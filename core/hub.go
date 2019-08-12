@@ -223,7 +223,7 @@ func (hub *Hub) AddMarket(market string) {
 		buy:  DefaultDepthManager(),
 		tman: DefaultTickerManager(market),
 	}
-	hub.csMan.Add(market)
+	hub.csMan.AddMarket(market)
 }
 
 func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
@@ -296,14 +296,14 @@ func (hub *Hub) beginForCandleSticks() {
 	var ok bool
 	currMinute := hub.currBlockTime.Hour() * hub.currBlockTime.Minute()
 	for _, cs := range candleSticks {
-		if sym != cs.MarketSymbol {
-			triman, ok = hub.managersMap[cs.MarketSymbol]
+		if sym != cs.Market {
+			triman, ok = hub.managersMap[cs.Market]
 			if !ok {
 				sym = ""
 				continue
 			}
 			info := hub.subMan.GetCandleStickSubscribeInfo()
-			sym = cs.MarketSymbol
+			sym = cs.Market
 			targets, ok = info[sym]
 			if !ok {
 				sym = ""
@@ -312,7 +312,7 @@ func (hub *Hub) beginForCandleSticks() {
 		}
 		if len(sym) != 0 {
 			if cs.TimeSpan == Minute {
-				triman.tman.UpdateNewestPrice(cs.EndPrice, currMinute)
+				triman.tman.UpdateNewestPrice(cs.ClosePrice, currMinute)
 			}
 			for _, target := range targets {
 				timespan, ok := target.Detail().(byte)

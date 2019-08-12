@@ -14,14 +14,14 @@ const (
 )
 
 type CandleStick struct {
-	BeginPrice     sdk.Dec `json:"begin"`
-	EndPrice       sdk.Dec `json:"end"`
-	MaxPrice       sdk.Dec `json:"max"`
-	MinPrice       sdk.Dec `json:"min"`
+	OpenPrice      sdk.Dec `json:"open"`
+	ClosePrice     sdk.Dec `json:"close"`
+	HighPrice      sdk.Dec `json:"high"`
+	LowPrice       sdk.Dec `json:"low"`
 	TotalDeal      sdk.Int `json:"total"`
 	EndingUnixTime int64   `json:"unix_time"`
 	TimeSpan       byte    `json:"time_span"`
-	MarketSymbol   string  `json:"market"`
+	Market         string  `json:"market"`
 }
 
 type Ticker struct {
