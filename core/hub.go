@@ -32,10 +32,6 @@ const (
 	RedelegationByte = byte(0x30)
 	UnbondingByte    = byte(0x32)
 	UnlockByte       = byte(0x34)
-
-	CreateOrderEndByte = byte('c')
-	FillOrderEndByte   = byte('f')
-	CancelOrderEndByte = byte('d')
 )
 
 func limitCount(count int) int {
@@ -179,48 +175,6 @@ type (
 	MsgBancorInfoForKafka            = bancorlite.MsgBancorInfoForKafka
 )
 
-type Subscriber interface {
-	Detail() interface{}
-}
-
-type SubscribeManager interface {
-	GetSlashSubscribeInfo() []Subscriber
-	GetHeightSubscribeInfo() []Subscriber
-	GetTickerSubscribeInfo() []Subscriber
-	GetCandleStickSubscribeInfo() map[string][]Subscriber
-
-	GetDepthSubscribeInfo() map[string][]Subscriber
-	GetDealSubscribeInfo() map[string][]Subscriber
-	GetOrderSubscribeInfo() map[string][]Subscriber
-	GetBancorInfoSubscribeInfo() map[string][]Subscriber
-	GetBancorTradeSubscribeInfo() map[string][]Subscriber
-	GetIncomeSubscribeInfo() map[string][]Subscriber
-	GetUnbondingSubscribeInfo() map[string][]Subscriber
-	GetRedelegationSubscribeInfo() map[string][]Subscriber
-	GetUnlockSubscribeInfo() map[string][]Subscriber
-	GetTxSubscribeInfo() map[string][]Subscriber
-	GetCommentSubscribeInfo() map[string][]Subscriber
-
-	PushSlash(subscriber Subscriber, info []byte)
-	PushHeight(subscriber Subscriber, info []byte)
-	PushTicker(subscriber Subscriber, t []*Ticker)
-	PushDepthSell(subscriber Subscriber, info []byte)
-	PushDepthBuy(subscriber Subscriber, info []byte)
-	PushCandleStick(subscriber Subscriber, cs *CandleStick)
-	PushDeal(subscriber Subscriber, info []byte)
-	PushCreateOrder(subscriber Subscriber, info []byte)
-	PushFillOrder(subscriber Subscriber, info []byte)
-	PushCancelOrder(subscriber Subscriber, info []byte)
-	PushBancorInfo(subscriber Subscriber, info []byte)
-	PushBancorTrade(subscriber Subscriber, info []byte)
-	PushIncome(subscriber Subscriber, info []byte)
-	PushUnbonding(subscriber Subscriber, info []byte)
-	PushRedelegation(subscriber Subscriber, info []byte)
-	PushUnlock(subscriber Subscriber, info []byte)
-	PushTx(subscriber Subscriber, info []byte)
-	PushComment(subscriber Subscriber, info []byte)
-}
-
 //func DefaultDepthManager() *DepthManager
 //func (dm *DepthManager) EndBlock() map[*types.PricePoint]bool
 
@@ -233,16 +187,32 @@ type TripleManager struct {
 type Hub struct {
 	db            dbm.DB
 	batch         dbm.Batch
-	dbMutex       *sync.RWMutex
-	tickerMutex   *sync.RWMutex
-	depthMutex    *sync.RWMutex
+	dbMutex       sync.RWMutex
+	tickerMutex   sync.RWMutex
+	depthMutex    sync.RWMutex
 	subMan        SubscribeManager
 	managersMap   map[string]TripleManager
-	csMan         *CandleStickManager
+	csMan         CandleStickManager
 	currBlockTime time.Time
 	lastBlockTime time.Time
 	tickerMap     map[string]*Ticker
 	sid           int64
+}
+
+var _ Querier = &Hub{}
+var _ Consumer = &Hub{}
+
+func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
+	return Hub{
+		db:            db,
+		batch:         db.NewBatch(),
+		subMan:        subMan,
+		managersMap:   make(map[string]TripleManager),
+		csMan:         NewCandleStickManager(nil),
+		currBlockTime: time.Unix(0, 0),
+		lastBlockTime: time.Unix(0, 0),
+		tickerMap:     make(map[string]*Ticker),
+	}
 }
 
 func (hub *Hub) HasMarket(market string) bool {
@@ -722,6 +692,8 @@ func (hub *Hub) commit() {
 	hub.batch = hub.db.NewBatch()
 	hub.dbMutex.Unlock()
 }
+
+//============================================================
 
 func (hub *Hub) QueryTikers(marketList []string) []*Ticker {
 	tickerList := make([]*Ticker, 0, len(marketList))

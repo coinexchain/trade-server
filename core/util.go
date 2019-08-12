@@ -8,12 +8,6 @@ import (
 	"github.com/emirpasic/gods/maps/treemap"
 )
 
-const (
-	Minute = byte(0x10)
-	Hour   = byte(0x20)
-	Day    = byte(0x30)
-)
-
 type baseCandleStick struct {
 	openPrice    sdk.Dec
 	closePrice   sdk.Dec
@@ -76,17 +70,6 @@ type CandleStickRecord struct {
 	minuteCS       [60]baseCandleStick
 	hourCS         [24]baseCandleStick
 	lastUpdateTime time.Time
-}
-
-type CandleStick struct {
-	BeginPrice     sdk.Dec `json:"begin_price"`
-	EndPrice       sdk.Dec `json:"end_price"`
-	MaxPrice       sdk.Dec `json:"max_price"`
-	MinPrice       sdk.Dec `json:"min_price"`
-	TotalDeal      sdk.Int `json:"total_deal"`
-	EndingUnixTime int64   `json:"unix_time"`
-	TimeSpan       byte    `json:"time_span"`
-	MarketSymbol   string  `json:"symbol"`
 }
 
 func newCandleStick(cs baseCandleStick, t int64, span byte) *CandleStick {
@@ -179,11 +162,6 @@ func (manager *CandleStickManager) GetRecord(marketSymbol string) *CandleStickRe
 
 //=====================================
 
-type PricePoint struct {
-	Price  sdk.Dec `json:"prime"`
-	Amount sdk.Int `json:"amount"`
-}
-
 type DepthManager struct {
 	ppMap   *treemap.Map //map[string]*PricePoint
 	updated map[*PricePoint]bool
@@ -257,12 +235,6 @@ func (dm *DepthManager) GetHighest(n int) []*PricePoint {
 type priceWithUpdate struct {
 	price   sdk.Dec
 	updated bool
-}
-
-type Ticker struct {
-	Market            string  `json:"market"`
-	NewPrice          sdk.Dec `json:"new"`
-	OldPriceOneDayAgo sdk.Dec `json:"old"`
 }
 
 const MinuteNumInDay = 24 * 60
