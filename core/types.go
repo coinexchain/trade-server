@@ -97,15 +97,17 @@ type Querier interface {
 	QueryTikers(marketList []string) []*Ticker
 	QueryBlockTime(height int64, count int) []int64
 	QueryDepth(market string, count int) (sell []*PricePoint, buy []*PricePoint)
-	QueryCandleStick(market string, timespan byte, unixSec int64, count int) [][]byte
-	QueryDeal(market string, unixSec int64, count int) [][]byte
-	QueryOrder(account string, unixSec int64, count int) (data [][]byte, tags []byte)
-	QueryBancorInfo(market string, unixSec int64, count int) [][]byte
-	QueryBancorTrade(account string, unixSec int64, count int) [][]byte
-	QueryRedelegation(account string, unixSec int64, count int) [][]byte
-	QueryUnbonding(account string, unixSec int64, count int) [][]byte
-	QueryUnlock(account string, unixSec int64, count int) [][]byte
-	QueryIncome(account string, unixSec int64, count int) [][]byte
-	QueryTx(account string, unixSec int64, count int) [][]byte
-	QueryComment(token string, unixSec int64, count int) [][]byte
+	QueryCandleStick(market string, timespan byte, time int64, sid int64, count int) [][]byte
+
+	QueryOrder(account string, time int64, sid int64, count int) (data [][]byte, tags []byte, timesid []int64)
+
+	QueryDeal(market string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
+	QueryBancorInfo(market string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
+	QueryBancorTrade(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
+	QueryRedelegation(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
+	QueryUnbonding(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
+	QueryUnlock(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
+	QueryIncome(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
+	QueryTx(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
+	QueryComment(token string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
 }

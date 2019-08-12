@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	MaxCount         = 1024
+	MaxCount = 1024
+	//These bytes are used as the first byte in key
 	CandleStickByte  = byte(0x10)
 	DealByte         = byte(0x12)
 	OrderByte        = byte(0x14)
@@ -42,61 +43,26 @@ func limitCount(count int) int {
 }
 
 func int64ToBigEndianBytes(n int64) []byte {
-	var result [8]byte
-	for i := 0; i < 8; i++ {
-		result[i] = byte(n >> (8 * uint(i)))
-	}
-	return result[:]
+	var b [8]byte
+	binary.BigEndian.PutUint64(b[:], uint64(n))
+	return b[:]
 }
 
-func (hub *Hub) getCandleStickKey(market string, timespan byte) []byte {
-	res := make([]byte, 0, 1+len(market)+3+8)
-	res = append(res, CandleStickByte)
-	res = append(res, []byte(market)...)
-	res = append(res, []byte{0, timespan, 0}...)
-	res = append(res, int64ToBigEndianBytes(hub.currBlockTime.Unix())...)
-	return res
-}
-
-func getCandleStickKeyEnd(market string, timespan byte, endTime int64) []byte {
-	res := make([]byte, 0, 1+len(market)+3+8)
-	res = append(res, CandleStickByte)
-	res = append(res, []byte(market)...)
-	res = append(res, []byte{0, timespan, 0}...)
-	res = append(res, int64ToBigEndianBytes(endTime)...)
-	return res
-}
-
-func getCandleStickKeyStart(market string, timespan byte) []byte {
-	res := make([]byte, 0, 1+len(market)+3)
-	res = append(res, CandleStickByte)
-	res = append(res, []byte(market)...)
-	res = append(res, []byte{0, timespan, 0}...)
-	return res
-}
-
-func (hub *Hub) getKeyFromBytes(firstByte byte, bz []byte, lastByte byte) []byte {
-	res := make([]byte, 0, 1+1+len(bz)+1+16+1)
-	res = append(res, firstByte)
-	res = append(res, byte(len(bz)))
-	res = append(res, bz...)
-	res = append(res, byte(0))
-	res = append(res, int64ToBigEndianBytes(hub.currBlockTime.Unix())...)
-	res = append(res, int64ToBigEndianBytes(hub.sid)...)
-	res = append(res, lastByte)
-	return res
-}
-
+// Following are some functions to generate keys to access the KVStore
 func (hub *Hub) getKeyFromBytesAndTime(firstByte byte, bz []byte, lastByte byte, unixTime int64) []byte {
 	res := make([]byte, 0, 1+1+len(bz)+1+16+1)
 	res = append(res, firstByte)
 	res = append(res, byte(len(bz)))
 	res = append(res, bz...)
 	res = append(res, byte(0))
-	res = append(res, int64ToBigEndianBytes(unixTime)...)
-	res = append(res, int64ToBigEndianBytes(hub.sid)...)
+	res = append(res, int64ToBigEndianBytes(unixTime)...) //the block's time at which the KV pair is generated
+	res = append(res, int64ToBigEndianBytes(hub.sid)...)  // the serial ID for a KV pair
 	res = append(res, lastByte)
 	return res
+}
+
+func (hub *Hub) getKeyFromBytes(firstByte byte, bz []byte, lastByte byte) []byte {
+	return hub.getKeyFromBytesAndTime(firstByte, bz, lastByte, hub.currBlockTime.Unix())
 }
 
 func getStartKeyFromBytes(firstByte byte, bz []byte) []byte {
@@ -108,14 +74,32 @@ func getStartKeyFromBytes(firstByte byte, bz []byte) []byte {
 	return res
 }
 
-func getEndKeyFromBytes(firstByte byte, bz []byte, unixSec int64) []byte {
+func getEndKeyFromBytes(firstByte byte, bz []byte, time int64, sid int64) []byte {
 	res := make([]byte, 0, 1+1+len(bz)+1+8)
 	res = append(res, firstByte)
 	res = append(res, byte(len(bz)))
 	res = append(res, bz...)
 	res = append(res, byte(0))
-	res = append(res, int64ToBigEndianBytes(unixSec)...)
+	res = append(res, int64ToBigEndianBytes(time)...)
+	res = append(res, int64ToBigEndianBytes(sid)...)
 	return res
+}
+
+//==========
+
+func (hub *Hub) getCandleStickKey(market string, timespan byte) []byte {
+	bz := append([]byte(market), []byte{0, timespan}...)
+	return hub.getKeyFromBytes(CandleStickByte, bz, 0)
+}
+
+func getCandleStickEndKey(market string, timespan byte, endTime int64, sid int64) []byte {
+	bz := append([]byte(market), []byte{0, timespan}...)
+	return getEndKeyFromBytes(CandleStickByte, bz, endTime, sid)
+}
+
+func getCandleStickStartKey(market string, timespan byte) []byte {
+	bz := append([]byte(market), []byte{0, timespan}...)
+	return getStartKeyFromBytes(CandleStickByte, bz)
 }
 
 func (hub *Hub) getDealKey(market string) []byte {
@@ -193,7 +177,7 @@ type Hub struct {
 	currBlockTime time.Time
 	lastBlockTime time.Time
 	tickerMap     map[string]*Ticker
-	sid           int64
+	sid           int64 // the serial ID for a KV pair
 }
 
 var _ Querier = &Hub{}
@@ -310,18 +294,29 @@ func (hub *Hub) beginForCandleSticks() {
 				continue
 			}
 		}
-		if len(sym) != 0 {
-			if cs.TimeSpan == Minute {
-				triman.tman.UpdateNewestPrice(cs.ClosePrice, currMinute)
-			}
-			for _, target := range targets {
-				timespan, ok := target.Detail().(byte)
-				if !ok || timespan != cs.TimeSpan {
-					continue
-				}
-				hub.subMan.PushCandleStick(target, &cs)
-			}
+		if len(sym) == 0 {
+			continue
 		}
+		// Update tickers' prices
+		if cs.TimeSpan == Minute {
+			triman.tman.UpdateNewestPrice(cs.ClosePrice, currMinute)
+		}
+		// Push candle sticks to subscribers
+		for _, target := range targets {
+			timespan, ok := target.Detail().(byte)
+			if !ok || timespan != cs.TimeSpan {
+				continue
+			}
+			hub.subMan.PushCandleStick(target, &cs)
+		}
+		// Save candle sticks to KVStore
+		key := hub.getCandleStickKey(cs.Market, cs.TimeSpan)
+		bz, err := json.Marshal(cs)
+		if err != nil {
+			continue
+		}
+		hub.batch.Set(key, bz)
+		hub.sid++
 	}
 }
 
@@ -780,11 +775,11 @@ func (hub *Hub) QueryDepth(market string, count int) (sell []*PricePoint, buy []
 	return
 }
 
-func (hub *Hub) QueryCandleStick(market string, timespan byte, unixSec int64, count int) [][]byte {
+func (hub *Hub) QueryCandleStick(market string, timespan byte, time int64, sid int64, count int) [][]byte {
 	count = limitCount(count)
 	data := make([][]byte, 0, count)
-	end := getCandleStickKeyEnd(market, timespan, unixSec)
-	start := getCandleStickKeyStart(market, timespan)
+	end := getCandleStickEndKey(market, timespan, time, sid)
+	start := getCandleStickStartKey(market, timespan)
 	hub.dbMutex.RLock()
 	iter := hub.db.ReverseIterator(start, end)
 	defer func() {
@@ -802,60 +797,61 @@ func (hub *Hub) QueryCandleStick(market string, timespan byte, unixSec int64, co
 }
 
 //=========
-func (hub *Hub) QueryDeal(market string, unixSec int64, count int) [][]byte {
-	data, _ := hub.query(false, DealByte, []byte(market), unixSec, count)
-	return data
+func (hub *Hub) QueryOrder(account string, time int64, sid int64, count int) (data [][]byte, tags []byte, timesid []int64) {
+	return hub.query(false, OrderByte, []byte(account), time, sid, count)
 }
 
-func (hub *Hub) QueryOrder(account string, unixSec int64, count int) (data [][]byte, tags []byte) {
-	data, tags = hub.query(false, OrderByte, []byte(account), unixSec, count)
+func (hub *Hub) QueryDeal(market string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+	data, _, timesid = hub.query(false, DealByte, []byte(market), time, sid, count)
 	return
 }
 
-func (hub *Hub) QueryBancorInfo(market string, unixSec int64, count int) [][]byte {
-	data, _ := hub.query(false, BancorInfoByte, []byte(market), unixSec, count)
-	return data
+func (hub *Hub) QueryBancorInfo(market string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+	data, _, timesid = hub.query(false, BancorInfoByte, []byte(market), time, sid, count)
+	return
 }
 
-func (hub *Hub) QueryBancorTrade(account string, unixSec int64, count int) [][]byte {
-	data, _ := hub.query(false, BancorTradeByte, []byte(account), unixSec, count)
-	return data
+func (hub *Hub) QueryBancorTrade(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+	data, _, timesid = hub.query(false, BancorTradeByte, []byte(account), time, sid, count)
+	return
 }
 
-func (hub *Hub) QueryRedelegation(account string, unixSec int64, count int) [][]byte {
-	data, _ := hub.query(false, RedelegationByte, []byte(account), unixSec, count)
-	return data
+func (hub *Hub) QueryRedelegation(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+	data, _, timesid = hub.query(false, RedelegationByte, []byte(account), time, sid, count)
+	return
 }
-func (hub *Hub) QueryUnbonding(account string, unixSec int64, count int) [][]byte {
-	data, _ := hub.query(false, UnbondingByte, []byte(account), unixSec, count)
-	return data
+func (hub *Hub) QueryUnbonding(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+	data, _, timesid = hub.query(false, UnbondingByte, []byte(account), time, sid, count)
+	return
 }
-func (hub *Hub) QueryUnlock(account string, unixSec int64, count int) [][]byte {
-	data, _ := hub.query(false, UnlockByte, []byte(account), unixSec, count)
-	return data
-}
-
-func (hub *Hub) QueryIncome(account string, unixSec int64, count int) [][]byte {
-	data, _ := hub.query(true, IncomeByte, []byte(account), unixSec, count)
-	return data
+func (hub *Hub) QueryUnlock(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+	data, _, timesid = hub.query(false, UnlockByte, []byte(account), time, sid, count)
+	return
 }
 
-func (hub *Hub) QueryTx(account string, unixSec int64, count int) [][]byte {
-	data, _ := hub.query(true, TxByte, []byte(account), unixSec, count)
-	return data
+func (hub *Hub) QueryIncome(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+	data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count)
+	return
 }
 
-func (hub *Hub) QueryComment(token string, unixSec int64, count int) [][]byte {
-	data, _ := hub.query(false, CommentByte, []byte(token), unixSec, count)
-	return data
+func (hub *Hub) QueryTx(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+	data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count)
+	return
 }
 
-func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, unixSec int64, count int) (data [][]byte, tags []byte) {
+func (hub *Hub) QueryComment(token string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+	data, _, timesid = hub.query(false, CommentByte, []byte(token), time, sid, count)
+	return
+}
+
+func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64, sid int64,
+	count int) (data [][]byte, tags []byte, timesid []int64) {
 	count = limitCount(count)
-	data = make([][]byte, 0, MaxCount)
-	tags = make([]byte, 0, MaxCount)
+	data = make([][]byte, 0, count)
+	tags = make([]byte, 0, count)
+	timesid = make([]int64, 0, 2*count)
 	start := getStartKeyFromBytes(firstByte, bz)
-	end := getEndKeyFromBytes(firstByte, bz, unixSec)
+	end := getEndKeyFromBytes(firstByte, bz, time, sid)
 	hub.dbMutex.RLock()
 	iter := hub.db.ReverseIterator(start, end)
 	defer func() {
@@ -864,7 +860,12 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, unixSec int
 	}()
 	for ; iter.Valid(); iter.Next() {
 		iKey := iter.Key()
-		tags = append(tags, iKey[len(iKey)-1])
+		idx := len(iKey) - 1
+		tags = append(tags, iKey[idx])
+		sid := binary.BigEndian.Uint64(iKey[idx-8 : idx])
+		idx -= 8
+		time := binary.BigEndian.Uint64(iKey[idx-8 : idx])
+		timesid = append(timesid, []int64{int64(time), int64(sid)}...)
 		if fetchTxDetail {
 			key := append([]byte{DetailByte}, iter.Value()...)
 			data = append(data, hub.db.Get(key))
@@ -876,5 +877,5 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, unixSec int
 			break
 		}
 	}
-	return data, tags
+	return
 }
