@@ -42,26 +42,38 @@ type Subscriber interface {
 type SubscribeManager interface {
 	GetSlashSubscribeInfo() []Subscriber
 	GetHeightSubscribeInfo() []Subscriber
+
+	//The returned subscribers have detailed information of markets
+	//one subscriber can subscribe tickers from no more than 100 markets
 	GetTickerSubscribeInfo() []Subscriber
+
+	//The returned subscribers have detailed information of timespan
 	GetCandleStickSubscribeInfo() map[string][]Subscriber
 
+	//the map keys are markets' names
 	GetDepthSubscribeInfo() map[string][]Subscriber
 	GetDealSubscribeInfo() map[string][]Subscriber
-	GetOrderSubscribeInfo() map[string][]Subscriber
+
+	//the map keys are bancor contracts' names
 	GetBancorInfoSubscribeInfo() map[string][]Subscriber
+
+	//the map keys are tokens' names
+	GetCommentSubscribeInfo() map[string][]Subscriber
+
+	//the map keys are accounts' bech32 addresses
+	GetOrderSubscribeInfo() map[string][]Subscriber
 	GetBancorTradeSubscribeInfo() map[string][]Subscriber
 	GetIncomeSubscribeInfo() map[string][]Subscriber
 	GetUnbondingSubscribeInfo() map[string][]Subscriber
 	GetRedelegationSubscribeInfo() map[string][]Subscriber
 	GetUnlockSubscribeInfo() map[string][]Subscriber
 	GetTxSubscribeInfo() map[string][]Subscriber
-	GetCommentSubscribeInfo() map[string][]Subscriber
 
 	PushSlash(subscriber Subscriber, info []byte)
 	PushHeight(subscriber Subscriber, info []byte)
 	PushTicker(subscriber Subscriber, t []*Ticker)
-	PushDepthSell(subscriber Subscriber, info []byte)
-	PushDepthBuy(subscriber Subscriber, info []byte)
+	PushDepthSell(subscriber Subscriber, delta map[*PricePoint]bool)
+	PushDepthBuy(subscriber Subscriber, delta map[*PricePoint]bool)
 	PushCandleStick(subscriber Subscriber, cs *CandleStick)
 	PushDeal(subscriber Subscriber, info []byte)
 	PushCreateOrder(subscriber Subscriber, info []byte)

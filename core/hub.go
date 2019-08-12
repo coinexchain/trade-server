@@ -175,9 +175,6 @@ type (
 	MsgBancorInfoForKafka            = bancorlite.MsgBancorInfoForKafka
 )
 
-//func DefaultDepthManager() *DepthManager
-//func (dm *DepthManager) EndBlock() map[*types.PricePoint]bool
-
 type TripleManager struct {
 	sell *DepthManager
 	buy  *DepthManager
@@ -288,12 +285,16 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 
 	hub.lastBlockTime = hub.currBlockTime
 	hub.currBlockTime = v.TimeStamp
+	hub.beginForCandleSticks()
+}
 
+func (hub *Hub) beginForCandleSticks() {
 	candleSticks := hub.csMan.NewBlock(hub.currBlockTime)
 	var triman TripleManager
 	var targets []Subscriber
 	sym := ""
 	var ok bool
+	currMinute := hub.currBlockTime.Hour() * hub.currBlockTime.Minute()
 	for _, cs := range candleSticks {
 		if sym != cs.MarketSymbol {
 			triman, ok = hub.managersMap[cs.MarketSymbol]
@@ -311,10 +312,13 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 		}
 		if len(sym) != 0 {
 			if cs.TimeSpan == Minute {
-				currMinute := hub.currBlockTime.Hour() * hub.currBlockTime.Minute()
 				triman.tman.UpdateNewestPrice(cs.EndPrice, currMinute)
 			}
 			for _, target := range targets {
+				timespan, ok := target.Detail().(byte)
+				if !ok || timespan != cs.TimeSpan {
+					continue
+				}
 				hub.subMan.PushCandleStick(target, &cs)
 			}
 		}
@@ -500,7 +504,7 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 	if !hub.HasMarket(v.TradingPair) {
 		hub.AddMarket(v.TradingPair)
 	}
-	key := hub.getCreateOrderKey(v.TradingPair)
+	key := hub.getCreateOrderKey(v.Sender)
 	hub.batch.Set(key, bz)
 	hub.sid++
 	info := hub.subMan.GetOrderSubscribeInfo()
@@ -534,14 +538,14 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 		hub.Log("Error in Unmarshal FillOrderInfo")
 		return
 	}
-	key := hub.getFillOrderKey(v.TradingPair)
-	hub.batch.Set(key, bz)
-	hub.sid++
 	info := hub.subMan.GetOrderSubscribeInfo()
 	accAndSeq := strings.Split(v.OrderID, "-")
 	if len(accAndSeq) != 2 {
 		return
 	}
+	key := hub.getFillOrderKey(accAndSeq[0])
+	hub.batch.Set(key, bz)
+	hub.sid++
 	targets, ok := info[accAndSeq[0]]
 	if !ok {
 		return
@@ -568,6 +572,18 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 	}()
 	managers.sell.DeltaChange(v.Price, negStock)
 	managers.buy.DeltaChange(v.Price, negStock)
+
+	key = hub.getDealKey(v.TradingPair)
+	hub.batch.Set(key, bz)
+	hub.sid++
+	info = hub.subMan.GetDealSubscribeInfo()
+	targets, ok = info[v.TradingPair]
+	if !ok {
+		return
+	}
+	for _, target := range targets {
+		hub.subMan.PushDeal(target, bz)
+	}
 }
 
 func (hub *Hub) handleCancelOrderInfo(bz []byte) {
@@ -577,14 +593,14 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 		hub.Log("Error in Unmarshal CancelOrderInfo")
 		return
 	}
-	key := hub.getCancelOrderKey(v.TradingPair)
-	hub.batch.Set(key, bz)
-	hub.sid++
 	info := hub.subMan.GetOrderSubscribeInfo()
 	accAndSeq := strings.Split(v.OrderID, "-")
 	if len(accAndSeq) != 2 {
 		return
 	}
+	key := hub.getCancelOrderKey(accAndSeq[0])
+	hub.batch.Set(key, bz)
+	hub.sid++
 	targets, ok := info[accAndSeq[0]]
 	if !ok {
 		return
@@ -620,6 +636,7 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 	key := hub.getBancorTradeKey(addr)
 	hub.batch.Set(key, bz)
 	hub.sid++
+
 	info := hub.subMan.GetBancorTradeSubscribeInfo()
 	targets, ok := info[addr]
 	if !ok {
@@ -628,15 +645,8 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 	for _, target := range targets {
 		hub.subMan.PushBancorTrade(target, bz)
 	}
-	info = hub.subMan.GetBancorInfoSubscribeInfo()
-	targets, ok = info[v.Stock+"/"+v.Money]
-	if !ok {
-		return
-	}
-	for _, target := range targets {
-		hub.subMan.PushBancorTrade(target, bz)
-	}
 }
+
 func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
 	var v MsgBancorInfoForKafka
 	err := json.Unmarshal(bz, &v)
@@ -657,7 +667,7 @@ func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
 	}
 }
 
-func (hub *Hub) commit() {
+func (hub *Hub) commitForTicker() {
 	tickerMap := make(map[string]*Ticker)
 	currMinute := hub.currBlockTime.Hour() * hub.currBlockTime.Minute()
 	for _, triman := range hub.managersMap {
@@ -686,7 +696,34 @@ func (hub *Hub) commit() {
 		hub.tickerMap[market] = ticker
 	}
 	hub.tickerMutex.Unlock()
+}
 
+func (hub *Hub) commitForDepth() {
+	for market, triman := range hub.managersMap {
+		depthDeltaSell := triman.sell.EndBlock()
+		depthDeltaBuy := triman.buy.EndBlock()
+		if len(depthDeltaSell) == 0 && len(depthDeltaBuy) == 0 {
+			continue
+		}
+		info := hub.subMan.GetDepthSubscribeInfo()
+		targets, ok := info[market]
+		if !ok {
+			continue
+		}
+		for _, target := range targets {
+			if len(depthDeltaSell) != 0 {
+				hub.subMan.PushDepthSell(target, depthDeltaSell)
+			}
+			if len(depthDeltaBuy) != 0 {
+				hub.subMan.PushDepthBuy(target, depthDeltaBuy)
+			}
+		}
+	}
+}
+
+func (hub *Hub) commit() {
+	hub.commitForTicker()
+	hub.commitForDepth()
 	hub.dbMutex.Lock()
 	hub.batch.WriteSync()
 	hub.batch = hub.db.NewBatch()
