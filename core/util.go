@@ -1,19 +1,25 @@
-package dexutil
+package core
 
 import (
 	"time"
 
-	"github.com/coinexchain/dex/modules/market/internal/types"
+	"github.com/coinexchain/dex/modules/market"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/emirpasic/gods/maps/treemap"
 )
 
+const (
+	Minute = byte(0x10)
+	Hour   = byte(0x20)
+	Day    = byte(0x30)
+)
+
 type baseCandleStick struct {
-	openPrice sdk.Dec
+	openPrice    sdk.Dec
 	closePrice   sdk.Dec
-	highestPrice   sdk.Dec
-	lowestPrice   sdk.Dec
-	totalDeal  sdk.Int
+	highestPrice sdk.Dec
+	lowestPrice  sdk.Dec
+	totalDeal    sdk.Int
 }
 
 func (cs *baseCandleStick) hasDeal() bool {
@@ -79,11 +85,11 @@ type CandleStick struct {
 	MinPrice       sdk.Dec `json:"min_price"`
 	TotalDeal      sdk.Int `json:"total_deal"`
 	EndingUnixTime int64   `json:"unix_time"`
-	TimeSpan       string  `json:"type"`
+	TimeSpan       byte    `json:"time_span"`
 	MarketSymbol   string  `json:"symbol"`
 }
 
-func newCandleStick(cs baseCandleStick, t int64, span string) *CandleStick {
+func newCandleStick(cs baseCandleStick, t int64, span byte) *CandleStick {
 	return &CandleStick{
 		BeginPrice:     cs.openPrice,
 		EndPrice:       cs.closePrice,
@@ -99,14 +105,14 @@ func (cs *CandleStickRecord) newBlock(t time.Time, isNewDay, isNewHour, isNewMin
 	res := make([]*CandleStick, 0, 3)
 	if isNewDay && t.Unix()-cs.lastUpdateTime.Unix() < 60*60*24 {
 		dayCS := merge(cs.hourCS[:])
-		res = append(res, newCandleStick(dayCS, cs.lastUpdateTime.Unix(), "day"))
+		res = append(res, newCandleStick(dayCS, cs.lastUpdateTime.Unix(), Day))
 	}
 	if isNewHour && t.Unix()-cs.lastUpdateTime.Unix() < 60*60 {
 		cs.hourCS[cs.lastUpdateTime.Hour()] = merge(cs.minuteCS[:])
-		res = append(res, newCandleStick(cs.hourCS[cs.lastUpdateTime.Hour()], cs.lastUpdateTime.Unix(), "hour"))
+		res = append(res, newCandleStick(cs.hourCS[cs.lastUpdateTime.Hour()], cs.lastUpdateTime.Unix(), Hour))
 	}
 	if isNewMinute && t.Unix()-cs.lastUpdateTime.Unix() < 60 {
-		res = append(res, newCandleStick(cs.minuteCS[cs.lastUpdateTime.Minute()], cs.lastUpdateTime.Unix(), "day"))
+		res = append(res, newCandleStick(cs.minuteCS[cs.lastUpdateTime.Minute()], cs.lastUpdateTime.Unix(), Minute))
 	}
 
 	if isNewDay {
@@ -173,71 +179,144 @@ func (manager *CandleStickManager) GetRecord(marketSymbol string) *CandleStickRe
 
 //=====================================
 
+type PricePoint struct {
+	Price  sdk.Dec `json:"prime"`
+	Amount sdk.Int `json:"amount"`
+}
+
 type DepthManager struct {
-	ppMap *treemap.Map //map[string]*types.PricePoint
-	updated map[*types.PricePoint]bool
+	ppMap   *treemap.Map //map[string]*PricePoint
+	updated map[*PricePoint]bool
 }
 
 func DefaultDepthManager() *DepthManager {
 	return &DepthManager{
-		ppMap: treemap.NewWithStringComparator(),
-		updated: make(map[*types.PricePoint]bool),
+		ppMap:   treemap.NewWithStringComparator(),
+		updated: make(map[*PricePoint]bool),
 	}
 }
 
-func NewDepthManager(ppList []*types.PricePoint) *DepthManager {
-	res:=DefaultDepthManager()
+func NewDepthManager(ppList []*PricePoint) *DepthManager {
+	res := DefaultDepthManager()
 	for _, pp := range ppList {
-		res.Change(pp.Price, pp.LeftStock)
+		res.DeltaChange(pp.Price, pp.Amount)
 	}
 	return res
 }
 
-func (dm *DepthManager) Change(price sdk.Dec, amount sdk.Int) {
-	s := string(types.DecToBigEndianBytes(price))
+func (dm *DepthManager) DeltaChange(price sdk.Dec, amount sdk.Int) {
+	s := string(market.DecToBigEndianBytes(price))
 	ptr, ok := dm.ppMap.Get(s)
-	pp := ptr.(*types.PricePoint)
+	pp := ptr.(*PricePoint)
 	if !ok {
-		pp = &types.PricePoint{Price:price, LeftStock:sdk.ZeroInt()}
+		pp = &PricePoint{Price: price, Amount: sdk.ZeroInt()}
 	}
-	pp.LeftStock = pp.LeftStock.Add(amount)
-	if pp.LeftStock.IsZero() {
+	pp.Amount = pp.Amount.Add(amount)
+	if pp.Amount.IsZero() {
 		dm.ppMap.Remove(s)
 	} else {
 		dm.ppMap.Put(s, pp)
 	}
-	dm.updated[pp]=true
+	dm.updated[pp] = true
 }
 
-func (dm *DepthManager) EndBlock() map[*types.PricePoint]bool {
+func (dm *DepthManager) EndBlock() map[*PricePoint]bool {
 	ret := dm.updated
-	dm.updated=make(map[*types.PricePoint]bool)
+	dm.updated = make(map[*PricePoint]bool)
 	return ret
 }
 
-func (dm *DepthManager) GetLowest(n int) []*types.PricePoint {
-	res:=make([]*types.PricePoint,0,n)
-	iter:=dm.ppMap.Iterator()
+func (dm *DepthManager) GetLowest(n int) []*PricePoint {
+	res := make([]*PricePoint, 0, n)
+	iter := dm.ppMap.Iterator()
 	iter.Begin()
-	for i:=0; i<n; i++ {
-		if ok:=iter.Next(); !ok {
+	for i := 0; i < n; i++ {
+		if ok := iter.Next(); !ok {
 			break
 		}
-		res=append(res, iter.Value().(*types.PricePoint))
+		res = append(res, iter.Value().(*PricePoint))
 	}
 	return res
 }
 
-func (dm *DepthManager) GetHighest(n int) []*types.PricePoint {
-	res:=make([]*types.PricePoint,0,n)
-	iter:=dm.ppMap.Iterator()
+func (dm *DepthManager) GetHighest(n int) []*PricePoint {
+	res := make([]*PricePoint, 0, n)
+	iter := dm.ppMap.Iterator()
 	iter.End()
-	for i:=0; i<n; i++ {
-		if ok:=iter.Prev(); !ok {
+	for i := 0; i < n; i++ {
+		if ok := iter.Prev(); !ok {
 			break
 		}
-		res=append(res, iter.Value().(*types.PricePoint))
+		res = append(res, iter.Value().(*PricePoint))
 	}
 	return res
 }
 
+//=====================================
+
+type priceWithUpdate struct {
+	price   sdk.Dec
+	updated bool
+}
+
+type Ticker struct {
+	Market            string  `json:"market"`
+	NewPrice          sdk.Dec `json:"new"`
+	OldPriceOneDayAgo sdk.Dec `json:"old"`
+}
+
+const MinuteNumInDay = 24 * 60
+
+type TickerManager struct {
+	priceList    [MinuteNumInDay]priceWithUpdate
+	newestPrice  sdk.Dec
+	newestMinute int
+	market       string
+	initialized  bool
+}
+
+func DefaultTickerManager(market string) *TickerManager {
+	return &TickerManager{
+		market: market,
+	}
+}
+
+func (tm *TickerManager) UpdateNewestPrice(currPrice sdk.Dec, currMinute int) {
+	if currMinute >= MinuteNumInDay || currMinute < 0 {
+		panic("Minute too large")
+	}
+	if !tm.initialized {
+		tm.initialized = true
+		for i := 0; i < MinuteNumInDay; i++ {
+			tm.priceList[i].price = currPrice
+		}
+		tm.newestPrice = currPrice
+		tm.newestMinute = currMinute
+		return
+	}
+	tm.priceList[tm.newestMinute].price = tm.newestPrice
+	tm.priceList[tm.newestMinute].updated = true
+	for tm.newestMinute++; tm.newestMinute != currMinute; tm.newestMinute++ {
+		if tm.newestMinute == MinuteNumInDay {
+			tm.newestMinute = 0
+		}
+		tm.priceList[tm.newestMinute].price = tm.newestPrice
+		tm.priceList[tm.newestMinute].updated = false
+	}
+	tm.newestPrice = currPrice
+}
+
+func (tm *TickerManager) GetTiker(currMinute int) *Ticker {
+	if currMinute >= MinuteNumInDay || currMinute < 0 {
+		panic("Minute too large")
+	}
+	ok := tm.newestMinute == currMinute || tm.priceList[currMinute].updated
+	if !ok {
+		return nil
+	}
+	return &Ticker{
+		NewPrice:          tm.newestPrice,
+		OldPriceOneDayAgo: tm.priceList[currMinute].price,
+		Market:            tm.market,
+	}
+}
