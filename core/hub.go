@@ -188,6 +188,9 @@ type Hub struct {
 
 	currBlockTime time.Time
 	lastBlockTime time.Time
+
+	// cache for NotificationSlash
+	slashSlice []*NotificationSlash
 }
 
 func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
@@ -200,6 +203,7 @@ func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
 		currBlockTime: time.Unix(0, 0),
 		lastBlockTime: time.Unix(0, 0),
 		tickerMap:     make(map[string]*Ticker),
+		slashSlice:    make([]*NotificationSlash, 0, 10),
 	}
 }
 
@@ -331,12 +335,13 @@ func (hub *Hub) beginForCandleSticks() {
 }
 
 func (hub *Hub) handleNotificationSlash(bz []byte) {
-	for _, ss := range hub.subMan.GetSlashSubscribeInfo() {
-		hub.subMan.PushSlash(ss, bz)
+	var v NotificationSlash
+	err := json.Unmarshal(bz, &v)
+	if err != nil {
+		hub.Log("Error in Unmarshal NotificationSlash")
+		return
 	}
-	key := hub.getKeyFromBytes(SlashByte, []byte{}, 0)
-	hub.batch.Set(key, bz)
-	hub.sid++
+	hub.slashSlice = append(hub.slashSlice, &v)
 }
 
 func (hub *Hub) handleNotificationTx(bz []byte) {
@@ -687,6 +692,29 @@ func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
 	for _, target := range targets {
 		hub.subMan.PushBancorInfo(target, bz)
 	}
+}
+
+func (hub *Hub) commitForSlash() {
+	newSlice := make([]*NotificationSlash, 0, len(hub.slashSlice))
+	// To fix a bug of cosmos-sdk
+	for _, slash := range hub.slashSlice {
+		if len(slash.Validator) == 0 && len(newSlice) != 0 {
+			newSlice[len(newSlice)-1].Jailed = slash.Jailed
+		}
+		if len(slash.Validator) != 0 {
+			newSlice = append(newSlice, slash)
+		}
+	}
+	for _, slash := range newSlice {
+		bz, _ := json.Marshal(slash)
+		for _, ss := range hub.subMan.GetSlashSubscribeInfo() {
+			hub.subMan.PushSlash(ss, bz)
+		}
+		key := hub.getKeyFromBytes(SlashByte, []byte{}, 0)
+		hub.batch.Set(key, bz)
+		hub.sid++
+	}
+	hub.slashSlice = hub.slashSlice[:]
 }
 
 func (hub *Hub) commitForTicker() {
