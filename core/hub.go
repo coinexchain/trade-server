@@ -540,7 +540,7 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 		}
 	}
 	//Update depth info
-	managers, ok := hub.managersMap[v.TradingPair]
+	triman, ok := hub.managersMap[v.TradingPair]
 	if !ok {
 		return
 	}
@@ -550,9 +550,9 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 		hub.depthMutex.Unlock()
 	}()
 	if v.Side == market.SELL {
-		managers.sell.DeltaChange(v.Price, amount)
+		triman.sell.DeltaChange(v.Price, amount)
 	} else {
-		managers.buy.DeltaChange(v.Price, amount)
+		triman.buy.DeltaChange(v.Price, amount)
 	}
 }
 func (hub *Hub) handleFillOrderInfo(bz []byte) {
@@ -595,7 +595,7 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 		csRec.Update(hub.currBlockTime, price, v.DealStock)
 	}
 	//Update depth info
-	managers, ok := hub.managersMap[v.TradingPair]
+	triman, ok := hub.managersMap[v.TradingPair]
 	if !ok {
 		return
 	}
@@ -604,8 +604,8 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 	defer func() {
 		hub.depthMutex.Unlock()
 	}()
-	managers.sell.DeltaChange(v.Price, negStock)
-	managers.buy.DeltaChange(v.Price, negStock)
+	triman.sell.DeltaChange(v.Price, negStock)
+	triman.buy.DeltaChange(v.Price, negStock)
 }
 
 func (hub *Hub) handleCancelOrderInfo(bz []byte) {
@@ -633,7 +633,7 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 		hub.subMan.PushCancelOrder(target, bz)
 	}
 	//Update depth info
-	managers, ok := hub.managersMap[v.TradingPair]
+	triman, ok := hub.managersMap[v.TradingPair]
 	if !ok {
 		return
 	}
@@ -643,9 +643,9 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 		hub.depthMutex.Unlock()
 	}()
 	if v.Side == market.SELL {
-		managers.sell.DeltaChange(v.Price, negStock)
+		triman.sell.DeltaChange(v.Price, negStock)
 	} else {
-		managers.buy.DeltaChange(v.Price, negStock)
+		triman.buy.DeltaChange(v.Price, negStock)
 	}
 }
 
@@ -936,4 +936,62 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64,
 		}
 	}
 	return
+}
+
+//===================================
+// for serialization and deserialization of Hub
+
+type HubForJSON struct {
+	Sid           int64              `json:"sid"`
+	CSMan         CandleStickManager `json:"csman"`
+	TickerMap     map[string]*Ticker
+	CurrBlockTime time.Time            `json:"curr_block_time"`
+	LastBlockTime time.Time            `json:"last_block_time"`
+	Markets       []*MarketInfoForJSON `json:"markets"`
+}
+
+type MarketInfoForJSON struct {
+	TkMan           *TickerManager `json:"tkman"`
+	SellPricePoints []*PricePoint  `json:"sells"`
+	BuyPricePoints  []*PricePoint  `json:"buys"`
+}
+
+func (hub *Hub) Load(hub4j *HubForJSON) {
+	hub.sid = hub4j.Sid
+	hub.csMan = hub4j.CSMan
+	hub.tickerMap = hub4j.TickerMap
+	hub.currBlockTime = hub4j.CurrBlockTime
+	hub.lastBlockTime = hub4j.LastBlockTime
+
+	for _, info := range hub4j.Markets {
+		triman := TripleManager{
+			sell: DefaultDepthManager(),
+			buy:  DefaultDepthManager(),
+			tkm:  info.TkMan,
+		}
+		for _, pp := range info.SellPricePoints {
+			triman.sell.DeltaChange(pp.Price, pp.Amount)
+		}
+		for _, pp := range info.BuyPricePoints {
+			triman.buy.DeltaChange(pp.Price, pp.Amount)
+		}
+		hub.managersMap[info.TkMan.Market] = triman
+	}
+}
+
+func (hub *Hub) Dump(hub4j *HubForJSON) {
+	hub4j.Sid = hub.sid
+	hub4j.CSMan = hub.csMan
+	hub4j.TickerMap = hub.tickerMap
+	hub4j.CurrBlockTime = hub.currBlockTime
+	hub4j.LastBlockTime = hub.lastBlockTime
+
+	hub4j.Markets = make([]*MarketInfoForJSON, 0, len(hub.managersMap))
+	for _, triman := range hub.managersMap {
+		hub4j.Markets = append(hub4j.Markets, &MarketInfoForJSON{
+			TkMan:           triman.tkm,
+			SellPricePoints: triman.sell.DumpPricePoints(),
+			BuyPricePoints:  triman.buy.DumpPricePoints(),
+		})
+	}
 }

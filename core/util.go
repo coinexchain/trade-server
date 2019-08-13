@@ -174,6 +174,18 @@ type DepthManager struct {
 	Updated map[*PricePoint]bool
 }
 
+func (dm *DepthManager) DumpPricePoints() []*PricePoint {
+	size := dm.ppMap.Size()
+	pps := make([]*PricePoint, size)
+	iter := dm.ppMap.Iterator()
+	iter.Begin()
+	for i := 0; i < size; i++ {
+		iter.Next()
+		pps[i] = iter.Value().(*PricePoint)
+	}
+	return pps
+}
+
 func DefaultDepthManager() *DepthManager {
 	return &DepthManager{
 		ppMap:   treemap.NewWithStringComparator(),
