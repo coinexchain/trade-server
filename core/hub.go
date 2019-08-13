@@ -173,9 +173,9 @@ type Hub struct {
 	db    dbm.DB
 	batch dbm.Batch
 	// Mutex to protect shared storage and variables
-	dbMutex     sync.RWMutex
-	tickerMutex sync.RWMutex
-	depthMutex  sync.RWMutex
+	dbMutex        sync.RWMutex
+	tickerMapMutex sync.RWMutex
+	depthMutex     sync.RWMutex
 
 	csMan CandleStickManager
 
@@ -189,9 +189,6 @@ type Hub struct {
 	currBlockTime time.Time
 	lastBlockTime time.Time
 }
-
-var _ Querier = &Hub{}
-var _ Consumer = &Hub{}
 
 func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
 	return Hub{
@@ -219,6 +216,13 @@ func (hub *Hub) AddMarket(market string) {
 	}
 	hub.csMan.AddMarket(market)
 }
+
+func (hub *Hub) Log(s string) {
+	fmt.Print(s)
+}
+
+//============================================================
+var _ Consumer = &Hub{}
 
 func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 	switch msgType {
@@ -255,10 +259,6 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 	default:
 		hub.Log(fmt.Sprintf("Unknown Message Type:%s", msgType))
 	}
-}
-
-func (hub *Hub) Log(s string) {
-	fmt.Print(s)
 }
 
 func (hub *Hub) handleNewHeightInfo(bz []byte) {
@@ -347,8 +347,9 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 		return
 	}
 	snBytes := make([]byte, 8)
-	binary.LittleEndian.PutUint64(snBytes[:], uint64(v.SerialNumber))
+	binary.BigEndian.PutUint64(snBytes[:], uint64(v.SerialNumber))
 
+	// Use the transaction's serial number as key, save its detail
 	key := append([]byte{DetailByte}, snBytes...)
 	hub.batch.Set(key, bz)
 	hub.sid++
@@ -396,6 +397,7 @@ func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
 	if err != nil {
 		return
 	}
+	// Use completion time as the key
 	key := hub.getRedelegationEventKey(v.Delegator, t.Unix())
 	hub.batch.Set(key, bz)
 	hub.sid++
@@ -411,6 +413,7 @@ func (hub *Hub) handleNotificationBeginUnbonding(bz []byte) {
 	if err != nil {
 		return
 	}
+	// Use completion time as the key
 	key := hub.getUnbondingEventKey(v.Delegator, t.Unix())
 	hub.batch.Set(key, bz)
 	hub.sid++
@@ -427,6 +430,7 @@ func (hub *Hub) handleNotificationCompleteRedelegation(bz []byte) {
 	if !ok {
 		return
 	}
+	// query the redelegations whose completion time is between current block and last block
 	end := hub.getRedelegationEventKey(v.Delegator, hub.currBlockTime.Unix())
 	start := hub.getRedelegationEventKey(v.Delegator, hub.lastBlockTime.Unix()-1)
 	hub.dbMutex.RLock()
@@ -453,6 +457,7 @@ func (hub *Hub) handleNotificationCompleteUnbonding(bz []byte) {
 	if !ok {
 		return
 	}
+	// query the unbondings whose completion time is between current block and last block
 	end := hub.getUnbondingEventKey(v.Delegator, hub.currBlockTime.Unix())
 	start := hub.getUnbondingEventKey(v.Delegator, hub.lastBlockTime.Unix()-1)
 	hub.dbMutex.RLock()
@@ -513,21 +518,23 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 		hub.Log("Error in Unmarshal CreateOrderInfo")
 		return
 	}
+	// Add a new market which is seen for the first time
 	if !hub.HasMarket(v.TradingPair) {
 		hub.AddMarket(v.TradingPair)
 	}
+	//Save to KVStore
 	key := hub.getCreateOrderKey(v.Sender)
 	hub.batch.Set(key, bz)
 	hub.sid++
+	//Push to subscribers
 	info := hub.subMan.GetOrderSubscribeInfo()
 	targets, ok := info[v.Sender]
-	if !ok {
-		return
+	if ok {
+		for _, target := range targets {
+			hub.subMan.PushCreateOrder(target, bz)
+		}
 	}
-	for _, target := range targets {
-		hub.subMan.PushCreateOrder(target, bz)
-	}
-
+	//Update depth info
 	managers, ok := hub.managersMap[v.TradingPair]
 	if !ok {
 		return
@@ -550,7 +557,7 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 		hub.Log("Error in Unmarshal FillOrderInfo")
 		return
 	}
-	info := hub.subMan.GetOrderSubscribeInfo()
+	//Save to KVStore
 	accAndSeq := strings.Split(v.OrderID, "-")
 	if len(accAndSeq) != 2 {
 		return
@@ -558,21 +565,31 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 	key := hub.getFillOrderKey(accAndSeq[0])
 	hub.batch.Set(key, bz)
 	hub.sid++
+	key = hub.getDealKey(v.TradingPair)
+	hub.batch.Set(key, bz)
+	hub.sid++
+	//Push to subscribers
+	info := hub.subMan.GetOrderSubscribeInfo()
 	targets, ok := info[accAndSeq[0]]
-	if !ok {
-		return
+	if ok {
+		for _, target := range targets {
+			hub.subMan.PushFillOrder(target, bz)
+		}
 	}
-	for _, target := range targets {
-		hub.subMan.PushFillOrder(target, bz)
+	info = hub.subMan.GetDealSubscribeInfo()
+	targets, ok = info[v.TradingPair]
+	if ok {
+		for _, target := range targets {
+			hub.subMan.PushDeal(target, bz)
+		}
 	}
-
+	//Update candle sticks
 	csRec := hub.csMan.GetRecord(v.TradingPair)
-	if csRec == nil {
-		return
+	if csRec != nil {
+		price := sdk.NewDec(v.DealMoney).QuoInt64(v.DealStock)
+		csRec.Update(hub.currBlockTime, price, v.DealStock)
 	}
-	price := sdk.NewDec(v.DealMoney).QuoInt64(v.DealStock)
-	csRec.Update(hub.currBlockTime, price, v.DealStock)
-
+	//Update depth info
 	managers, ok := hub.managersMap[v.TradingPair]
 	if !ok {
 		return
@@ -584,18 +601,6 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 	}()
 	managers.sell.DeltaChange(v.Price, negStock)
 	managers.buy.DeltaChange(v.Price, negStock)
-
-	key = hub.getDealKey(v.TradingPair)
-	hub.batch.Set(key, bz)
-	hub.sid++
-	info = hub.subMan.GetDealSubscribeInfo()
-	targets, ok = info[v.TradingPair]
-	if !ok {
-		return
-	}
-	for _, target := range targets {
-		hub.subMan.PushDeal(target, bz)
-	}
 }
 
 func (hub *Hub) handleCancelOrderInfo(bz []byte) {
@@ -605,7 +610,7 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 		hub.Log("Error in Unmarshal CancelOrderInfo")
 		return
 	}
-	info := hub.subMan.GetOrderSubscribeInfo()
+	//Save to KVStore
 	accAndSeq := strings.Split(v.OrderID, "-")
 	if len(accAndSeq) != 2 {
 		return
@@ -613,6 +618,8 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 	key := hub.getCancelOrderKey(accAndSeq[0])
 	hub.batch.Set(key, bz)
 	hub.sid++
+	//Push to subscribers
+	info := hub.subMan.GetOrderSubscribeInfo()
 	targets, ok := info[accAndSeq[0]]
 	if !ok {
 		return
@@ -620,7 +627,7 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 	for _, target := range targets {
 		hub.subMan.PushCancelOrder(target, bz)
 	}
-
+	//Update depth info
 	managers, ok := hub.managersMap[v.TradingPair]
 	if !ok {
 		return
@@ -644,11 +651,12 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 		hub.Log("Error in Unmarshal MsgBancorTradeInfoForKafka")
 		return
 	}
+	//Save to KVStore
 	addr := v.Sender.String()
 	key := hub.getBancorTradeKey(addr)
 	hub.batch.Set(key, bz)
 	hub.sid++
-
+	//Push to subscribers
 	info := hub.subMan.GetBancorTradeSubscribeInfo()
 	targets, ok := info[addr]
 	if !ok {
@@ -666,9 +674,11 @@ func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
 		hub.Log("Error in Unmarshal MsgBancorInfoForKafka")
 		return
 	}
+	//Save to KVStore
 	key := hub.getBancorInfoKey(v.Money + "/" + v.Stock)
 	hub.batch.Set(key, bz)
 	hub.sid++
+	//Push to subscribers
 	info := hub.subMan.GetBancorInfoSubscribeInfo()
 	targets, ok := info[v.Stock+"/"+v.Money]
 	if !ok {
@@ -680,34 +690,29 @@ func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
 }
 
 func (hub *Hub) commitForTicker() {
-	tickerMap := make(map[string]*Ticker)
+	tkMap := make(map[string]*Ticker)
 	currMinute := hub.currBlockTime.Hour() * hub.currBlockTime.Minute()
 	for _, triman := range hub.managersMap {
-		ticker := triman.tkm.GetTiker(currMinute)
-		if ticker != nil {
-			tickerMap[ticker.Market] = ticker
+		if ticker := triman.tkm.GetTiker(currMinute); ticker != nil {
+			tkMap[ticker.Market] = ticker
 		}
 	}
 	for _, subscriber := range hub.subMan.GetTickerSubscribeInfo() {
-		marketList, ok := subscriber.Detail().([]string)
-		if !ok {
-			continue
-		}
+		marketList := subscriber.Detail().([]string)
 		tickerList := make([]*Ticker, 0, len(marketList))
 		for _, market := range marketList {
-			ticker, ok := tickerMap[market]
-			if ok {
+			if ticker, ok := tkMap[market]; ok {
 				tickerList = append(tickerList, ticker)
 			}
 		}
 		hub.subMan.PushTicker(subscriber, tickerList)
 	}
 
-	hub.tickerMutex.Lock()
-	for market, ticker := range tickerMap {
+	hub.tickerMapMutex.Lock()
+	for market, ticker := range tkMap {
 		hub.tickerMap[market] = ticker
 	}
-	hub.tickerMutex.Unlock()
+	hub.tickerMapMutex.Unlock()
 }
 
 func (hub *Hub) commitForDepth() {
@@ -742,22 +747,24 @@ func (hub *Hub) commit() {
 	hub.commitForDepth()
 	hub.dbMutex.Lock()
 	hub.batch.WriteSync()
+	hub.batch.Close()
 	hub.batch = hub.db.NewBatch()
 	hub.dbMutex.Unlock()
 }
 
 //============================================================
+var _ Querier = &Hub{}
 
 func (hub *Hub) QueryTikers(marketList []string) []*Ticker {
 	tickerList := make([]*Ticker, 0, len(marketList))
-	hub.tickerMutex.RLock()
+	hub.tickerMapMutex.RLock()
 	for _, market := range marketList {
 		ticker, ok := hub.tickerMap[market]
 		if ok {
 			tickerList = append(tickerList, ticker)
 		}
 	}
-	hub.tickerMutex.RUnlock()
+	hub.tickerMapMutex.RUnlock()
 	return tickerList
 }
 
@@ -775,8 +782,7 @@ func (hub *Hub) QueryBlockTime(height int64, count int) []int64 {
 	for ; iter.Valid(); iter.Next() {
 		unixSec := binary.LittleEndian.Uint64(iter.Value())
 		data = append(data, int64(unixSec))
-		count--
-		if count < 0 {
+		if count--; count < 0 {
 			break
 		}
 	}
@@ -809,8 +815,7 @@ func (hub *Hub) QueryCandleStick(market string, timespan byte, time int64, sid i
 	}()
 	for ; iter.Valid(); iter.Next() {
 		data = append(data, iter.Value())
-		count--
-		if count < 0 {
+		if count--; count < 0 {
 			break
 		}
 	}
@@ -898,8 +903,7 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64,
 		} else {
 			data = append(data, iter.Value())
 		}
-		count--
-		if count < 0 {
+		if count--; count < 0 {
 			break
 		}
 	}

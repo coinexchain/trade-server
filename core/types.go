@@ -94,6 +94,7 @@ type Consumer interface {
 }
 
 type Querier interface {
+	// All these functions can be safely called in goroutines.
 	QueryTikers(marketList []string) []*Ticker
 	QueryBlockTime(height int64, count int) []int64
 	QueryDepth(market string, count int) (sell []*PricePoint, buy []*PricePoint)
