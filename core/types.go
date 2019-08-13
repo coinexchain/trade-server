@@ -110,4 +110,5 @@ type Querier interface {
 	QueryIncome(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
 	QueryTx(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
 	QueryComment(token string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
+	QuerySlash(time int64, sid int64, count int) (data [][]byte, timesid []int64)
 }

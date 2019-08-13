@@ -27,9 +27,10 @@ const (
 	BancorTradeByte  = byte(0x18)
 	IncomeByte       = byte(0x1A)
 	TxByte           = byte(0x1C)
-	CommentByte      = byte(0x1D)
+	CommentByte      = byte(0x1E)
 	BlockHeightByte  = byte(0x20)
 	DetailByte       = byte(0x22)
+	SlashByte        = byte(0x24)
 	RedelegationByte = byte(0x30)
 	UnbondingByte    = byte(0x32)
 	UnlockByte       = byte(0x34)
@@ -75,7 +76,7 @@ func getStartKeyFromBytes(firstByte byte, bz []byte) []byte {
 }
 
 func getEndKeyFromBytes(firstByte byte, bz []byte, time int64, sid int64) []byte {
-	res := make([]byte, 0, 1+1+len(bz)+1+8)
+	res := make([]byte, 0, 1+1+len(bz)+1+16)
 	res = append(res, firstByte)
 	res = append(res, byte(len(bz)))
 	res = append(res, bz...)
@@ -162,22 +163,31 @@ type (
 type TripleManager struct {
 	sell *DepthManager
 	buy  *DepthManager
-	tman *TickerManager
+	tkm  *TickerManager
 }
 
 type Hub struct {
-	db            dbm.DB
-	batch         dbm.Batch
-	dbMutex       sync.RWMutex
-	tickerMutex   sync.RWMutex
-	depthMutex    sync.RWMutex
-	subMan        SubscribeManager
-	managersMap   map[string]TripleManager
-	csMan         CandleStickManager
+	// the serial ID for a KV pair in KVStore
+	sid int64
+	// KVStore and its batch
+	db    dbm.DB
+	batch dbm.Batch
+	// Mutex to protect shared storage and variables
+	dbMutex     sync.RWMutex
+	tickerMutex sync.RWMutex
+	depthMutex  sync.RWMutex
+
+	csMan CandleStickManager
+
+	// Updating logic and query logic share these variables
+	managersMap map[string]TripleManager
+	tickerMap   map[string]*Ticker
+
+	// interface to the subscribe functions
+	subMan SubscribeManager
+
 	currBlockTime time.Time
 	lastBlockTime time.Time
-	tickerMap     map[string]*Ticker
-	sid           int64 // the serial ID for a KV pair
 }
 
 var _ Querier = &Hub{}
@@ -205,7 +215,7 @@ func (hub *Hub) AddMarket(market string) {
 	hub.managersMap[market] = TripleManager{
 		sell: DefaultDepthManager(),
 		buy:  DefaultDepthManager(),
-		tman: DefaultTickerManager(market),
+		tkm:  DefaultTickerManager(market),
 	}
 	hub.csMan.AddMarket(market)
 }
@@ -299,7 +309,7 @@ func (hub *Hub) beginForCandleSticks() {
 		}
 		// Update tickers' prices
 		if cs.TimeSpan == Minute {
-			triman.tman.UpdateNewestPrice(cs.ClosePrice, currMinute)
+			triman.tkm.UpdateNewestPrice(cs.ClosePrice, currMinute)
 		}
 		// Push candle sticks to subscribers
 		for _, target := range targets {
@@ -324,6 +334,9 @@ func (hub *Hub) handleNotificationSlash(bz []byte) {
 	for _, ss := range hub.subMan.GetSlashSubscribeInfo() {
 		hub.subMan.PushSlash(ss, bz)
 	}
+	key := hub.getKeyFromBytes(SlashByte, []byte{}, 0)
+	hub.batch.Set(key, bz)
+	hub.sid++
 }
 
 func (hub *Hub) handleNotificationTx(bz []byte) {
@@ -461,8 +474,12 @@ func (hub *Hub) handleNotificationUnlock(bz []byte) {
 		hub.Log("Error in Unmarshal NotificationUnlock")
 		return
 	}
+	addr := v.Address.String()
+	key := hub.getUnlockEventKey(addr)
+	hub.batch.Set(key, bz)
+	hub.sid++
 	info := hub.subMan.GetUnlockSubscribeInfo()
-	targets, ok := info[v.Address.String()]
+	targets, ok := info[addr]
 	if !ok {
 		return
 	}
@@ -666,7 +683,7 @@ func (hub *Hub) commitForTicker() {
 	tickerMap := make(map[string]*Ticker)
 	currMinute := hub.currBlockTime.Hour() * hub.currBlockTime.Minute()
 	for _, triman := range hub.managersMap {
-		ticker := triman.tman.GetTiker(currMinute)
+		ticker := triman.tkm.GetTiker(currMinute)
 		if ticker != nil {
 			tickerMap[ticker.Market] = ticker
 		}
@@ -694,6 +711,10 @@ func (hub *Hub) commitForTicker() {
 }
 
 func (hub *Hub) commitForDepth() {
+	hub.depthMutex.Lock()
+	defer func() {
+		hub.depthMutex.Unlock()
+	}()
 	for market, triman := range hub.managersMap {
 		depthDeltaSell := triman.sell.EndBlock()
 		depthDeltaBuy := triman.buy.EndBlock()
@@ -841,6 +862,11 @@ func (hub *Hub) QueryTx(account string, time int64, sid int64, count int) (data 
 
 func (hub *Hub) QueryComment(token string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
 	data, _, timesid = hub.query(false, CommentByte, []byte(token), time, sid, count)
+	return
+}
+
+func (hub *Hub) QuerySlash(time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+	data, _, timesid = hub.query(false, SlashByte, []byte{}, time, sid, count)
 	return
 }
 
