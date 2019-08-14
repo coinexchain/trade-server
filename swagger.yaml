@@ -27,12 +27,13 @@ paths:
       parameters:
         - in: body
           name: marketList
-          description: todo
+          description: market list
           required: true
           schema:
             type: array
             items:
               type: string
+              example: abc/cet
       responses:
         200:
           description: OK
@@ -54,7 +55,7 @@ paths:
       parameters:
         - in: query
           name: height
-          description: todo
+          description: BlockHeight
           required: true
           type: integer
           format: int64
@@ -647,7 +648,7 @@ paths:
           format: int32
       responses:
         200:
-          description: todo
+          description: OK
           schema:
             type: object
             properties:
