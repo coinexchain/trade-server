@@ -555,7 +555,7 @@ paths:
               data:
                 type: array
                 items:
-                  $ref: '#/definitions/Income'
+                  $ref: '#/definitions/Tx'
               timesid:
                 type: array
                 items:
@@ -1001,16 +1001,45 @@ definitions:
         type: integer
         format: int64
         example: 0
-  Income:
+  TransferRecord:
     type: object
     properties:
-      snBytes:
+      sender:
         type: string
+        example: ""
+      Recipient:
+        type: string
+        example: ""
+      amount:
+        type: string
+        example: "0"
   Tx:
     type: object
     properties:
-      snBytes:
+      signers:
+        type: array
+        items:
+          $ref: '#/definitions/Address'
+      Transfers:
+        type: array
+        items:
+          $ref: '#/definitions/TransferRecord'
+      serialNumber:
+        type: integer
+        format: int64
+        example: 0
+      msgTypes:
+        type: array
+        items:
+          type: string
+          example: ""
+      txJson:
         type: string
+        example: ""
+      height:
+        type: integer
+        format: int64
+        example: 0
   Comment:
     type: object
     properties:
