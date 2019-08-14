@@ -25,15 +25,13 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: body
+        - in: query
           name: marketList
           description: market list
           required: true
-          schema:
-            type: array
-            items:
-              type: string
-              example: abc/cet
+          type: array
+          items:
+            type: string
       responses:
         200:
           description: OK
