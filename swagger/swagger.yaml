@@ -5,8 +5,13 @@ info:
   title: Trade-Server for CoinEx Chain
   description: A REST interface for state queries
 tags:
-  - name: Querier
-    description: Query state
+  - name: Market
+  - name: Bancor
+  - name: Tx
+  - name: Comment
+  - name: Slash
+  - name: Misc
+  - name: Expiry
 schemes:
   - https
   - http
@@ -15,10 +20,10 @@ securityDefinitions:
   kms:
     type: basic
 paths:
-  /trader/server/tikers:
+  /market/tikers:
     get:
       tags:
-        - Querier
+        - Market
       summary: Query tikers
       description: Query tikers info
       operationId: queryTikers
@@ -41,10 +46,10 @@ paths:
               $ref: "#/definitions/Tikers"
         500:
           description: Server internal error
-  /trader/server/blockTimes:
+  /misc/blockTimes:
     get:
       tags:
-        - Querier
+        - Misc
       summary: Query blockTimes
       description: Query blockTimes info
       operationId: queryBlockTimes
@@ -73,10 +78,10 @@ paths:
               format: int64
         500:
           description: Server internal error
-  /trader/server/depth:
+  /market/depths:
     get:
       tags:
-        - Querier
+        - Market
       summary: Query depth
       description: Query depth info
       operationId: queryDepth
@@ -110,10 +115,10 @@ paths:
                   $ref: "#/definitions/PricePoint"
         500:
           description: Server internal error
-  /trader/server/candleStick:
+  /market/candleSticks:
     get:
       tags:
-        - Querier
+        - Market
       summary: Query candleStick
       description: Query candleStick info
       operationId: queryCandleStick
@@ -158,10 +163,10 @@ paths:
               $ref: '#/definitions/CandleStick'
         500:
           description: Server internal error
-  /trader/server/order:
+  /market/orders:
     get:
       tags:
-        - Querier
+        - Market
       summary: Query order
       description: Query order info
       operationId: queryOrder
@@ -211,10 +216,10 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /trader/server/deal:
+  /market/deals:
     get:
       tags:
-        - Querier
+        - Market
       summary: Query deal
       description: Query deal info
       operationId: queryDeal
@@ -261,10 +266,10 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /trader/server/BancorInfo:
+  /bancor/bancorInfos:
     get:
       tags:
-        - Querier
+        - Bancor
       summary: Query bancor info
       description: Query bancor info
       operationId: queryBancorInfo
@@ -311,10 +316,10 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /trader/server/BancorTrade:
+  /bancor/bancorTrades:
     get:
       tags:
-        - Querier
+        - Bancor
       summary: Query bancor trade
       description: Query bancor trade info
       operationId: queryBancorTrade
@@ -361,10 +366,10 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /trader/server/Redelegation:
+  /expiry/redelegations:
     get:
       tags:
-        - Querier
+        - Expiry
       summary: Query redelegation
       description: Query redelegation info
       operationId: queryRedelegation
@@ -411,10 +416,10 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /trader/server/Unbonding:
+  /expiry/unbondings:
     get:
       tags:
-        - Querier
+        - Expiry
       summary: Query Unbonding
       description: Query unbonding info
       operationId: queryUnbonding
@@ -461,10 +466,10 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /trader/server/Unlock:
+  /expiry/unlocks:
     get:
       tags:
-        - Querier
+        - Expiry
       summary: Query Unlock
       description: Query Unlock info
       operationId: queryUnlock
@@ -511,10 +516,10 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /trader/server/Income:
+  /tx/incomes:
     get:
       tags:
-        - Querier
+        - Tx
       summary: Query income
       description: Query income info
       operationId: queryIncome
@@ -561,10 +566,10 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /trader/server/Tx:
+  /tx/txs:
     get:
       tags:
-        - Querier
+        - Tx
       summary: Query tx
       description: Query tx info
       operationId: queryTx
@@ -611,10 +616,10 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /trader/server/Comment:
+  /comment/comments:
     get:
       tags:
-        - Querier
+        - Comment
       summary: Query comment
       description: Query token comment info
       operationId: queryComment
@@ -661,10 +666,10 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /trader/server/Slash:
+  /slash/punishments:
     get:
       tags:
-        - Querier
+        - Slash
       summary: Query slash info
       description: Query slash power, reason, and jailed status.
       operationId: querySlash
