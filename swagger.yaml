@@ -1,0 +1,1085 @@
+---
+swagger: "2.0"
+info:
+  version: "3.0"
+  title: Trade-Server for CoinEx Chain
+  description: A REST interface for state queries
+tags:
+  - name: Querier
+    description: Query state
+schemes:
+  - https
+  - http
+host: localhost:1317
+securityDefinitions:
+  kms:
+    type: basic
+paths:
+  /trader/server/tikers:
+    get:
+      tags:
+        - Querier
+      summary: Query tikers
+      description: Query tikers info
+      operationId: queryTikers
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: marketList
+          description: todo
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Tikers"
+        500:
+          description: Server internal error
+  /trader/server/blockTimes:
+    get:
+      tags:
+        - Querier
+      summary: Query blockTimes
+      description: Query blockTimes info
+      operationId: queryBlockTimes
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: height
+          description: todo
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        500:
+          description: Server internal error
+  /trader/server/depth:
+    get:
+      tags:
+        - Querier
+      summary: Query depth
+      description: Query depth info
+      operationId: queryDepth
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: market
+          description: stock/money
+          required: true
+          type: string
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              sell:
+                type: array
+                items:
+                  $ref: "#/definitions/PricePoint"
+              buy:
+                type: array
+                items:
+                  $ref: "#/definitions/PricePoint"
+        500:
+          description: Server internal error
+  /trader/server/candleStick:
+    get:
+      tags:
+        - Querier
+      summary: Query candleStick
+      description: Query candleStick info
+      operationId: queryCandleStick
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: market
+          description: stock/money
+          required: true
+          type: string
+        - in: query
+          name: timespan
+          description: Minute:16/Hour:32/Day:48
+          required: true
+          type: integer
+          format: byte
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/CandleStick'
+        500:
+          description: Server internal error
+  /trader/server/order:
+    get:
+      tags:
+        - Querier
+      summary: Query order
+      description: Query order info
+      operationId: queryOrder
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: account
+          description: Bech32
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              order:
+                type: array
+                items:
+                  $ref: '#/definitions/Order'
+              tags:
+                type: string
+                example:
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        500:
+          description: Server internal error
+  /trader/server/deal:
+    get:
+      tags:
+        - Querier
+      summary: Query deal
+      description: Query deal info
+      operationId: queryDeal
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: market
+          description: stock/money
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/Deal'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        500:
+          description: Server internal error
+  /trader/server/BancorInfo:
+    get:
+      tags:
+        - Querier
+      summary: Query bancor info
+      description: Query bancor info
+      operationId: queryBancorInfo
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: market
+          description: stock/money
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              bancorInfo:
+                type: array
+                items:
+                  $ref: '#/definitions/BancorInfo'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        500:
+          description: Server internal error
+  /trader/server/BancorTrade:
+    get:
+      tags:
+        - Querier
+      summary: Query bancor trade
+      description: Query bancor trade info
+      operationId: queryBancorTrade
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: account
+          description: Bech32
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/BancorTrade'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        500:
+          description: Server internal error
+  /trader/server/Redelegation:
+    get:
+      tags:
+        - Querier
+      summary: Query redelegation
+      description: Query redelegation info
+      operationId: queryRedelegation
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: account
+          description: Bech32
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/Redelegation'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        500:
+          description: Server internal error
+  /trader/server/Unbonding:
+    get:
+      tags:
+        - Querier
+      summary: Query Unbonding
+      description: Query unbonding info
+      operationId: queryUnbonding
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: account
+          description: Bech
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/Unbonding'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        500:
+          description: Server internal error
+  /trader/server/Unlock:
+    get:
+      tags:
+        - Querier
+      summary: Query Unlock
+      description: Query Unlock info
+      operationId: queryUnlock
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: account
+          description: Bech
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/Unlock'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        500:
+          description: Server internal error
+  /trader/server/Income:
+    get:
+      tags:
+        - Querier
+      summary: Query income
+      description: Query income info
+      operationId: queryIncome
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: account
+          description: Bech32
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/Income'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        500:
+          description: Server internal error
+  /trader/server/Tx:
+    get:
+      tags:
+        - Querier
+      summary: Query tx
+      description: Query tx info
+      operationId: queryTx
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: account
+          description: Bech32
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/Tx'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        500:
+          description: Server internal error
+  /trader/server/Comment:
+    get:
+      tags:
+        - Querier
+      summary: Query comment
+      description: Query token comment info
+      operationId: queryComment
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: token
+          description: Symbol
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: todo
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/Comment'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        500:
+          description: Server internal error
+  /trader/server/Slash:
+    get:
+      tags:
+        - Querier
+      summary: Query slash info
+      description: Query slash power, reason, and jailed status.
+      operationId: querySlash
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/Slash'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        500:
+          description: Server internal error
+definitions:
+  Address:
+    type: string
+    description: bech32 encoded address
+    example: coinex1nv3ghvdnpgc28mvjfkyrle5ccx0m3vesqp8tdx
+  Coin:
+    type: object
+    properties:
+      denom:
+        type: string
+        example: cet
+      amount:
+        type: string
+        example: "0"
+  LockedCoin:
+    type: object
+    properties:
+      coin:
+        $ref: '#/definitions/Coin'
+      unlockTime:
+        type: integer
+        format: int64
+        example: 1565740800
+        description: The unix timestamp when tokens can transfer again
+  Tikers:
+    type: object
+    properties:
+      market:
+        type: string
+        example: "abc/cet"
+      newPrice:
+        type: string
+        example: "0"
+        description: Newest price
+      oldPrice:
+        type: string
+        example: "0"
+        description: Old price one day ago
+  PricePoint:
+    type: object
+    properties:
+      price:
+        type: string
+        example: "0"
+        description: Price of depth without precision consolidation
+      amount:
+        type: string
+        example: "0"
+        description: Amount of depth
+  CandleStick:
+    type: object
+    properties:
+      openPrice:
+        type: string
+        example: "0"
+      closePrice:
+        type: string
+        example: "0"
+      highPrice:
+        type: string
+        example: "0"
+      lowPrice:
+        type: string
+        example: "0"
+      totalDeal:
+        type: string
+        example: "0"
+      endingUnixTime:
+        type: integer
+        format: int64
+        example: 1565740800
+      timeSpan:
+        type: integer
+        format: uint8
+        example: 16
+        description: Minute:16/Hour:32/Day:48
+      market:
+        type: string
+        example: abc/cet
+  Order:
+    type: object
+    properties:
+      orderID:
+        type: string
+        example: "coinex1nv3ghvdnpgc28mvjfkyrle5ccx0m3vesqp8tdx-1"
+      sender:
+        $ref: '#/definitions/Address'
+      tradingPair:
+        type: string
+        example: "abc/cet"
+      orderType:
+        type: integer
+        format: byte
+        example: 2
+        description: Limit 2
+      price:
+        type: string
+        example: "0"
+      quantity:
+        type: integer
+        format: int64
+        example: "0"
+      side:
+        type: integer
+        format: byte
+        example: 1
+        description: BUY:1/SELL:2
+      timeInForce:
+        type: integer
+        format: int32
+        example: 3
+        description: GTE:3/IOC:4
+      featureFee:
+        type: integer
+        format: int64
+        example: 0
+      height:
+        type: integer
+        format: int64
+        example: 0
+      frozenFee:
+        type: integer
+        format: int64
+        example: 0
+      freeze:
+        type: integer
+        format: int64
+        example: 0
+  Deal:
+    type: object
+    properties:
+      orderID:
+        type: string
+        example: "coinex1nv3ghvdnpgc28mvjfkyrle5ccx0m3vesqp8tdx-1"
+      tradingPair:
+        type: string
+        example: "abc/cet"
+      height:
+        type: integer
+        format: int64
+        example: 0
+      side:
+        type: integer
+        format: byte
+        example: 1
+        description: BUY:1/SELL:2
+      price:
+        type: string
+        example: "0"
+      leftStock:
+        type: integer
+        format: int64
+        example: 0
+      freeze:
+        type: integer
+        format: int64
+        example: 0
+      dealStock:
+        type: integer
+        format: int64
+        example: 0
+      dealMoney:
+        type: integer
+        format: int64
+        example: 0
+      currStock:
+        type: integer
+        format: int64
+        example: 0
+      currMoney:
+        type: integer
+        format: int64
+        example: 0
+  BancorInfo:
+    type: object
+    properties:
+      owner:
+        $ref: '#/definitions/Address'
+      stock:
+        type: string
+        example: "abc"
+      money:
+        type: string
+        example: "cet"
+      initPrice:
+        type: string
+        example: "0"
+      maxSupply:
+        type: string
+        example: "0"
+      maxPrice:
+        type: string
+        example: "0"
+      price:
+        type: string
+        example: "0"
+      stockInPool:
+        type: string
+        example: "0"
+      moneyInPool:
+        type: string
+        example: "0"
+      earliestCancelTime:
+        type: integer
+        format: int64
+        example: 0
+      blockHeight:
+        type: integer
+        format: int64
+        example: 0
+  BancorTrade:
+    type: object
+    properties:
+      sender:
+        $ref: '#/definitions/Address'
+      stock:
+        type: string
+        example: "abc"
+      money:
+        type: string
+        example: "cet"
+      amount:
+        type: integer
+        format: int64
+        example: 0
+      side:
+        type: string
+        example: "buy"
+        description: buy/sell
+      moneyLimit:
+        type: integer
+        format: int64
+        example: 0
+      txPrice:
+        type: string
+        example: "0"
+      blockHeight:
+        type: integer
+        format: int64
+        example: 0
+  Redelegation:
+    type: object
+    properties:
+      delegator:
+        $ref: '#/definitions/Address'
+      validatorSrc:
+        $ref: '#/definitions/Address'
+      validatorDst:
+        $ref: '#/definitions/Address'
+      amount:
+        type: string
+        example: "0"
+      completionTime:
+        type: string
+        example: "0"
+  Unbonding:
+    type: object
+    properties:
+      delegator:
+        $ref: '#/definitions/Address'
+      validator:
+        $ref: '#/definitions/Address'
+      amount:
+        type: string
+        example: "0"
+      completionTime:
+        type: string
+        example: "0"
+  Unlock:
+    type: object
+    properties:
+      address:
+        $ref: '#/definitions/Address'
+      unlocked:
+        type: array
+        items:
+          $ref: '#/definitions/Coin'
+      lockedCoins:
+        type: array
+        items:
+          $ref: "#/definitions/LockedCoin"
+      frozenCoins:
+        type: array
+        items:
+          $ref: '#/definitions/Coin'
+      coins:
+        type: array
+        items:
+          $ref: '#/definitions/Coin'
+      height:
+        type: integer
+        format: int64
+        example: 0
+  Income:
+    type: object
+    properties:
+      snBytes:
+        type: string
+  Tx:
+    type: object
+    properties:
+      snBytes:
+        type: string
+  Comment:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: uint64
+        example: 1
+      height:
+        type: integer
+        format: int64
+        example: 0
+      sender:
+        $ref: '#/definitions/Address'
+      token:
+        type: string
+        example: "abc"
+      donation:
+        type: integer
+        format: int64
+        example: 1
+      title:
+        type: string
+        example: "First Comment"
+      content:
+        type: string
+        example: "Comment content"
+      contentType:
+        type: integer
+        format: int8
+        example: 4
+        description: 0~6:IPFS/Magnet/HTTP/TF8Text/ShortHanzi/ShortHanziLZ4/RawBytes
+      references:
+        type: array
+        items:
+          $ref: '#/definitions/CommentRef'
+  CommentRef:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: uint64
+        example: 1
+      rewardTarget:
+        $ref: '#/definitions/Address'
+      rewardToken:
+        type: string
+        example: "abc"
+      rewardAmount:
+        type: integer
+        format: int64
+        example: 100
+      attitudes:
+        type: array
+        items:
+          type: integer
+          format: int32
+          example: 50
+          description: 50~60:Like/Dislike/Laugh/Cry/Angry/Surprise/Heart/Sweat/Speechless/Favorite/Condolences
+  Slash:
+    type: object
+    properties:
+      address:
+        $ref: '#/definitions/Address'
+      power:
+        type: string
+        example: "0"
+      reason:
+        type: string
+        example: ""
+      jailed:
+        type: boolean
+        example: false
+          
