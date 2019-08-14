@@ -24,7 +24,7 @@ paths:
     get:
       tags:
         - Market
-      summary: Query tikers
+      summary: Query market tikers
       description: Query tikers info
       operationId: queryTikers
       produces:
@@ -32,7 +32,7 @@ paths:
       parameters:
         - in: query
           name: marketList
-          description: market list
+          description: Market limited to 1~100
           required: true
           type: array
           items:
@@ -50,21 +50,21 @@ paths:
     get:
       tags:
         - Misc
-      summary: Query blockTimes
-      description: Query blockTimes info
+      summary: Query block time
+      description: Query the block time up to given height
       operationId: queryBlockTimes
       produces:
         - application/json
       parameters:
         - in: query
           name: height
-          description: BlockHeight
+          description: Block height
           required: true
           type: integer
           format: int64
         - in: query
           name: count
-          description: Querier count
+          description: Querier count limited to 1024
           required: true
           type: integer
           format: int32
@@ -76,14 +76,15 @@ paths:
             items:
               type: integer
               format: int64
+              example: 1565740800
         500:
           description: Server internal error
   /market/depths:
     get:
       tags:
         - Market
-      summary: Query depth
-      description: Query depth info
+      summary: Query market depth
+      description: Query purchases and sales of a market at all price levels
       operationId: queryDepth
       produces:
         - application/json
@@ -95,7 +96,7 @@ paths:
           type: string
         - in: query
           name: count
-          description: Querier count
+          description: Querier count limited to 1024
           required: true
           type: integer
           format: int32
@@ -119,8 +120,8 @@ paths:
     get:
       tags:
         - Market
-      summary: Query candleStick
-      description: Query candleStick info
+      summary: Query market candleStick
+      description: Query candleStick until to given time
       operationId: queryCandleStick
       produces:
         - application/json
@@ -150,7 +151,7 @@ paths:
           format: int64
         - in: query
           name: count
-          description: Querier count
+          description: Querier candleStick count limited to 1024
           required: true
           type: integer
           format: int32
@@ -167,15 +168,15 @@ paths:
     get:
       tags:
         - Market
-      summary: Query order
-      description: Query order info
+      summary: Query account order
+      description: Query account all market order until to given time
       operationId: queryOrder
       produces:
         - application/json
       parameters:
         - in: query
           name: account
-          description: Bech32
+          description: Bech32 address
           required: true
           type: string
         - in: query
@@ -192,7 +193,7 @@ paths:
           format: int64
         - in: query
           name: count
-          description: Querier count
+          description: Querier order count limited to 1024
           required: true
           type: integer
           format: int32
@@ -202,13 +203,13 @@ paths:
           schema:
             type: object
             properties:
-              order:
+              orders:
                 type: array
                 items:
                   $ref: '#/definitions/Order'
               tags:
                 type: string
-                example:
+                example: ""
               timesid:
                 type: array
                 items:
@@ -220,8 +221,8 @@ paths:
     get:
       tags:
         - Market
-      summary: Query deal
-      description: Query deal info
+      summary: Query market deal
+      description: Query market deal until to given time
       operationId: queryDeal
       produces:
         - application/json
@@ -245,7 +246,7 @@ paths:
           format: int64
         - in: query
           name: count
-          description: Querier count
+          description: Querier deal count limited to 1024
           required: true
           type: integer
           format: int32
@@ -255,7 +256,7 @@ paths:
           schema:
             type: object
             properties:
-              data:
+              deals:
                 type: array
                 items:
                   $ref: '#/definitions/Deal'
@@ -266,12 +267,12 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /bancor/bancorInfos:
+  /bancor/bancorInfo:
     get:
       tags:
         - Bancor
       summary: Query bancor info
-      description: Query bancor info
+      description: Query bancor info until to given time
       operationId: queryBancorInfo
       produces:
         - application/json
@@ -295,7 +296,7 @@ paths:
           format: int64
         - in: query
           name: count
-          description: Querier count
+          description: Querier count limited to 1024
           required: true
           type: integer
           format: int32
@@ -321,14 +322,14 @@ paths:
       tags:
         - Bancor
       summary: Query bancor trade
-      description: Query bancor trade info
+      description: Query bancor trade until to given time
       operationId: queryBancorTrade
       produces:
         - application/json
       parameters:
         - in: query
           name: account
-          description: Bech32
+          description: Bech32 address
           required: true
           type: string
         - in: query
@@ -345,7 +346,7 @@ paths:
           format: int64
         - in: query
           name: count
-          description: Querier count
+          description: Querier count limited to 1024
           required: true
           type: integer
           format: int32
@@ -371,14 +372,14 @@ paths:
       tags:
         - Expiry
       summary: Query redelegation
-      description: Query redelegation info
+      description: Query delegator redelegation info
       operationId: queryRedelegation
       produces:
         - application/json
       parameters:
         - in: query
           name: account
-          description: Bech32
+          description: Bech32 address
           required: true
           type: string
         - in: query
@@ -395,7 +396,7 @@ paths:
           format: int64
         - in: query
           name: count
-          description: Querier count
+          description: Querier count limited to 1024
           required: true
           type: integer
           format: int32
@@ -421,7 +422,7 @@ paths:
       tags:
         - Expiry
       summary: Query Unbonding
-      description: Query unbonding info
+      description: Query delegator unbonding info
       operationId: queryUnbonding
       produces:
         - application/json
@@ -620,8 +621,8 @@ paths:
     get:
       tags:
         - Comment
-      summary: Query comment
-      description: Query token comment info
+      summary: Query token comment
+      description: Query token all comment info until to time
       operationId: queryComment
       produces:
         - application/json
@@ -645,7 +646,7 @@ paths:
           format: int64
         - in: query
           name: count
-          description: Querier count
+          description: Querier comment count limited to 1024
           required: true
           type: integer
           format: int32
@@ -666,12 +667,12 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /slash/punishments:
+  /slash/slashings:
     get:
       tags:
         - Slash
-      summary: Query slash info
-      description: Query slash power, reason, and jailed status.
+      summary: Query validator slash info
+      description: Query validator slash power, reason, and jailed status
       operationId: querySlash
       produces:
         - application/json
@@ -690,7 +691,7 @@ paths:
           format: int64
         - in: query
           name: count
-          description: Querier count
+          description: Querier count limited to 1024
           required: true
           type: integer
           format: int32
@@ -805,14 +806,14 @@ definitions:
         type: integer
         format: byte
         example: 2
-        description: Limit 2
+        description: Limited value 2
       price:
         type: string
         example: "0"
       quantity:
         type: integer
         format: int64
-        example: "0"
+        example: 0
       side:
         type: integer
         format: byte
@@ -1089,7 +1090,7 @@ definitions:
         $ref: '#/definitions/Address'
       rewardToken:
         type: string
-        example: "abc"
+        example: "cet"
       rewardAmount:
         type: integer
         format: int64
@@ -1104,7 +1105,7 @@ definitions:
   Slash:
     type: object
     properties:
-      address:
+      validator:
         $ref: '#/definitions/Address'
       power:
         type: string
