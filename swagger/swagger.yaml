@@ -1074,7 +1074,7 @@ definitions:
         type: integer
         format: int8
         example: 4
-        description: 0~6:IPFS/Magnet/HTTP/TF8Text/ShortHanzi/ShortHanziLZ4/RawBytes
+        description: IPFS:0,Magnet:1,HTTP:2,UTF8Text:3,RawBytes:6
       references:
         type: array
         items:
