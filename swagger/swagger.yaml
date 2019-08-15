@@ -20,13 +20,13 @@ securityDefinitions:
   kms:
     type: basic
 paths:
-  /market/tikers:
+  /market/tickers:
     get:
       tags:
         - Market
-      summary: Query market tikers
-      description: Query tikers info
-      operationId: queryTikers
+      summary: Query market tickers
+      description: Query tickers info
+      operationId: queryTickers
       produces:
         - application/json
       parameters:
@@ -43,7 +43,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/Tikers"
+              $ref: "#/definitions/Tickers"
         500:
           description: Server internal error
   /misc/block-times:
@@ -256,7 +256,7 @@ paths:
                   description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
-  /bancor/bancor-infos:
+  /bancorlite/infos:
     get:
       tags:
         - Bancor
@@ -307,7 +307,7 @@ paths:
                   description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
-  /bancor/bancor-trades:
+  /bancorlite/trades:
     get:
       tags:
         - Bancor
@@ -734,7 +734,7 @@ definitions:
         format: int64
         example: 1565740800
         description: The unix timestamp when tokens can transfer again
-  Tikers:
+  Tickers:
     type: object
     properties:
       market:
@@ -1038,9 +1038,10 @@ definitions:
         format: int64
         example: 0
       side:
-        type: string
-        example: "buy"
-        description: buy/sell
+        type: integer
+        format: byte
+        example: 1
+        description: BUY:1/SELL:2
       money_limit:
         type: integer
         format: int64

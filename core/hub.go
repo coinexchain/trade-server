@@ -721,7 +721,7 @@ func (hub *Hub) commitForTicker() {
 	tkMap := make(map[string]*Ticker)
 	currMinute := hub.currBlockTime.Hour() * hub.currBlockTime.Minute()
 	for _, triman := range hub.managersMap {
-		if ticker := triman.tkm.GetTiker(currMinute); ticker != nil {
+		if ticker := triman.tkm.GetTicker(currMinute); ticker != nil {
 			tkMap[ticker.Market] = ticker
 		}
 	}
@@ -783,7 +783,7 @@ func (hub *Hub) commit() {
 //============================================================
 var _ Querier = &Hub{}
 
-func (hub *Hub) QueryTikers(marketList []string) []*Ticker {
+func (hub *Hub) QueryTickers(marketList []string) []*Ticker {
 	tickerList := make([]*Ticker, 0, len(marketList))
 	hub.tickerMapMutex.RLock()
 	for _, market := range marketList {

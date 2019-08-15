@@ -296,7 +296,7 @@ func (tm *TickerManager) UpdateNewestPrice(currPrice sdk.Dec, currMinute int) {
 }
 
 // Return a Ticker if NewPrice or OldPriceOneDayAgo is different from its previous minute
-func (tm *TickerManager) GetTiker(currMinute int) *Ticker {
+func (tm *TickerManager) GetTicker(currMinute int) *Ticker {
 	if currMinute >= MinuteNumInDay || currMinute < 0 {
 		panic("Minute too large")
 	}
