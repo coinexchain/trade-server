@@ -112,7 +112,7 @@ func (csr *CandleStickRecord) newCandleStick(cs baseCandleStick, t int64, span b
 }
 
 // When a new block comes, flush the pending candle sticks
-func (csr *CandleStickRecord) newBlock(t time.Time, isNewDay, isNewHour, isNewMinute bool) []CandleStick {
+func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool) []CandleStick {
 	res := make([]CandleStick, 0, 3)
 	lastTime := csr.LastUpdateTime.Unix()
 	if isNewMinute && lastTime != 0 {
@@ -174,7 +174,7 @@ func (manager *CandleStickManager) NewBlock(t time.Time) []CandleStick {
 	isNewHour := t.Hour() != manager.LastBlockTime.Hour() || t.Unix()-manager.LastBlockTime.Unix() > 60*60
 	isNewMinute := t.Minute() != manager.LastBlockTime.Minute() || t.Unix()-manager.LastBlockTime.Unix() > 60
 	for _, csr := range manager.CsrMap {
-		csSlice := csr.newBlock(t, isNewDay, isNewHour, isNewMinute)
+		csSlice := csr.newBlock(isNewDay, isNewHour, isNewMinute)
 		res = append(res, csSlice...)
 	}
 	manager.LastBlockTime = t
@@ -220,9 +220,11 @@ func DefaultDepthManager() *DepthManager {
 func (dm *DepthManager) DeltaChange(price sdk.Dec, amount sdk.Int) {
 	s := string(market.DecToBigEndianBytes(price))
 	ptr, ok := dm.ppMap.Get(s)
-	pp := ptr.(*PricePoint)
+	var pp *PricePoint
 	if !ok {
 		pp = &PricePoint{Price: price, Amount: sdk.ZeroInt()}
+	} else {
+		pp = ptr.(*PricePoint)
 	}
 	pp.Amount = pp.Amount.Add(amount)
 	if pp.Amount.IsZero() {
