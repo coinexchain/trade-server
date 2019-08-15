@@ -77,6 +77,7 @@ paths:
               type: integer
               format: int64
               example: 1565740800
+              description: Unix timestamp
         500:
           description: Server internal error
   /market/depths:
@@ -869,6 +870,7 @@ definitions:
         type: integer
         format: int64
         example: 0
+        description: Order feature fee, sato.CET as the unit
       height:
         type: integer
         format: int64
@@ -877,10 +879,12 @@ definitions:
         type: integer
         format: int64
         example: 0
+        description: Order frozen fee, sato.CET as the unit
       freeze:
         type: integer
         format: int64
         example: 0
+        description: Freeze sato.CET amount
   FillOrderInfo:
     type: object
     properties:
@@ -902,7 +906,7 @@ definitions:
       price:
         type: string
         example: "0"
-      leftStock:
+      left_stock:
         type: integer
         format: int64
         example: 0
@@ -910,6 +914,7 @@ definitions:
         type: integer
         format: int64
         example: 0
+        description: Freeze sato.CET amount
       deal_stock:
         type: integer
         format: int64
@@ -954,6 +959,7 @@ definitions:
         type: integer
         format: int64
         example: 0
+        description: Order used commission
       left_stock:
         type: integer
         format: int64
@@ -1115,14 +1121,17 @@ definitions:
         type: integer
         format: int64
         example: 0
+        description: Tx global serial number
       msg_types:
         type: array
         items:
           type: string
-          example: ""
+          example: """"
+          description: Tx messages type
       tx_json:
         type: string
-        example: ""
+        example: """"
+        description: Raw tx json byte
       height:
         type: integer
         format: int64
@@ -1193,6 +1202,7 @@ definitions:
       power:
         type: string
         example: "0"
+        description: Vote power
       reason:
         type: string
         example: ""
