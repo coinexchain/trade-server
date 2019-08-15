@@ -45,12 +45,12 @@ Note : 此处的实现方案还在确定中，针对链接的建立可能会有�
 	"transfers": [
 		{
 			"sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-			"recepient": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",
+			"recipient": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",
 			"amount": "8467.863"		// amount
 		},
 		{
 			"sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-			"recepient": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",
+			"recipient": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",
 			"amount": "8467.863"		// amount
 		}
 	],
