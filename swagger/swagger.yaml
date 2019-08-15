@@ -46,7 +46,7 @@ paths:
               $ref: "#/definitions/Tikers"
         500:
           description: Server internal error
-  /misc/blockTimes:
+  /misc/block-times:
     get:
       tags:
         - Misc
@@ -116,7 +116,7 @@ paths:
                   $ref: "#/definitions/PricePoint"
         500:
           description: Server internal error
-  /market/candleSticks:
+  /market/candle-sticks:
     get:
       tags:
         - Market
@@ -254,7 +254,7 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /bancor/bancorInfo:
+  /bancor/bancor-infos:
     get:
       tags:
         - Bancor
@@ -304,7 +304,7 @@ paths:
                   format: int64
         500:
           description: Server internal error
-  /bancor/bancorTrades:
+  /bancor/bancor-trades:
     get:
       tags:
         - Bancor
