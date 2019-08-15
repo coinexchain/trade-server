@@ -201,20 +201,7 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              orders:
-                type: array
-                items:
-                  $ref: '#/definitions/Order'
-              tags:
-                type: string
-                example: ""
-              timesid:
-                type: array
-                items:
-                  type: integer
-                  format: int64
+            $ref: '#/definitions/Order'
         500:
           description: Server internal error
   /market/deals:
@@ -259,7 +246,7 @@ paths:
               deals:
                 type: array
                 items:
-                  $ref: '#/definitions/Deal'
+                  $ref: '#/definitions/FillOrderInfo'
               timesid:
                 type: array
                 items:
@@ -529,7 +516,7 @@ paths:
       parameters:
         - in: query
           name: account
-          description: Bech32
+          description: Bech32 address
           required: true
           type: string
         - in: query
@@ -546,7 +533,7 @@ paths:
           format: int64
         - in: query
           name: count
-          description: Querier count
+          description: Querier count limited to 1024
           required: true
           type: integer
           format: int32
@@ -579,7 +566,7 @@ paths:
       parameters:
         - in: query
           name: account
-          description: Bech32
+          description: Bech32 address
           required: true
           type: string
         - in: query
@@ -596,7 +583,7 @@ paths:
           format: int64
         - in: query
           name: count
-          description: Querier count
+          description: Querier count limited to 1024
           required: true
           type: integer
           format: int32
@@ -715,14 +702,14 @@ paths:
 definitions:
   Address:
     type: string
-    description: bech32 encoded address
+    description: Bech32 encoded address
     example: coinex1nv3ghvdnpgc28mvjfkyrle5ccx0m3vesqp8tdx
   Coin:
     type: object
     properties:
       denom:
         type: string
-        example: cet
+        example: "cet"
       amount:
         type: string
         example: "0"
@@ -794,6 +781,54 @@ definitions:
   Order:
     type: object
     properties:
+      createOrderInfo:
+        type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: '#/definitions/CreateOrderInfo'
+          tags:
+            type: string
+            example: ""
+          timesid:
+            type: array
+            items:
+              type: integer
+              format: int64
+      fillOrderInfo:
+        type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: '#/definitions/FillOrderInfo'
+          tags:
+            type: string
+            example: ""
+          timesid:
+            type: array
+            items:
+              type: integer
+              format: int64
+      cancelOrderInfo:
+        type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: '#/definitions/CancelOrderInfo'
+          tags:
+            type: string
+            example: ""
+          timesid:
+            type: array
+            items:
+              type: integer
+              format: int64
+  CreateOrderInfo:
+    type: object
+    properties:
       orderID:
         type: string
         example: "coinex1nv3ghvdnpgc28mvjfkyrle5ccx0m3vesqp8tdx-1"
@@ -840,7 +875,7 @@ definitions:
         type: integer
         format: int64
         example: 0
-  Deal:
+  FillOrderInfo:
     type: object
     properties:
       orderID:
@@ -882,6 +917,50 @@ definitions:
         format: int64
         example: 0
       currMoney:
+        type: integer
+        format: int64
+        example: 0
+  CancelOrderInfo:
+    type: object
+    properties:
+      orderID:
+        type: string
+        example: "coinex1nv3ghvdnpgc28mvjfkyrle5ccx0m3vesqp8tdx-1"
+      tradingPair:
+        type: string
+        example: "abc/cet"
+      height:
+        type: integer
+        format: int64
+        example: 0
+      side:
+        type: integer
+        format: byte
+        example: 1
+        description: BUY:1/SELL:2
+      price:
+        type: string
+        example: "0"
+      delReason:
+        type: string
+        example: "cancel order reason"
+      usedCommission:
+        type: integer
+        format: int64
+        example: 0
+      leftStock:
+        type: integer
+        format: int64
+        example: 0
+      remainAmount:
+        type: integer
+        format: int64
+        example: 0
+      dealStock:
+        type: integer
+        format: int64
+        example: 0
+      dealMoney:
         type: integer
         format: int64
         example: 0
@@ -1009,11 +1088,9 @@ definitions:
     type: object
     properties:
       sender:
-        type: string
-        example: ""
+        $ref: '#/definitions/Address'
       Recipient:
-        type: string
-        example: ""
+        $ref: '#/definitions/Address'
       amount:
         type: string
         example: "0"
@@ -1073,7 +1150,7 @@ definitions:
       contentType:
         type: integer
         format: int8
-        example: 4
+        example: 3
         description: IPFS:0,Magnet:1,HTTP:2,UTF8Text:3,RawBytes:6
       references:
         type: array
