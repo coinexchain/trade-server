@@ -1,0 +1,8 @@
+# listen port
+port = 8000
+
+# node
+lcd = "http://localhost:1317"
+
+# kafka
+kafka-addrs = "localhost:9092"
