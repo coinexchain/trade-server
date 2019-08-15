@@ -10,20 +10,80 @@
 
 Note : 此处的实现方案还在确定中，针对链接的建立可能会有修改；
 
-## Detailed Stream information
+## 链接
+
+将您的 websocket 客户端连接到 `wss://stream.coinexchain.com`
+
+通过发送 "help"，你可以基本了解如何使用我们的 websocket API.
+
+## 所有指令
+
+基本的指令发送格式
+
+`{"op":"<command>", "args":["args1", "args2", "args3", ...] }`
+
+*	订阅
+	* 	subscribe
+	*  unsubscribe
+* 心跳
+	* Ping
+	
+	
+## 订阅
+
+trader-server 是用来订阅实时数据的，一旦链接成功，会获取到订阅主题的最新信息推送，它是获取最新数据的最好方法。
+
+订阅主题，分为两种方式；
+
+*	建立链接建立时订阅相关的主题； 对于订阅多个主题，使用逗号分隔主题列表。如
+	* 	`wss://stream.coinexchain.com?subscribe=txs,blockinfo,slash`
+*	如果链接已建立后，想要订阅一个新的主题，使用下列格式发送请求
+	* `{"op":"subscribe", "args":[<subscriptionTopic>, ...]}`
+通过发送订阅主题数组，一次可订阅多个主题。
+
+当前所有的主题订阅，均无需进行身份验证。
+
+当订阅的某个topic需要携带参数时，	可以使用`:`号分隔topic名称与它的参数；
+
+*	如：`kline:etc/cet:1m` ; 该topic的意思为：订阅 etc/cet的1分钟K线数据.
+
+## 响应格式
+
+websocket的响应可能含有以下三种类型：
+
+`Success`(成功订阅一个主题后的响应)
+`{"subscribe": subscriptionName, "success": true}`
+
+`Error`(格式错误的请求的响应)
+`{"error": errorMessage}`
+
+`数据响应`(当订阅的数据被推送时): 
+
+```
+{
+	"type": "blockinfo",   		// 数据应答类型
+	...
+	// 数据应答信息
+	...	
+}
+```
+所有的数据消息推送都有一个 `type`属性，用来标识消息类型，以便对它进行响应的处理.
+	
+## 主题列表
 
 ### 区块的确认信息
 
 每次链上确认一个区块时，会将该区块的高度、时间戳、哈希信息推出.
 
-**Stream Name** : blockinfo
+**SubscriptionTopic** : `blockinfo`
 
 **Payload** : 
 
 ```json
 "event": "blockinfo",		// event type
 
-{	
+{
+	"type": "blockinfo",	
 	"height": 162537, 			// height
 	"time": 673571293,			// unix time second
 	"hash": "000000000000000000ac6c4c9a6c2e406ac32b53af5910039be27f669d767356" // block hash
@@ -32,9 +92,9 @@ Note : 此处的实现方案还在确定中，针对链接的建立可能会有�
 
 ### 被确认的交易信息
 
-每个区块中被确认的交易信息
+获取每个区块中指定用户签名的交易。
 
-**Stream Name** : txinfo
+**SubscriptionTopic** : `txs:<address>`
 
 **Payload** : 
 
@@ -42,6 +102,7 @@ Note : 此处的实现方案还在确定中，针对链接的建立可能会有�
 "e": "blockinfo",			// event type
 
 {
+	"type": "txs",
 	"transfers": [
 		{
 			"sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
@@ -62,7 +123,7 @@ Note : 此处的实现方案还在确定中，针对链接的建立可能会有�
 	"msg_types": [
 		"asset/MsgIssueToken"
 	],								// tx messages type
-	"tx_json": "dgygygyw81728673...", // raw tx json byte
+	"tx_json": "...", // raw tx json byte
 	"height": 16728						// block height 
 }
 
@@ -70,9 +131,9 @@ Note : 此处的实现方案还在确定中，针对链接的建立可能会有�
 
 ### 验证者的Slash信息
 
-每个区块中验证者被slash的信息
+获取区块中的slash信息；
 
-**Stream Name** : slash
+**SubscriptionTopic** : `slash`
 
 **Payload** : 
 
@@ -80,6 +141,7 @@ Note : 此处的实现方案还在确定中，针对链接的建立可能会有�
 "e": "slash",			// event type
 
 {
+	"type": "slash",
 	"validator": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",	// validator address
 	"power":	"67.2",				// vote power
 	"reason": "Double check", 		// reason
@@ -89,40 +151,44 @@ Note : 此处的实现方案还在确定中，针对链接的建立可能会有�
 
 ### 交易对的Ticker信息
 
-交易对的ticker信息
+获取交易对的ticker信息
 
-**Stream Name** : `<symbol>@ticker`
+**SubscriptionTopic** : `ticker:<trading-pair>`
 
 **Payload** : 
 
 ```json
-[
-	{
-		"market": "bch/cet",				// market
-		"new": "0.986",		// new price
-		"old": "1.12" 		// old price
-	},
-	{
-		"market": "eth/cet",				// market
-		"new": "0.986",		// new price
-		"old": "1.12" 		// old pric	
-	}
-]
+{
+	"type": "ticker",
+	[
+		{
+			"market": "bch/cet",				// market
+			"new": "0.986",		// new price
+			"old": "1.12" 		// old price
+		},
+		{
+			"market": "eth/cet",				// market
+			"new": "0.986",		// new price
+			"old": "1.12" 		// old pric	
+		}
+	]
+}
 ```
 
 ### 交易对某个精度的K线信息
 
 获取交易对的指定精度的K线信息
 
-k线精度 : 当前支持 minute --> 0x10, hour --> 0x20, day --> 0x30
+k线精度 : 当前支持 minute --> 1m, hour --> 1h, day --> 1d
 
-**Stream Name**: <symbol>@kline_<internal>
+**SubscriptionTopic** : `kline:<trading-pair>:<internal>`
 
 **Payload**:
 
 ```json
 
 {
+	"type": "kline",
 	"open": "0.989",				// open price
 	"close": "0.97", 				// close price
 	"high": "1.29",					// high price
@@ -138,12 +204,13 @@ k线精度 : 当前支持 minute --> 0x10, hour --> 0x20, day --> 0x30
 
 获取交易对的深度信息
 
-**Stream Name**: `<symbol>@depth_<level>`
+**SubscriptionTopic** : `depth:<trading-pair>:<level>`
 
 **Payload**:
 
 ```json
 {
+	"type": "depth",
 	"bids": [
 		{
 			"price": "0.936",		// price
@@ -163,12 +230,13 @@ k线精度 : 当前支持 minute --> 0x10, hour --> 0x20, day --> 0x30
 
 订阅指定交易对 有成交的区块信息
 
-**Stream Name**: `<symbol>@deal`
+**SubscriptionTopic** : `deal:<trading-pair>`
 
 **Payload**:
 
 ```json
 {
+	"type": "deal",
 	"stock":"89678.92",			// total deal stock in block
 	"money":"7736.2",				// total deal money in block
 	"height":8783					// block heigh
@@ -177,15 +245,18 @@ k线精度 : 当前支持 minute --> 0x10, hour --> 0x20, day --> 0x30
 
 ### 交易对的订单信息
 
-获取指定用户的相关交易对的订单信息
+获取交易对的订单信息; 
 
-**Stream Name**: `<symbol>@order_<address>`
+主要含有三类订单类型：创建订单，订单成交，订单取消.
+
+**SubscriptionTopic** : `order:<trading-pair>`
 
 **Payload**:
 
 ```json
 // create order info
 {
+	"type": "create_order",
 	"order_id": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x-9",		// order id
 	"sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x", 		// order sender
 	"trading_pair":	"eth/cet",				// trading-pair
@@ -201,20 +272,23 @@ k线精度 : 当前支持 minute --> 0x10, hour --> 0x20, day --> 0x30
 
 // fill order info
 {
+	"type": "fill_order",
 	"order_id": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x-9",		// order id
-	"trading_pair":	"eth/cet",				// trading-pair
+	"trading_pair":	"eth/cet",		// trading-pair
 	"height": 2773,				// block height
 	"side":	1, 					// order side; BUY / SELL
 	"price": "0.73", 			// order price
 	"freeze": 836382,			// order freeze fee; CET as the unit
+	"left_stock": 7753, 		// order left stock
 	"deal_stock": 773,			// order deal stock
 	"deal_money": 726,			// order deal money
 	"curr_stock": 8262,		// order remain stock
-	"curr_money": 7753		// order remain money
+	"curr_money": 7753			// order remain money
 }
 
 // cancel order info 
 {
+	"type": "cancel_order",
 	"order_id": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x-9",		// order id
 	"trading_pair":	"eth/cet",				// trading-pair
 	"height": 2773,				// block height
@@ -233,12 +307,13 @@ k线精度 : 当前支持 minute --> 0x10, hour --> 0x20, day --> 0x30
 
 获取指定token的股吧信息；
 
-**Stream Name**: `<tokenSymbol>@comment`
+**SubscriptionTopic** : `comment:<symbol>`
 
 **Payload**:
 
 ```json
 {
+	"type": "comment",
 	"id": 2,
 	"height": 2773,				// block height
 	"sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x", 		// comment sender
@@ -275,9 +350,9 @@ IPFS | 0
 
 ### bancor合约的信息
 
-获取bancor合约信息
+获取bancor合约中指定交易对的信息
 
-**Stream Name**: `<symbol>@bancor-info`
+**SubscriptionTopic** : `bancor:<trading-pair>`
 
 **Payload**:
 
@@ -285,6 +360,7 @@ IPFS | 0
 // bancor info
 
 {
+	"type": "bancor",
 	"sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
 	"stock": "set",
 	"money": "cet",
@@ -302,15 +378,16 @@ IPFS | 0
 
 ### 订阅bancor 合约的成交信息
 
-获取bancor合约的成交信息
+获取bancor合约的指定交易的成交信息
 
-**Stream Name**: `<symbol>@bancor-trade`
+**SubscriptionTopic** : `bancor-trade:<trading-pair>`
 
 **Payload**:
 
 ```json
 // bancor trade
 {
+	"type": "bancor-trade",
 	"sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
 	"stock": "set",
 	"money": "cet",
@@ -324,23 +401,26 @@ IPFS | 0
 
 ### 账户的金额变动信息
 
-获取用户指定unix时间戳前，所有的收入记录； 
+获取指定用户 的收入信息； 
 
-**Stream Name**: `<address>@income_<unix_time>`
+**SubscriptionTopic** : `income:<address>`
 
 **Payload**:
 
 ```json
-[
-	{
-		"type": "bankx/MsgSend",			// msg type
-		"amount": "21672.21" 		//	amount	
-	},
-	{
-		"type": "bankx/MsgSend",			// msg type
-		"amount": "21672.21" 		//	amount	
-	}
-]
+{
+	"type": "income",
+	[
+		{
+			"type": "bankx/MsgSend",			// msg type
+			"amount": "21672.21" 		//	amount	
+		},
+		{
+			"type": "bankx/MsgSend",			// msg type
+			"amount": "21672.21" 		//	amount	
+		}
+	]
+}
 ```
 
 
@@ -348,7 +428,7 @@ IPFS | 0
 
 获取用户 Redelegation 的信息
 
-**Stream Name**: `<address>@redelegation`
+**SubscriptionTopic** : `redelegation:<address>`
 
 **Payload**:
 
@@ -356,6 +436,7 @@ IPFS | 0
 // begin redelegation
 
 {
+	"type": "begin-redele",
 	"height": 12322,
 	"delegator": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
 	"src": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
@@ -367,6 +448,7 @@ IPFS | 0
 // complete redelegation
 
 {
+	"type": "complete-redele",
 	"height": 12322,
 	"delegator": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
 	"src": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
@@ -379,7 +461,7 @@ IPFS | 0
 
 获取用户的unbonding 信息
 
-**Stream Name**: `<address>@unbonding`
+**SubscriptionTopic** : `unbonding:<address>`
 
 **Payload**:
 
@@ -387,6 +469,7 @@ IPFS | 0
 // begin unbonding
 
 {
+	"type": "begin-unbonding",
 	"height": 12322,
 	"delegator": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
 	"validator": "coinex1ughhs0eyames355v4tzq5nx2g806p55r323x",
@@ -397,6 +480,7 @@ IPFS | 0
 // complete unbonding 
 
 {
+	"type": "complete-unbonding",
 	"height": 22384,
 	"delegator": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
 	"validator": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna123x",
@@ -407,12 +491,13 @@ IPFS | 0
 
 获取用户的延迟转账到期信息
 
-**Stream Name**: `<address>@unlock`
+**Stream Name**: `unlock:<address>`
 
 **Payload**:
 
 ```json
 {
+	"type": "unlock",
 	"address": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
 	"unlocked": [
 		{
@@ -463,6 +548,55 @@ IPFS | 0
 	"height": 100003
 }
 ```		
+
+## 心跳
+
+如果你的 websocket 库支持 hybi-13 或 ping/pong，你可在任何时间发送 ping ，服务器就会返回pong。
+
+如果你担心你的连接被默默地终止，我们推荐你采用以下流程：
+
+*	在接收到每条消息后，设置一个 5 秒钟的定时器。
+*	如果在定时器触发收到任何新消息，则重置定时器。
+*	如果定时器被触发了（意味着 5 秒内没有收到新消息），发送一个 ping 数据帧（如果支持的话），或者发送字符串 'ping'。
+*	期待一个原始的pong框架或文字字符串'pong'作为回应。 如果在5秒内未收到，请发出错误或重新连接。
+
+**Payload**
+
+```
+{
+	"type":"pong"
+}
+```
+
+
+## Unsubscribe
+
+如果在用户程序在运行一段时间后，想解除某个topic的订阅，可以使用`unsubscribe`命令。
+
+示例： `{"op":"unsubscribe", "args":[<subscriptionTopic>, ...]}`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
