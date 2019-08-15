@@ -253,6 +253,7 @@ paths:
                 items:
                   type: integer
                   format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
   /bancor/bancor-infos:
@@ -303,6 +304,7 @@ paths:
                 items:
                   type: integer
                   format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
   /bancor/bancor-trades:
@@ -353,6 +355,7 @@ paths:
                 items:
                   type: integer
                   format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
   /expiry/redelegations:
@@ -403,6 +406,7 @@ paths:
                 items:
                   type: integer
                   format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
   /expiry/unbondings:
@@ -417,7 +421,7 @@ paths:
       parameters:
         - in: query
           name: account
-          description: Bech
+          description: Bech32 address
           required: true
           type: string
         - in: query
@@ -453,6 +457,7 @@ paths:
                 items:
                   type: integer
                   format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
   /expiry/unlocks:
@@ -467,7 +472,7 @@ paths:
       parameters:
         - in: query
           name: account
-          description: Bech
+          description: Bech32 address
           required: true
           type: string
         - in: query
@@ -503,13 +508,14 @@ paths:
                 items:
                   type: integer
                   format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
   /tx/incomes:
     get:
       tags:
         - Tx
-      summary: Query income
+      summary: Query account all income until to given time
       description: Query income info
       operationId: queryIncome
       produces:
@@ -553,6 +559,7 @@ paths:
                 items:
                   type: integer
                   format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
   /tx/txs:
@@ -560,7 +567,7 @@ paths:
       tags:
         - Tx
       summary: Query tx
-      description: Query tx info
+      description: Query account all txs until to given time
       operationId: queryTx
       produces:
         - application/json
@@ -603,6 +610,7 @@ paths:
                 items:
                   type: integer
                   format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
   /comment/comments:
@@ -610,7 +618,7 @@ paths:
       tags:
         - Comment
       summary: Query token comment
-      description: Query token all comment info until to time
+      description: Query token all comment info until to given time
       operationId: queryComment
       produces:
         - application/json
@@ -653,6 +661,7 @@ paths:
                 items:
                   type: integer
                   format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
   /slash/slashings:
@@ -660,7 +669,7 @@ paths:
       tags:
         - Slash
       summary: Query validator slash info
-      description: Query validator slash power, reason, and jailed status
+      description: Query validator slash reason, and jailed status etc
       operationId: querySlash
       produces:
         - application/json
@@ -698,6 +707,7 @@ paths:
                 items:
                   type: integer
                   format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
 definitions:
@@ -803,6 +813,7 @@ definitions:
             items:
               type: integer
               format: int64
+              description: Timesid entry are in pairs, a count correspond two entry(time,sid)
       fillOrderInfo:
         type: object
         properties:
@@ -818,6 +829,7 @@ definitions:
             items:
               type: integer
               format: int64
+              description: Timesid entry are in pairs, a count correspond two entry(time,sid)
       cancelOrderInfo:
         type: object
         properties:
@@ -833,6 +845,7 @@ definitions:
             items:
               type: integer
               format: int64
+              description: Timesid entry are in pairs, a count correspond two entry(time,sid)
   CreateOrderInfo:
     type: object
     properties:
@@ -910,6 +923,7 @@ definitions:
         type: integer
         format: int64
         example: 0
+        description: Order left stock
       freeze:
         type: integer
         format: int64
@@ -919,18 +933,22 @@ definitions:
         type: integer
         format: int64
         example: 0
+        description: Order accumulated deal stock amount
       deal_money:
         type: integer
         format: int64
         example: 0
+        description: Order accumulated deal money amount
       curr_stock:
         type: integer
         format: int64
         example: 0
+        description: Current block deal stock amount
       curr_money:
         type: integer
         format: int64
         example: 0
+        description: Current block deal money amount
   CancelOrderInfo:
     type: object
     properties:
@@ -1126,11 +1144,11 @@ definitions:
         type: array
         items:
           type: string
-          example: """"
+          example: ""
           description: Tx messages type
       tx_json:
         type: string
-        example: """"
+        example: ""
         description: Raw tx json byte
       height:
         type: integer
