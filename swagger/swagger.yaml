@@ -295,7 +295,7 @@ paths:
           schema:
             type: object
             properties:
-              bancorInfo:
+              bancor_info:
                 type: array
                 items:
                   $ref: '#/definitions/BancorInfo'
@@ -346,7 +346,7 @@ paths:
           schema:
             type: object
             properties:
-              data:
+              bancor_trade:
                 type: array
                 items:
                   $ref: '#/definitions/BancorTrade'
@@ -397,7 +397,7 @@ paths:
           schema:
             type: object
             properties:
-              data:
+              redelegation:
                 type: array
                 items:
                   $ref: '#/definitions/Redelegation'
@@ -448,7 +448,7 @@ paths:
           schema:
             type: object
             properties:
-              data:
+              unbonding:
                 type: array
                 items:
                   $ref: '#/definitions/Unbonding'
@@ -499,7 +499,7 @@ paths:
           schema:
             type: object
             properties:
-              data:
+              unlock:
                 type: array
                 items:
                   $ref: '#/definitions/Unlock'
@@ -550,7 +550,7 @@ paths:
           schema:
             type: object
             properties:
-              data:
+              tx:
                 type: array
                 items:
                   $ref: '#/definitions/Tx'
@@ -601,7 +601,7 @@ paths:
           schema:
             type: object
             properties:
-              data:
+              tx:
                 type: array
                 items:
                   $ref: '#/definitions/Tx'
@@ -652,7 +652,7 @@ paths:
           schema:
             type: object
             properties:
-              data:
+              comment:
                 type: array
                 items:
                   $ref: '#/definitions/Comment'
@@ -698,7 +698,7 @@ paths:
           schema:
             type: object
             properties:
-              data:
+              slash:
                 type: array
                 items:
                   $ref: '#/definitions/Slash'
