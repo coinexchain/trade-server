@@ -31,7 +31,7 @@ paths:
         - application/json
       parameters:
         - in: query
-          name: marketList
+          name: market_list
           description: Market limited to 1~100
           required: true
           type: array
@@ -106,11 +106,11 @@ paths:
           schema:
             type: object
             properties:
-              sell:
+              asks:
                 type: array
                 items:
                   $ref: "#/definitions/PricePoint"
-              buy:
+              bids:
                 type: array
                 items:
                   $ref: "#/definitions/PricePoint"
@@ -718,7 +718,7 @@ definitions:
     properties:
       coin:
         $ref: '#/definitions/Coin'
-      unlockTime:
+      unlock_time:
         type: integer
         format: int64
         example: 1565740800
@@ -729,11 +729,11 @@ definitions:
       market:
         type: string
         example: "abc/cet"
-      newPrice:
+      new:
         type: string
         example: "0"
         description: Newest price
-      oldPrice:
+      old:
         type: string
         example: "0"
         description: Old price one day ago
@@ -751,26 +751,32 @@ definitions:
   CandleStick:
     type: object
     properties:
-      openPrice:
+      open:
         type: string
         example: "0"
-      closePrice:
+        description: open price
+      close:
         type: string
         example: "0"
-      highPrice:
+        description: close price
+      high:
         type: string
         example: "0"
-      lowPrice:
+        description: high price
+      low:
         type: string
         example: "0"
-      totalDeal:
+        description: low price
+      total:
         type: string
         example: "0"
-      endingUnixTime:
+        description: total deal
+      unix_time:
         type: integer
         format: int64
         example: 1565740800
-      timeSpan:
+        description: ending unix time
+      time_span:
         type: integer
         format: uint8
         example: 16
@@ -829,15 +835,15 @@ definitions:
   CreateOrderInfo:
     type: object
     properties:
-      orderID:
+      order_id:
         type: string
         example: "coinex1nv3ghvdnpgc28mvjfkyrle5ccx0m3vesqp8tdx-1"
       sender:
         $ref: '#/definitions/Address'
-      tradingPair:
+      trading_pair:
         type: string
         example: "abc/cet"
-      orderType:
+      order_type:
         type: integer
         format: byte
         example: 2
@@ -854,12 +860,12 @@ definitions:
         format: byte
         example: 1
         description: BUY:1/SELL:2
-      timeInForce:
+      time_in_force:
         type: integer
         format: int32
         example: 3
         description: GTE:3/IOC:4
-      featureFee:
+      feature_fee:
         type: integer
         format: int64
         example: 0
@@ -867,7 +873,7 @@ definitions:
         type: integer
         format: int64
         example: 0
-      frozenFee:
+      frozen_fee:
         type: integer
         format: int64
         example: 0
@@ -878,10 +884,10 @@ definitions:
   FillOrderInfo:
     type: object
     properties:
-      orderID:
+      order_id:
         type: string
         example: "coinex1nv3ghvdnpgc28mvjfkyrle5ccx0m3vesqp8tdx-1"
-      tradingPair:
+      trading_pair:
         type: string
         example: "abc/cet"
       height:
@@ -904,29 +910,29 @@ definitions:
         type: integer
         format: int64
         example: 0
-      dealStock:
+      deal_stock:
         type: integer
         format: int64
         example: 0
-      dealMoney:
+      deal_money:
         type: integer
         format: int64
         example: 0
-      currStock:
+      curr_stock:
         type: integer
         format: int64
         example: 0
-      currMoney:
+      curr_money:
         type: integer
         format: int64
         example: 0
   CancelOrderInfo:
     type: object
     properties:
-      orderID:
+      order_id:
         type: string
         example: "coinex1nv3ghvdnpgc28mvjfkyrle5ccx0m3vesqp8tdx-1"
-      tradingPair:
+      trading_pair:
         type: string
         example: "abc/cet"
       height:
@@ -941,33 +947,33 @@ definitions:
       price:
         type: string
         example: "0"
-      delReason:
+      del_reason:
         type: string
         example: "cancel order reason"
-      usedCommission:
+      used_commission:
         type: integer
         format: int64
         example: 0
-      leftStock:
+      left_stock:
         type: integer
         format: int64
         example: 0
-      remainAmount:
+      remain_amount:
         type: integer
         format: int64
         example: 0
-      dealStock:
+      deal_stock:
         type: integer
         format: int64
         example: 0
-      dealMoney:
+      deal_money:
         type: integer
         format: int64
         example: 0
   BancorInfo:
     type: object
     properties:
-      owner:
+      sender:
         $ref: '#/definitions/Address'
       stock:
         type: string
@@ -975,29 +981,29 @@ definitions:
       money:
         type: string
         example: "cet"
-      initPrice:
+      init_price:
         type: string
         example: "0"
-      maxSupply:
+      max_supply:
         type: string
         example: "0"
-      maxPrice:
+      max_price:
         type: string
         example: "0"
       price:
         type: string
         example: "0"
-      stockInPool:
+      stock_in_pool:
         type: string
         example: "0"
-      moneyInPool:
+      money_in_pool:
         type: string
         example: "0"
-      earliestCancelTime:
+      enable_cancel_time:
         type: integer
         format: int64
         example: 0
-      blockHeight:
+      block_height:
         type: integer
         format: int64
         example: 0
@@ -1020,14 +1026,14 @@ definitions:
         type: string
         example: "buy"
         description: buy/sell
-      moneyLimit:
+      money_limit:
         type: integer
         format: int64
         example: 0
-      txPrice:
+      transaction_price:
         type: string
         example: "0"
-      blockHeight:
+      block_height:
         type: integer
         format: int64
         example: 0
@@ -1036,14 +1042,14 @@ definitions:
     properties:
       delegator:
         $ref: '#/definitions/Address'
-      validatorSrc:
+      src:
         $ref: '#/definitions/Address'
-      validatorDst:
+      dst:
         $ref: '#/definitions/Address'
       amount:
         type: string
         example: "0"
-      completionTime:
+      completion_time:
         type: string
         example: "0"
   Unbonding:
@@ -1056,7 +1062,7 @@ definitions:
       amount:
         type: string
         example: "0"
-      completionTime:
+      completion_time:
         type: string
         example: "0"
   Unlock:
@@ -1068,11 +1074,11 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/Coin'
-      lockedCoins:
+      locked_coins:
         type: array
         items:
           $ref: "#/definitions/LockedCoin"
-      frozenCoins:
+      frozen_coins:
         type: array
         items:
           $ref: '#/definitions/Coin'
@@ -1089,7 +1095,7 @@ definitions:
     properties:
       sender:
         $ref: '#/definitions/Address'
-      Recipient:
+      recipient:
         $ref: '#/definitions/Address'
       amount:
         type: string
@@ -1101,20 +1107,20 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/Address'
-      Transfers:
+      transfers:
         type: array
         items:
           $ref: '#/definitions/TransferRecord'
-      serialNumber:
+      serial_number:
         type: integer
         format: int64
         example: 0
-      msgTypes:
+      msg_types:
         type: array
         items:
           type: string
           example: ""
-      txJson:
+      tx_json:
         type: string
         example: ""
       height:
@@ -1147,7 +1153,7 @@ definitions:
       content:
         type: string
         example: "Comment content"
-      contentType:
+      content_type:
         type: integer
         format: int8
         example: 3
@@ -1163,12 +1169,12 @@ definitions:
         type: integer
         format: uint64
         example: 1
-      rewardTarget:
+      reward_target:
         $ref: '#/definitions/Address'
-      rewardToken:
+      reward_token:
         type: string
         example: "cet"
-      rewardAmount:
+      reward_amount:
         type: integer
         format: int64
         example: 100
