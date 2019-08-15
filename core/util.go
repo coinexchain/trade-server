@@ -16,6 +16,16 @@ type baseCandleStick struct {
 	TotalDeal  sdk.Int `json:"total"`
 }
 
+func defaultBaseCandleStick() baseCandleStick {
+	return baseCandleStick{
+		OpenPrice:  sdk.ZeroDec(),
+		ClosePrice: sdk.ZeroDec(),
+		HighPrice:  sdk.ZeroDec(),
+		LowPrice:   sdk.ZeroDec(),
+		TotalDeal:  sdk.ZeroInt(),
+	}
+}
+
 func (cs *baseCandleStick) hasDeal() bool {
 	return cs.TotalDeal.IsPositive()
 }
@@ -42,6 +52,7 @@ func (cs *baseCandleStick) update(price sdk.Dec, amount int64) {
 
 // merge some candle sticks with smaller time span, into one candle stick with larger time span
 func merge(subList []baseCandleStick) (cs baseCandleStick) {
+	cs = defaultBaseCandleStick()
 	for _, sub := range subList {
 		if !sub.hasDeal() {
 			continue
@@ -76,6 +87,17 @@ type CandleStickRecord struct {
 	Market         string              `json:"Market"`
 }
 
+func NewCandleStickRecord(market string) *CandleStickRecord {
+	res := &CandleStickRecord{Market: market, LastUpdateTime: time.Unix(0, 0)}
+	for i := 0; i < len(res.MinuteCS); i++ {
+		res.MinuteCS[i] = defaultBaseCandleStick()
+	}
+	for i := 0; i < len(res.HourCS); i++ {
+		res.HourCS[i] = defaultBaseCandleStick()
+	}
+	return res
+}
+
 func (csr *CandleStickRecord) newCandleStick(cs baseCandleStick, t int64, span byte) CandleStick {
 	return CandleStick{
 		OpenPrice:      cs.OpenPrice,
@@ -92,16 +114,17 @@ func (csr *CandleStickRecord) newCandleStick(cs baseCandleStick, t int64, span b
 // When a new block comes, flush the pending candle sticks
 func (csr *CandleStickRecord) newBlock(t time.Time, isNewDay, isNewHour, isNewMinute bool) []CandleStick {
 	res := make([]CandleStick, 0, 3)
-	if isNewMinute {
+	lastTime := csr.LastUpdateTime.Unix()
+	if isNewMinute && lastTime != 0 {
 		cs := csr.newCandleStick(csr.MinuteCS[csr.LastUpdateTime.Minute()], csr.LastUpdateTime.Unix(), Minute)
 		res = append(res, cs)
 	}
-	if isNewHour {
+	if isNewHour && lastTime != 0 {
 		csr.HourCS[csr.LastUpdateTime.Hour()] = merge(csr.MinuteCS[:])
 		cs := csr.newCandleStick(csr.HourCS[csr.LastUpdateTime.Hour()], csr.LastUpdateTime.Unix(), Hour)
 		res = append(res, cs)
 	}
-	if isNewDay {
+	if isNewDay && lastTime != 0 {
 		dayCS := merge(csr.HourCS[:])
 		cs := csr.newCandleStick(dayCS, csr.LastUpdateTime.Unix(), Day)
 		res = append(res, cs)
@@ -109,12 +132,12 @@ func (csr *CandleStickRecord) newBlock(t time.Time, isNewDay, isNewHour, isNewMi
 
 	if isNewDay {
 		for i := 0; i < 24; i++ {
-			csr.HourCS[i] = baseCandleStick{}
+			csr.HourCS[i] = defaultBaseCandleStick()
 		}
 	}
 	if isNewDay || isNewHour {
 		for i := 0; i < 60; i++ {
-			csr.MinuteCS[i] = baseCandleStick{}
+			csr.MinuteCS[i] = defaultBaseCandleStick()
 		}
 	}
 	return res
@@ -135,14 +158,14 @@ type CandleStickManager struct {
 
 func NewCandleStickManager(markets []string) CandleStickManager {
 	res := CandleStickManager{CsrMap: make(map[string]*CandleStickRecord)}
-	for _, Market := range markets {
-		res.CsrMap[Market] = &CandleStickRecord{}
+	for _, market := range markets {
+		res.CsrMap[market] = NewCandleStickRecord(market)
 	}
 	return res
 }
 
-func (manager *CandleStickManager) AddMarket(Market string) {
-	manager.CsrMap[Market] = &CandleStickRecord{Market: Market}
+func (manager *CandleStickManager) AddMarket(market string) {
+	manager.CsrMap[market] = NewCandleStickRecord(market)
 }
 
 func (manager *CandleStickManager) NewBlock(t time.Time) []CandleStick {
