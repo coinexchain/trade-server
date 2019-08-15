@@ -193,10 +193,10 @@ k线精度 : 当前支持 minute --> 0x10, hour --> 0x20, day --> 0x30
 	"price": "0.73", 			// order price
 	"quantity": 8763892, 	// order quantity
 	"side":	1, 					// order side; BUY / SELL
-	"time_in_force": 3,		// GTC / IOC	"feature_fee": 21562，	// order feature fee; CET as the unit
+	"time_in_force": 3,		// GTC / IOC	"feature_fee": 21562，	// order feature fee; sato.CET as the unit
 	"height": 2773,				// block height
-	"frozen_fee": 782553,	// order frozen fee; CET as the unit
-	"freeze": 836382			// order freeze fee; CET as the unit
+	"frozen_fee": 782553,	// order frozen fee; sato.CET as the unit
+	"freeze": 836382			// freeze sato.CET amount
 }
 
 // fill order info
@@ -206,7 +206,7 @@ k线精度 : 当前支持 minute --> 0x10, hour --> 0x20, day --> 0x30
 	"height": 2773,				// block height
 	"side":	1, 					// order side; BUY / SELL
 	"price": "0.73", 			// order price
-	"freeze": 836382,			// order freeze fee; CET as the unit
+	"freeze": 836382,			// freeze sato.CET amount
 	"deal_stock": 773,			// order deal stock
 	"deal_money": 726,			// order deal money
 	"curr_stock": 8262,		// order remain stock
