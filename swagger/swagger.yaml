@@ -32,7 +32,7 @@ paths:
       parameters:
         - in: query
           name: market_list
-          description: Market limited to 1~100
+          description: Market count limited to 1~100
           required: true
           type: array
           items:
@@ -169,8 +169,8 @@ paths:
     get:
       tags:
         - Market
-      summary: Query account order
-      description: Query account all market order until to given time
+      summary: Query account's order
+      description: Query account's order activities in all markets until to given time
       operationId: queryOrder
       produces:
         - application/json
@@ -363,7 +363,7 @@ paths:
       tags:
         - Expiry
       summary: Query redelegation
-      description: Query delegator redelegation info
+      description: Query delegator's redelegation-completion info
       operationId: queryRedelegation
       produces:
         - application/json
@@ -414,7 +414,7 @@ paths:
       tags:
         - Expiry
       summary: Query Unbonding
-      description: Query delegator unbonding info
+      description: Query delegator's unbonding-completion info
       operationId: queryUnbonding
       produces:
         - application/json
@@ -566,8 +566,8 @@ paths:
     get:
       tags:
         - Tx
-      summary: Query tx
-      description: Query account all txs until to given time
+      summary: Query transactions
+      description: Query transactions signed by given account until to given time
       operationId: queryTx
       produces:
         - application/json
@@ -618,7 +618,7 @@ paths:
       tags:
         - Comment
       summary: Query token comment
-      description: Query token all comment info until to given time
+      description: Query all comments about given token until to time
       operationId: queryComment
       produces:
         - application/json
@@ -669,7 +669,7 @@ paths:
       tags:
         - Slash
       summary: Query validator slash info
-      description: Query validator slash reason, and jailed status etc
+      description: Query validator slash power, reason, and jailed status etc
       operationId: querySlash
       produces:
         - application/json
@@ -758,7 +758,7 @@ definitions:
       amount:
         type: string
         example: "0"
-        description: Amount of depth
+        description: Amount of all the unfilled orders
   CandleStick:
     type: object
     properties:
@@ -805,9 +805,6 @@ definitions:
             type: array
             items:
               $ref: '#/definitions/CreateOrderInfo'
-          tags:
-            type: string
-            example: ""
           timesid:
             type: array
             items:
@@ -821,9 +818,6 @@ definitions:
             type: array
             items:
               $ref: '#/definitions/FillOrderInfo'
-          tags:
-            type: string
-            example: ""
           timesid:
             type: array
             items:
@@ -837,9 +831,6 @@ definitions:
             type: array
             items:
               $ref: '#/definitions/CancelOrderInfo'
-          tags:
-            type: string
-            example: ""
           timesid:
             type: array
             items:
