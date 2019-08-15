@@ -106,12 +106,12 @@ websocket的响应可能含有以下三种类型：
 	"transfers": [
 		{
 			"sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-			"recepient": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",
+			"recipient": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",
 			"amount": "8467.863"		// amount
 		},
 		{
 			"sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-			"recepient": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",
+			"recipient": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",
 			"amount": "8467.863"		// amount
 		}
 	],
@@ -262,12 +262,12 @@ k线精度 : 当前支持 minute --> 1m, hour --> 1h, day --> 1d
 	"trading_pair":	"eth/cet",				// trading-pair
 	"order_type": 2,			// order type; Limit Order
 	"price": "0.73", 			// order price
-	"quantity": 8763892, 	// order quantity
+	"quantity": 8763892, 	    // order quantity
 	"side":	1, 					// order side; BUY / SELL
-	"time_in_force": 3,		// GTC / IOC	"feature_fee": 21562，	// order feature fee; CET as the unit
+	"time_in_force": 3,		    // GTC / IOC	"feature_fee": 21562，	// order feature fee; sato.CET as the unit
 	"height": 2773,				// block height
-	"frozen_fee": 782553,	// order frozen fee; CET as the unit
-	"freeze": 836382			// order freeze fee; CET as the unit
+	"frozen_fee": 782553,	    // order frozen fee; sato.CET as the unit
+	"freeze": 836382			// freeze sato.CET amount
 }
 
 // fill order info
@@ -278,28 +278,28 @@ k线精度 : 当前支持 minute --> 1m, hour --> 1h, day --> 1d
 	"height": 2773,				// block height
 	"side":	1, 					// order side; BUY / SELL
 	"price": "0.73", 			// order price
-	"freeze": 836382,			// order freeze fee; CET as the unit
+	"freeze": 836382,			// freeze sato.CET amount
 	"left_stock": 7753, 		// order left stock
 	"deal_stock": 773,			// order deal stock
 	"deal_money": 726,			// order deal money
-	"curr_stock": 8262,		// order remain stock
-	"curr_money": 7753			// order remain money
+	"curr_stock": 8262,		    // curr stock
+	"curr_money": 7753			// curr money 
 }
 
 // cancel order info 
 {
 	"type": "cancel_order",
 	"order_id": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x-9",		// order id
-	"trading_pair":	"eth/cet",				// trading-pair
-	"height": 2773,				// block height
-	"side":	1, 					// order side; BUY / SELL
-	"price": "0.73", 			// order price
+	"trading_pair":	"eth/cet",			// trading-pair
+	"height": 2773,				        // block height
+	"side":	1, 					        // order side; BUY / SELL
+	"price": "0.73", 			        // order price
 	"del_reason": "munual delete order", 
-	"used_commission": 37253, 	// order used commission
+	"used_commission": 37253, 	        // order used commission
 	"left_stock": 7753, 				// order left stock
-	"remain_amount": 7762,			// order remain amount
-	"deal_stock": 773,			// order deal stock
-	"deal_money": 722		// order deal money
+	"remain_amount": 7762,			    // order remain amount
+	"deal_stock": 773,			        // order deal stock
+	"deal_money": 722		            // order deal money
 }
 ```
 
