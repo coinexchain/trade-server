@@ -46,7 +46,7 @@ func NewServer(cfgFile string) *TradeSever {
 	hub := core.NewHub(db, TestSubscribeManager{})
 
 	// http server
-	router := registerHandler()
+	router := registerHandler(&hub)
 	httpSvr := &http.Server{
 		Addr:         fmt.Sprintf(":%d", svrConfig.GetDefault("port", 8000).(int64)),
 		Handler:      router,
