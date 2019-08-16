@@ -25,7 +25,7 @@ const (
 )
 
 type TradeSever struct {
-	httpSvr  http.Server
+	httpSvr  *http.Server
 	hub      *core.Hub
 	consumer *TradeConsumer
 }
@@ -42,9 +42,17 @@ func NewServer(cfgFile string) *TradeSever {
 	if err != nil {
 		log.Fatalf("open db fail. %v\n", err)
 	}
+	// TODO: SubscribeManager
 	hub := core.NewHub(db, TestSubscribeManager{})
 
+	// http server
 	router := registerHandler()
+	httpSvr := &http.Server{
+		Addr:         fmt.Sprintf(":%d", svrConfig.GetDefault("port", 8000).(int64)),
+		Handler:      router,
+		ReadTimeout:  ReadTimeout * time.Second,
+		WriteTimeout: WriteTimeout * time.Second,
+	}
 
 	// consumer
 	addrs := svrConfig.Get("kafka-addrs").(string)
@@ -57,12 +65,7 @@ func NewServer(cfgFile string) *TradeSever {
 	}
 
 	return &TradeSever{
-		httpSvr: http.Server{
-			Addr:         fmt.Sprintf(":%d", svrConfig.GetDefault("port", 8000).(int64)),
-			Handler:      router,
-			ReadTimeout:  ReadTimeout * time.Second,
-			WriteTimeout: WriteTimeout * time.Second,
-		},
+		httpSvr:  httpSvr,
 		consumer: consumer,
 		hub:      &hub,
 	}
@@ -71,22 +74,27 @@ func NewServer(cfgFile string) *TradeSever {
 func (ts *TradeSever) Start() {
 	log.Printf("Server start... (%v)\n", ts.httpSvr.Addr)
 
+	// start consumer
 	go ts.consumer.Consume()
 
-	if err := ts.httpSvr.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("error occur:%v\n", err)
-	}
+	// start http server
+	go func() {
+		if err := ts.httpSvr.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("error occur:%v\n", err)
+		}
+	}()
 }
 
 func (ts *TradeSever) Stop() {
+	// stop http server
 	ctx, cancel := context.WithTimeout(context.Background(), WaitTimeout*time.Second)
 	defer cancel()
-
-	ts.consumer.Close()
-
 	if err := ts.httpSvr.Shutdown(ctx); err != nil {
 		log.Fatalf("shutdown failed. error:%v\n", err)
 	}
+
+	// stop consumer
+	ts.consumer.Close()
 
 	ts.hub.Close()
 
@@ -112,7 +120,7 @@ func loadConfigFile(cfgFile string) (*toml.Tree, error) {
 	return tree, nil
 }
 
-func newLevelDB(name, dir string) (db dbm.DB, err error) {
+func newLevelDB(name string, dir string) (db dbm.DB, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("couldn't create db: %v", r)

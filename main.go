@@ -31,7 +31,7 @@ func main() {
 	}
 
 	svr := server.NewServer(cfgFile)
-	go svr.Start()
+	svr.Start()
 
 	waitForSignal()
 

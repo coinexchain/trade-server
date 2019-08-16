@@ -9,6 +9,7 @@ require (
 	github.com/emirpasic/gods v1.12.0
 	github.com/gorilla/mux v1.7.0
 	github.com/pelletier/go-toml v1.2.0
+	github.com/tendermint/tendermint v0.32.2
 	github.com/tendermint/tm-db v0.1.1
 )
 
