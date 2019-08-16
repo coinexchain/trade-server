@@ -37,6 +37,7 @@ type PricePoint struct {
 
 type Subscriber interface {
 	Detail() interface{}
+	WriteMsg([]byte) error
 }
 
 type SubscribeManager interface {
@@ -72,9 +73,9 @@ type SubscribeManager interface {
 	PushSlash(subscriber Subscriber, info []byte)
 	PushHeight(subscriber Subscriber, info []byte)
 	PushTicker(subscriber Subscriber, t []*Ticker)
-	PushDepthSell(subscriber Subscriber, delta map[*PricePoint]bool)
-	PushDepthBuy(subscriber Subscriber, delta map[*PricePoint]bool)
-	PushCandleStick(subscriber Subscriber, cs *CandleStick)
+	PushDepthSell(subscriber Subscriber, delta []byte)
+	PushDepthBuy(subscriber Subscriber, delta []byte)
+	PushCandleStick(subscriber Subscriber, info []byte)
 	PushDeal(subscriber Subscriber, info []byte)
 	PushCreateOrder(subscriber Subscriber, info []byte)
 	PushFillOrder(subscriber Subscriber, info []byte)

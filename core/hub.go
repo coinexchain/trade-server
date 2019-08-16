@@ -9,6 +9,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	log "github.com/sirupsen/logrus"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -292,23 +293,31 @@ func (hub *Hub) beginForCandleSticks() {
 		if cs.TimeSpan == Minute {
 			triman.tkm.UpdateNewestPrice(cs.ClosePrice, currMinute)
 		}
+		bz := formatCandleStick(&cs)
 		// Push candle sticks to subscribers
 		for _, target := range targets {
 			timespan, ok := target.Detail().(byte)
 			if !ok || timespan != cs.TimeSpan {
 				continue
 			}
-			hub.subMan.PushCandleStick(target, &cs)
+			hub.subMan.PushCandleStick(target, bz)
 		}
 		// Save candle sticks to KVStore
 		key := hub.getCandleStickKey(cs.Market, cs.TimeSpan)
-		bz, err := json.Marshal(cs)
-		if err != nil {
+		if len(bz) == 0 {
 			continue
 		}
 		hub.batch.Set(key, bz)
 		hub.sid++
 	}
+}
+
+func formatCandleStick(info *CandleStick) []byte {
+	bz, err := json.Marshal(info)
+	if err != nil {
+		log.Errorf(err.Error())
+	}
+	return bz
 }
 
 func (hub *Hub) handleNotificationSlash(bz []byte) {
@@ -736,12 +745,15 @@ func (hub *Hub) commitForDepth() {
 		if !ok {
 			continue
 		}
+
+		buyBz := encodeDepth(depthDeltaBuy, true)
+		sellBz := encodeDepth(depthDeltaSell, false)
 		for _, target := range targets {
 			if len(depthDeltaSell) != 0 {
-				hub.subMan.PushDepthSell(target, depthDeltaSell)
+				hub.subMan.PushDepthSell(target, sellBz)
 			}
 			if len(depthDeltaBuy) != 0 {
-				hub.subMan.PushDepthBuy(target, depthDeltaBuy)
+				hub.subMan.PushDepthBuy(target, buyBz)
 			}
 		}
 	}
