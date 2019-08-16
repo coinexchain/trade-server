@@ -3,7 +3,6 @@ package core
 import (
 	"time"
 
-	"github.com/coinexchain/dex/modules/market"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/emirpasic/gods/maps/treemap"
 )
@@ -218,7 +217,7 @@ func DefaultDepthManager() *DepthManager {
 
 // positive amount for increment, negative amount for decrement
 func (dm *DepthManager) DeltaChange(price sdk.Dec, amount sdk.Int) {
-	s := string(market.DecToBigEndianBytes(price))
+	s := string(DecToBigEndianBytes(price))
 	ptr, ok := dm.ppMap.Get(s)
 	var pp *PricePoint
 	if !ok {

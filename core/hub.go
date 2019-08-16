@@ -8,11 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/coinexchain/dex/app"
-	"github.com/coinexchain/dex/modules/authx"
-	"github.com/coinexchain/dex/modules/bancorlite"
-	"github.com/coinexchain/dex/modules/comment"
-	"github.com/coinexchain/dex/modules/market"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	dbm "github.com/tendermint/tm-db"
 )
@@ -140,25 +135,6 @@ func (hub *Hub) getUnbondingEventKey(addr string, time int64) []byte {
 func (hub *Hub) getUnlockEventKey(addr string) []byte {
 	return hub.getKeyFromBytes(UnlockByte, []byte(addr), byte(0))
 }
-
-type (
-	NewHeightInfo                    = market.NewHeightInfo
-	CreateOrderInfo                  = market.CreateOrderInfo
-	FillOrderInfo                    = market.FillOrderInfo
-	CancelOrderInfo                  = market.CancelOrderInfo
-	NotificationSlash                = app.NotificationSlash
-	TransferRecord                   = app.TransferRecord
-	NotificationTx                   = app.NotificationTx
-	NotificationBeginRedelegation    = app.NotificationBeginRedelegation
-	NotificationBeginUnbonding       = app.NotificationBeginUnbonding
-	NotificationCompleteRedelegation = app.NotificationCompleteRedelegation
-	NotificationCompleteUnbonding    = app.NotificationCompleteUnbonding
-	NotificationUnlock               = authx.NotificationUnlock
-	TokenComment                     = comment.TokenComment
-	CommentRef                       = comment.CommentRef
-	MsgBancorTradeInfoForKafka       = bancorlite.MsgBancorTradeInfoForKafka
-	MsgBancorInfoForKafka            = bancorlite.MsgBancorInfoForKafka
-)
 
 type TripleManager struct {
 	sell *DepthManager
@@ -549,7 +525,7 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 	defer func() {
 		hub.depthMutex.Unlock()
 	}()
-	if v.Side == market.SELL {
+	if v.Side == SELL {
 		triman.sell.DeltaChange(v.Price, amount)
 	} else {
 		triman.buy.DeltaChange(v.Price, amount)
@@ -642,7 +618,7 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 	defer func() {
 		hub.depthMutex.Unlock()
 	}()
-	if v.Side == market.SELL {
+	if v.Side == SELL {
 		triman.sell.DeltaChange(v.Price, negStock)
 	} else {
 		triman.buy.DeltaChange(v.Price, negStock)
