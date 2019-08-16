@@ -1,26 +1,27 @@
 package server
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 
 	"github.com/Shopify/sarama"
+	"github.com/coinexchain/trade-server/core"
 )
 
 type TradeConsumer struct {
 	sarama.Consumer
 	topic    string
 	stopChan chan byte
+	hub      *core.Hub
 }
 
 func init() {
 	sarama.Logger = log.New(os.Stdout, "[sarama] ", log.LstdFlags)
 }
 
-func NewConsumer(addrs []string, topic string) (*TradeConsumer, error) {
+func NewConsumer(addrs []string, topic string, hub *core.Hub) (*TradeConsumer, error) {
 	consumer, err := sarama.NewConsumer(addrs, nil)
 	if err != nil {
 		panic(err)
@@ -30,19 +31,30 @@ func NewConsumer(addrs []string, topic string) (*TradeConsumer, error) {
 		Consumer: consumer,
 		topic:    topic,
 		stopChan: make(chan byte, 1),
+		hub:      hub,
 	}, nil
 }
 
 func (tc *TradeConsumer) Consume() {
 	defer close(tc.stopChan)
+
 	partitionList, err := tc.Partitions(tc.topic)
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("Partition size:%v\n", len(partitionList))
 
 	wg := &sync.WaitGroup{}
-	for partition := range partitionList {
-		pc, err := tc.ConsumePartition(tc.topic, int32(partition), sarama.OffsetNewest)
+	for _, partition := range partitionList {
+		offset := tc.hub.LoadOffset(partition)
+		if offset == 0 {
+			// start from the oldest offset
+			offset = sarama.OffsetOldest
+		} else {
+			// start from next offset
+			offset += 1
+		}
+		pc, err := tc.ConsumePartition(tc.topic, partition, offset)
 		if err != nil {
 			log.Printf("Failed to start consumer for partition %d: %s\n", partition, err)
 			continue
@@ -50,11 +62,11 @@ func (tc *TradeConsumer) Consume() {
 		wg.Add(1)
 
 		go func(sarama.PartitionConsumer) {
-			log.Printf("PartitionConsumer %v start\n", partition)
+			log.Printf("PartitionConsumer %v start from %v\n", partition, offset)
 			defer func() {
 				pc.AsyncClose()
 				wg.Done()
-				log.Printf("PartitionConsumer %v close\n", partition)
+				log.Printf("PartitionConsumer %v close in %v\n", partition, offset)
 			}()
 
 			signals := make(chan os.Signal, 1)
@@ -63,7 +75,10 @@ func (tc *TradeConsumer) Consume() {
 			for {
 				select {
 				case msg := <-pc.Messages():
-					fmt.Printf("Partition:%d, Offset:%d, Key:%s, Value:%s\n", msg.Partition, msg.Offset, string(msg.Key), string(msg.Value))
+					// update offset, and then commit to db
+					tc.hub.UpdateOffset(msg.Partition, msg.Offset)
+					tc.hub.ConsumeMessage(string(msg.Key), msg.Value)
+					offset = msg.Offset
 				case <-signals:
 					return
 				}

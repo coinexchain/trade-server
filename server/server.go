@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/coinexchain/trade-server/core"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/pelletier/go-toml"
+	dbm "github.com/tendermint/tm-db"
 )
 
 const (
@@ -19,10 +21,12 @@ const (
 	WaitTimeout  = 10
 
 	DexTopic = "coinex-dex"
+	DbName   = "dex-trade"
 )
 
 type TradeSever struct {
-	http.Server
+	httpSvr  http.Server
+	hub      *core.Hub
 	consumer *TradeConsumer
 }
 
@@ -32,33 +36,44 @@ func NewServer(cfgFile string) *TradeSever {
 		log.Printf("load config file fail:%v\n", err)
 	}
 
+	// hub
+	dataDir := svrConfig.GetDefault("data-dir", "data").(string)
+	db, err := newLevelDB(DbName, dataDir)
+	if err != nil {
+		log.Fatalf("open db fail. %v\n", err)
+	}
+	hub := core.NewHub(db, TestSubscribeManager{})
+
 	router := registerHandler()
+
+	// consumer
 	addrs := svrConfig.Get("kafka-addrs").(string)
 	if len(addrs) == 0 {
-		log.Fatalln("kafka address is empty\n", err)
+		log.Fatalln("kafka address is empty")
 	}
-	consumer, err := NewConsumer(strings.Split(addrs, ","), DexTopic)
+	consumer, err := NewConsumer(strings.Split(addrs, ","), DexTopic, &hub)
 	if err != nil {
 		log.Fatalf("create consumer error:%v\n", err)
 	}
 
 	return &TradeSever{
-		Server: http.Server{
+		httpSvr: http.Server{
 			Addr:         fmt.Sprintf(":%d", svrConfig.GetDefault("port", 8000).(int64)),
 			Handler:      router,
 			ReadTimeout:  ReadTimeout * time.Second,
 			WriteTimeout: WriteTimeout * time.Second,
 		},
 		consumer: consumer,
+		hub:      &hub,
 	}
 }
 
 func (ts *TradeSever) Start() {
-	log.Printf("Server start... (%v)\n", ts.Addr)
+	log.Printf("Server start... (%v)\n", ts.httpSvr.Addr)
 
 	go ts.consumer.Consume()
 
-	if err := ts.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := ts.httpSvr.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("error occur:%v\n", err)
 	}
 }
@@ -69,9 +84,11 @@ func (ts *TradeSever) Stop() {
 
 	ts.consumer.Close()
 
-	if err := ts.Shutdown(ctx); err != nil {
+	if err := ts.httpSvr.Shutdown(ctx); err != nil {
 		log.Fatalf("shutdown failed. error:%v\n", err)
 	}
+
+	ts.hub.Close()
 
 	log.Println("Server stop...")
 }
@@ -93,4 +110,13 @@ func loadConfigFile(cfgFile string) (*toml.Tree, error) {
 	}
 
 	return tree, nil
+}
+
+func newLevelDB(name, dir string) (db dbm.DB, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("couldn't create db: %v", r)
+		}
+	}()
+	return dbm.NewDB(name, dbm.GoLevelDBBackend, dir), err
 }

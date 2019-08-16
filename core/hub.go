@@ -29,6 +29,7 @@ const (
 	RedelegationByte = byte(0x30)
 	UnbondingByte    = byte(0x32)
 	UnlockByte       = byte(0x34)
+	OffsetByte       = byte(0xF0)
 )
 
 func limitCount(count int) int {
@@ -970,4 +971,35 @@ func (hub *Hub) Dump(hub4j *HubForJSON) {
 			BuyPricePoints:  triman.buy.DumpPricePoints(),
 		})
 	}
+}
+
+//===================================
+func (hub *Hub) UpdateOffset(partition int32, offset int64) {
+	key := getOffsetKey(partition)
+	offsetBuf := int64ToBigEndianBytes(offset)
+	hub.batch.Set(key, offsetBuf)
+}
+
+func (hub *Hub) LoadOffset(partition int32) int64 {
+	key := getOffsetKey(partition)
+	hub.dbMutex.RLock()
+	defer func() {
+		hub.dbMutex.RUnlock()
+	}()
+	offsetBuf := hub.db.Get(key)
+	if offsetBuf == nil {
+		return 0
+	}
+	return int64(binary.BigEndian.Uint64(offsetBuf))
+}
+
+func getOffsetKey(partition int32) []byte {
+	key := make([]byte, 5)
+	key[0] = OffsetByte
+	binary.BigEndian.PutUint32(key[1:], uint32(partition))
+	return key
+}
+
+func (hub *Hub) Close() {
+	hub.db.Close()
 }

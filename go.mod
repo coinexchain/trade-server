@@ -12,4 +12,4 @@ require (
 	github.com/tendermint/tm-db v0.1.1
 )
 
-#replace github.com/coinexchain/dex v0.0.11 => ../dex
+// replace github.com/coinexchain/dex v0.0.11 => ../dex

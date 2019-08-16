@@ -1,8 +1,12 @@
 # listen port
 port = 8000
 
-# node
+# rest proxy
+proxy = true
 lcd = "http://localhost:1317"
 
 # kafka
 kafka-addrs = "localhost:9092"
+
+# level DB
+data-dir = "data"
