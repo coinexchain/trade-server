@@ -214,7 +214,7 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
 
 获取交易对的深度信息
 
-**SubscriptionTopic** : `depth:<trading-pair>:<level>`
+**SubscriptionTopic** : `depth:<trading-pair>`
 
 **Response**:
 
@@ -273,11 +273,11 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
 
 ### 交易对的订单信息
 
-获取交易对的订单信息; 
+获取指定用户的订单信息; 
 
 主要含有三类订单类型：创建订单，订单成交，订单取消.
 
-**SubscriptionTopic** : `order:<trading-pair>`
+**SubscriptionTopic** : `order:<address>`
 
 **Response**:
 
