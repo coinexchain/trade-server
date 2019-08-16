@@ -503,7 +503,7 @@ IPFS | 0
 
 ```json
 {
-	"type": "begin-redele",
+	"type": "redelegation",
 	"payload": {        
         "delegator": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
         "src": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
@@ -527,7 +527,7 @@ IPFS | 0
 
 ```json
 {
-	"type": "begin-unbonding",
+	"type": "unbonding",
 	"payload": {       
         "delegator": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
         "validator": "coinex1ughhs0eyames355v4tzq5nx2g806p55r323x",
