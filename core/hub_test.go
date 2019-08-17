@@ -14,6 +14,10 @@ func (s *PlainSubscriber) Detail() interface{} {
 	return nil
 }
 
+func (s *PlainSubscriber) WriteMsg([]byte) error {
+	return nil
+}
+
 type TickerSubscriber struct {
 	ID      int
 	Markets []string
@@ -23,6 +27,10 @@ func (s *TickerSubscriber) Detail() interface{} {
 	return s.Markets
 }
 
+func (s *TickerSubscriber) WriteMsg([]byte) error {
+	return nil
+}
+
 type CandleStickSubscriber struct {
 	ID       int
 	TimeSpan byte
@@ -30,6 +38,10 @@ type CandleStickSubscriber struct {
 
 func (s *CandleStickSubscriber) Detail() interface{} {
 	return s.TimeSpan
+}
+
+func (s *CandleStickSubscriber) WriteMsg([]byte) error {
+	return nil
 }
 
 type pushInfo struct {

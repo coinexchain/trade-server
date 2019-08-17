@@ -517,7 +517,7 @@ func parseQueryKVStoreParams(r *http.Request) (time int64, sid int64, count int,
 	}
 
 	count, err = strconv.Atoi(countStr)
-	if err == nil {
+	if err != nil {
 		return time, sid, count, err
 	} else if count <= 0 {
 		return time, sid, count, ErrInvalidParams(queryKeyCount)

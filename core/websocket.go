@@ -15,7 +15,6 @@ const (
 	SeparateArgu = ":"
 	MinArguNum   = 0
 	MaxArguNum   = 2
-	NullParam    = ""
 )
 
 func init() {
@@ -34,7 +33,7 @@ func init() {
 }
 
 type ImplSubscriber struct {
-	websocket.Conn
+	*websocket.Conn
 	value interface{}
 }
 
@@ -47,11 +46,11 @@ func (i ImplSubscriber) WriteMsg(v []byte) error {
 }
 
 type Conn struct {
-	websocket.Conn
+	*websocket.Conn
 	topicWithParams map[string][]string // topic --> params
 }
 
-func NewConn(c websocket.Conn) *Conn {
+func NewConn(c *websocket.Conn) *Conn {
 	return &Conn{
 		Conn:            c,
 		topicWithParams: make(map[string][]string),
@@ -227,7 +226,7 @@ func (w *WebsocketManager) GetTxSubscribeInfo() map[string][]Subscriber {
 
 // Push msgs----------------------------
 
-func assembleJson(typeKey string, info []byte) []byte {
+func assembleJSON(typeKey string, info []byte) []byte {
 	m := make(map[string]string)
 	m[Type] = typeKey
 	m[Payload] = ""
@@ -237,7 +236,7 @@ func assembleJson(typeKey string, info []byte) []byte {
 }
 
 func sendEncodeMsg(subscriber Subscriber, typeKey string, info []byte) {
-	msg := assembleJson(typeKey, info)
+	msg := assembleJSON(typeKey, info)
 	if err := subscriber.WriteMsg(msg); err != nil {
 		log.Errorf(err.Error())
 	}
