@@ -58,25 +58,25 @@ func NewConn(c websocket.Conn) *Conn {
 	}
 }
 
-type ConnWithParams map[string]map[Conn]struct{}
+type ConnWithParams map[string]map[*Conn]struct{}
 
 type WebsocketManager struct {
 	sync.RWMutex
 
-	subs           map[string]ConnWithParams    // topic --> params
-	connWithTopics map[Conn]map[string]struct{} // conn --> topics
+	subs           map[string]ConnWithParams     // topic --> params
+	connWithTopics map[*Conn]map[string]struct{} // conn --> topics
 
-	topicAndConns map[string]map[Conn]struct{}
+	topicAndConns map[string]map[*Conn]struct{}
 }
 
 func NewWebSocketManager() *WebsocketManager {
 	return &WebsocketManager{
 		subs:           make(map[string]ConnWithParams),
-		connWithTopics: make(map[Conn]map[string]struct{}),
+		connWithTopics: make(map[*Conn]map[string]struct{}),
 	}
 }
 
-func (w *WebsocketManager) CloseConn(c Conn) error {
+func (w *WebsocketManager) CloseConn(c *Conn) error {
 	w.Lock()
 	defer w.Unlock()
 
@@ -95,7 +95,7 @@ func (w *WebsocketManager) CloseConn(c Conn) error {
 	return c.Close()
 }
 
-func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, c Conn) error {
+func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, c *Conn) error {
 	w.Lock()
 	defer w.Unlock()
 	values := strings.Split(subscriptionTopic, SeparateArgu)
@@ -112,7 +112,7 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, c Conn) er
 	return nil
 }
 
-func (w *WebsocketManager) RemoveSubscribeConn(c Conn, topic string) {
+func (w *WebsocketManager) RemoveSubscribeConn(c *Conn, topic string) {
 	w.Lock()
 	defer w.Unlock()
 

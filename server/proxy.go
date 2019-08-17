@@ -10,6 +10,10 @@ func (t TestSubscriber) Detail() interface{} {
 	return []string{"detail"}
 }
 
+func (t TestSubscriber) WriteMsg([]byte) error {
+	return nil
+}
+
 type TestSubscribeManager struct {
 }
 
@@ -71,20 +75,20 @@ func (sm TestSubscribeManager) GetTxSubscribeInfo() map[string][]core.Subscriber
 func (sm TestSubscribeManager) PushSlash(subscriber core.Subscriber, info []byte)       {}
 func (sm TestSubscribeManager) PushHeight(subscriber core.Subscriber, info []byte)      {}
 func (sm TestSubscribeManager) PushTicker(subscriber core.Subscriber, t []*core.Ticker) {}
-func (sm TestSubscribeManager) PushDepthSell(subscriber core.Subscriber, delta map[*core.PricePoint]bool) {
-}
-func (sm TestSubscribeManager) PushDepthBuy(subscriber core.Subscriber, delta map[*core.PricePoint]bool) {
-}
-func (sm TestSubscribeManager) PushCandleStick(subscriber core.Subscriber, cs *core.CandleStick) {}
-func (sm TestSubscribeManager) PushDeal(subscriber core.Subscriber, info []byte)                 {}
-func (sm TestSubscribeManager) PushCreateOrder(subscriber core.Subscriber, info []byte)          {}
-func (sm TestSubscribeManager) PushFillOrder(subscriber core.Subscriber, info []byte)            {}
-func (sm TestSubscribeManager) PushCancelOrder(subscriber core.Subscriber, info []byte)          {}
-func (sm TestSubscribeManager) PushBancorInfo(subscriber core.Subscriber, info []byte)           {}
-func (sm TestSubscribeManager) PushBancorTrade(subscriber core.Subscriber, info []byte)          {}
-func (sm TestSubscribeManager) PushIncome(subscriber core.Subscriber, info []byte)               {}
-func (sm TestSubscribeManager) PushUnbonding(subscriber core.Subscriber, info []byte)            {}
-func (sm TestSubscribeManager) PushRedelegation(subscriber core.Subscriber, info []byte)         {}
-func (sm TestSubscribeManager) PushUnlock(subscriber core.Subscriber, info []byte)               {}
-func (sm TestSubscribeManager) PushTx(subscriber core.Subscriber, info []byte)                   {}
-func (sm TestSubscribeManager) PushComment(subscriber core.Subscriber, info []byte)              {}
+func (sm TestSubscribeManager) PushDepthSell(subscriber core.Subscriber, info []byte)   {}
+
+func (sm TestSubscribeManager) PushDepthBuy(subscriber core.Subscriber, info []byte) {}
+
+func (sm TestSubscribeManager) PushCandleStick(subscriber core.Subscriber, info []byte)  {}
+func (sm TestSubscribeManager) PushDeal(subscriber core.Subscriber, info []byte)         {}
+func (sm TestSubscribeManager) PushCreateOrder(subscriber core.Subscriber, info []byte)  {}
+func (sm TestSubscribeManager) PushFillOrder(subscriber core.Subscriber, info []byte)    {}
+func (sm TestSubscribeManager) PushCancelOrder(subscriber core.Subscriber, info []byte)  {}
+func (sm TestSubscribeManager) PushBancorInfo(subscriber core.Subscriber, info []byte)   {}
+func (sm TestSubscribeManager) PushBancorTrade(subscriber core.Subscriber, info []byte)  {}
+func (sm TestSubscribeManager) PushIncome(subscriber core.Subscriber, info []byte)       {}
+func (sm TestSubscribeManager) PushUnbonding(subscriber core.Subscriber, info []byte)    {}
+func (sm TestSubscribeManager) PushRedelegation(subscriber core.Subscriber, info []byte) {}
+func (sm TestSubscribeManager) PushUnlock(subscriber core.Subscriber, info []byte)       {}
+func (sm TestSubscribeManager) PushTx(subscriber core.Subscriber, info []byte)           {}
+func (sm TestSubscribeManager) PushComment(subscriber core.Subscriber, info []byte)      {}
