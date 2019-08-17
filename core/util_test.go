@@ -1,10 +1,10 @@
 package core
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
-	"github.com/stretchr/testify/require"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestBaseCandleStick(t *testing.T) {
@@ -98,14 +98,14 @@ func TestCandleStickRecord(t *testing.T) {
 	csSlice = csrMan.NewBlock(T("2019-07-15T08:09:10Z"))
 	require.Equal(t, []CandleStick{
 		{
-			OpenPrice:     sdk.NewDec(50),
-			ClosePrice:    sdk.NewDec(10),
-			HighPrice:     sdk.NewDec(50),
-			LowPrice:      sdk.NewDec(10),
-			TotalDeal:     sdk.NewInt(4),
-			EndingUnixTime:lastTimeOld.Unix(),
-			TimeSpan:      Minute,
-			Market:        market1,
+			OpenPrice:      sdk.NewDec(50),
+			ClosePrice:     sdk.NewDec(10),
+			HighPrice:      sdk.NewDec(50),
+			LowPrice:       sdk.NewDec(10),
+			TotalDeal:      sdk.NewInt(4),
+			EndingUnixTime: lastTimeOld.Unix(),
+			TimeSpan:       Minute,
+			Market:         market1,
 		},
 	}, csSlice)
 
@@ -125,14 +125,14 @@ func TestCandleStickRecord(t *testing.T) {
 	csSlice = csrMan.NewBlock(T("2019-07-15T08:10:40Z"))
 	require.Equal(t, []CandleStick{
 		{
-			OpenPrice:     sdk.NewDec(10),
-			ClosePrice:    sdk.NewDec(20),
-			HighPrice:     sdk.NewDec(40),
-			LowPrice:      sdk.NewDec(10),
-			TotalDeal:     sdk.NewInt(6),
-			EndingUnixTime:lastTimeOld.Unix(),
-			TimeSpan:      Minute,
-			Market:        market1,
+			OpenPrice:      sdk.NewDec(10),
+			ClosePrice:     sdk.NewDec(20),
+			HighPrice:      sdk.NewDec(40),
+			LowPrice:       sdk.NewDec(10),
+			TotalDeal:      sdk.NewInt(6),
+			EndingUnixTime: lastTimeOld.Unix(),
+			TimeSpan:       Minute,
+			Market:         market1,
 		},
 	}, csSlice)
 
@@ -144,28 +144,27 @@ func TestCandleStickRecord(t *testing.T) {
 	csSlice = csrMan.NewBlock(T("2019-07-15T09:00:40Z"))
 	require.Equal(t, []CandleStick{
 		{
-			OpenPrice:     sdk.NewDec(80),
-			ClosePrice:    sdk.NewDec(80),
-			HighPrice:     sdk.NewDec(80),
-			LowPrice:      sdk.NewDec(80),
-			TotalDeal:     sdk.NewInt(10),
-			EndingUnixTime:lastTimeOld.Unix(),
-			TimeSpan:      Minute,
-			Market:        market1,
+			OpenPrice:      sdk.NewDec(80),
+			ClosePrice:     sdk.NewDec(80),
+			HighPrice:      sdk.NewDec(80),
+			LowPrice:       sdk.NewDec(80),
+			TotalDeal:      sdk.NewInt(10),
+			EndingUnixTime: lastTimeOld.Unix(),
+			TimeSpan:       Minute,
+			Market:         market1,
 		},
 		{
-			OpenPrice:     sdk.NewDec(50),
-			ClosePrice:    sdk.NewDec(80),
-			HighPrice:     sdk.NewDec(80),
-			LowPrice:      sdk.NewDec(10),
-			TotalDeal:     sdk.NewInt(20),
-			EndingUnixTime:lastTimeOld.Unix(),
-			TimeSpan:      Hour,
-			Market:        market1,
+			OpenPrice:      sdk.NewDec(50),
+			ClosePrice:     sdk.NewDec(80),
+			HighPrice:      sdk.NewDec(80),
+			LowPrice:       sdk.NewDec(10),
+			TotalDeal:      sdk.NewInt(20),
+			EndingUnixTime: lastTimeOld.Unix(),
+			TimeSpan:       Hour,
+			Market:         market1,
 		},
 	}, csSlice)
 }
-
 
 func TestDepthManager(t *testing.T) {
 	dm := DefaultDepthManager()
@@ -198,4 +197,3 @@ func TestDepthManager(t *testing.T) {
 		require.Equal(t, &PricePoint{sdk.NewDec(80), sdk.NewInt(70)}, pp)
 	}
 }
-

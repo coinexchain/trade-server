@@ -1,11 +1,11 @@
 package core
 
 import (
-//	"github.com/coinexchain/dex/app"
-//	"github.com/coinexchain/dex/modules/authx"
-//	"github.com/coinexchain/dex/modules/bancorlite"
-//	"github.com/coinexchain/dex/modules/comment"
-//	"github.com/coinexchain/dex/modules/market"
+	//	"github.com/coinexchain/dex/app"
+	//	"github.com/coinexchain/dex/modules/authx"
+	//	"github.com/coinexchain/dex/modules/bancorlite"
+	//	"github.com/coinexchain/dex/modules/comment"
+	//	"github.com/coinexchain/dex/modules/market"
 
 	"time"
 
@@ -89,9 +89,9 @@ type CancelOrderInfo struct {
 }
 
 type NewHeightInfo struct {
-	Height    int64     `json:"height"`
-	TimeStamp time.Time `json:"timestamp"`
-	LastBlockHash cmn.HexBytes  `json:"last_block_hash"`
+	Height        int64        `json:"height"`
+	TimeStamp     time.Time    `json:"timestamp"`
+	LastBlockHash cmn.HexBytes `json:"last_block_hash"`
 }
 
 type TransferRecord struct {
@@ -149,12 +149,12 @@ type LockedCoin struct {
 type LockedCoins []LockedCoin
 
 type NotificationUnlock struct {
-	Address     sdk.AccAddress    `json:"address" yaml:"address"`
-	Unlocked    sdk.Coins         `json:"unlocked"`
-	LockedCoins LockedCoins `json:"locked_coins"`
-	FrozenCoins sdk.Coins         `json:"frozen_coins"`
-	Coins       sdk.Coins         `json:"coins" yaml:"coins"`
-	Height      int64             `json:"height"`
+	Address     sdk.AccAddress `json:"address" yaml:"address"`
+	Unlocked    sdk.Coins      `json:"unlocked"`
+	LockedCoins LockedCoins    `json:"locked_coins"`
+	FrozenCoins sdk.Coins      `json:"frozen_coins"`
+	Coins       sdk.Coins      `json:"coins" yaml:"coins"`
+	Height      int64          `json:"height"`
 }
 
 type CommentRef struct {
@@ -210,4 +210,3 @@ func DecToBigEndianBytes(d sdk.Dec) []byte {
 	}
 	return result[:]
 }
-
