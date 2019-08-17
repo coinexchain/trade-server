@@ -20,10 +20,14 @@ const (
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.WarnLevel)
-	err := os.Mkdir("log", 0755)
-	if err != nil {
-		log.Fatal(err)
+
+	_, err := os.Stat("log")
+	if err != nil && os.IsNotExist(err) {
+		if err = os.Mkdir("log", 0755); err != nil {
+			log.Fatal(err)
+		}
 	}
+
 	file, err := os.OpenFile("log/log.out", os.O_RDWR|os.O_CREATE|os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatal(err)
