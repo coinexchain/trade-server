@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/coinexchain/trade-server/core"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -438,13 +437,13 @@ func parseQueryHeightParams(str string) (height int64, err error) {
 
 	if str == "" {
 		return height, ErrNilParams(queryKeyHeight)
-	} else {
-		height, err = strconv.ParseInt(str, 10, 64)
-		if err != nil {
-			return height, err
-		} else if height < 0 {
-			return height, ErrNegativeParams(queryKeyHeight)
-		}
+	}
+
+	height, err = strconv.ParseInt(str, 10, 64)
+	if err != nil {
+		return height, err
+	} else if height < 0 {
+		return height, ErrNegativeParams(queryKeyHeight)
 	}
 
 	return
@@ -454,13 +453,13 @@ func parseQueryCountParams(str string) (count int, err error) {
 
 	if str == "" {
 		return count, ErrNilParams(queryKeyCount)
-	} else {
-		count, err = strconv.Atoi(str)
-		if err != nil {
-			return count, err
-		} else if count <= 0 {
-			return count, ErrInvalidParams(queryKeyCount)
-		}
+	}
+
+	count, err = strconv.Atoi(str)
+	if err != nil {
+		return count, err
+	} else if count <= 0 {
+		return count, ErrInvalidParams(queryKeyCount)
 	}
 
 	return
@@ -473,15 +472,16 @@ func parseQueryTimespanParams(str string) (byte, error) {
 	)
 	if str == "" {
 		return 0, ErrNilParams(queryKeyTimespan)
-	} else {
-		timespan, err = strconv.ParseInt(str, 10, 8)
-		if err != nil {
-			return 0, err
-		}
-		if byte(timespan) != core.Minute || byte(timespan) != core.Hour || byte(timespan) != core.Day {
-			return 0, ErrInvalidTimespan()
-		}
 	}
+
+	timespan, err = strconv.ParseInt(str, 10, 8)
+	if err != nil {
+		return 0, err
+	}
+	if byte(timespan) != core.Minute && byte(timespan) != core.Hour && byte(timespan) != core.Day {
+		return 0, ErrInvalidTimespan()
+	}
+
 	return byte(timespan), nil
 }
 
@@ -490,53 +490,53 @@ func parseQueryKVStoreParams(r *http.Request) (time int64, sid int64, count int,
 	timeStr := r.FormValue(queryKeyTime)
 	if timeStr == "" {
 		return time, sid, count, ErrNilParams(queryKeyTime)
-	} else {
-		time, err = strconv.ParseInt(timeStr, 10, 64)
-		if err != nil {
-			return time, sid, count, err
-		} else if time <= 0 {
-			return time, sid, count, ErrInvalidParams(queryKeyTime)
-		}
+	}
+
+	time, err = strconv.ParseInt(timeStr, 10, 64)
+	if err != nil {
+		return time, sid, count, err
+	} else if time <= 0 {
+		return time, sid, count, ErrInvalidParams(queryKeyTime)
 	}
 
 	sidStr := r.FormValue(queryKeySid)
 	if sidStr == "" {
 		return time, sid, count, ErrNilParams(queryKeySid)
-	} else {
-		sid, err = strconv.ParseInt(timeStr, 10, 64)
-		if err != nil {
-			return time, sid, count, err
-		} else if sid < 0 {
-			return time, sid, count, ErrNegativeParams(queryKeySid)
-		}
+	}
+
+	sid, err = strconv.ParseInt(timeStr, 10, 64)
+	if err != nil {
+		return time, sid, count, err
+	} else if sid < 0 {
+		return time, sid, count, ErrNegativeParams(queryKeySid)
 	}
 
 	countStr := r.FormValue(queryKeyCount)
 	if countStr == "" {
 		return time, sid, count, ErrNilParams(queryKeyCount)
-	} else {
-		count, err = strconv.Atoi(countStr)
-		if err != nil {
-			return time, sid, count, err
-		} else if count <= 0 {
-			return time, sid, count, ErrInvalidParams(queryKeyCount)
-		}
+	}
+
+	count, err = strconv.Atoi(countStr)
+	if err == nil {
+		return time, sid, count, err
+	} else if count <= 0 {
+		return time, sid, count, ErrInvalidParams(queryKeyCount)
 	}
 
 	return
 }
 
 func ErrNilParams(params string) error {
-	return errors.New(fmt.Sprintf("%s can not be nil", params))
+	return fmt.Errorf("%s can not be nil", params)
 }
 func ErrNegativeParams(params string) error {
-	return errors.New(fmt.Sprintf("%s cannot be negative", params))
+	return fmt.Errorf("%s cannot be negative", params)
 }
 func ErrInvalidParams(params string) error {
-	return errors.New(fmt.Sprintf("%s must greater than 0", params))
+	return fmt.Errorf("%s must greater than 0", params)
 }
 func ErrInvalidTimespan() error {
-	return errors.New(fmt.Sprintf("timespan must be Minute:16/Hour:32/Day:48"))
+	return fmt.Errorf("timespan must be Minute:16/Hour:32/Day:48")
 }
 
 type DataWrapped struct {

@@ -52,7 +52,7 @@ func (tc *TradeConsumer) Consume() {
 			offset = sarama.OffsetOldest
 		} else {
 			// start from next offset
-			offset += 1
+			offset++
 		}
 		pc, err := tc.ConsumePartition(tc.topic, partition, offset)
 		if err != nil {
@@ -61,7 +61,7 @@ func (tc *TradeConsumer) Consume() {
 		}
 		wg.Add(1)
 
-		go func(sarama.PartitionConsumer) {
+		go func(pc sarama.PartitionConsumer, partition int32) {
 			log.Printf("PartitionConsumer %v start from %v\n", partition, offset)
 			defer func() {
 				pc.AsyncClose()
@@ -83,7 +83,7 @@ func (tc *TradeConsumer) Consume() {
 					return
 				}
 			}
-		}(pc)
+		}(pc, partition)
 	}
 
 	wg.Wait()
