@@ -28,7 +28,7 @@ func init() {
 		}
 	}
 
-	file, err := os.OpenFile("log/log.out", os.O_RDWR|os.O_CREATE|os.O_CREATE, 0666)
+	file, err := os.OpenFile("log/log.out", os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
