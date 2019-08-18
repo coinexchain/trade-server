@@ -18,11 +18,10 @@ const (
 )
 
 func init() {
-	log.SetFormatter(&log.JSONFormatter{})
+	log.SetFormatter(&log.TextFormatter{})
 	log.SetLevel(log.WarnLevel)
 
-	_, err := os.Stat("log")
-	if err != nil && os.IsNotExist(err) {
+	if _, err := os.Stat("log"); err != nil && os.IsNotExist(err) {
 		if err = os.Mkdir("log", 0755); err != nil {
 			log.Fatal(err)
 		}
