@@ -101,7 +101,7 @@ type TransferRecord struct {
 }
 
 type NotificationTx struct {
-	Signers      []sdk.AccAddress `json:"signers"`
+	Signers      []string         `json:"signers"`
 	Transfers    []TransferRecord `json:"transfers"`
 	SerialNumber int64            `json:"serial_number"`
 	MsgTypes     []string         `json:"msg_types"`
@@ -149,57 +149,57 @@ type LockedCoin struct {
 type LockedCoins []LockedCoin
 
 type NotificationUnlock struct {
-	Address     sdk.AccAddress `json:"address" yaml:"address"`
-	Unlocked    sdk.Coins      `json:"unlocked"`
-	LockedCoins LockedCoins    `json:"locked_coins"`
-	FrozenCoins sdk.Coins      `json:"frozen_coins"`
-	Coins       sdk.Coins      `json:"coins" yaml:"coins"`
-	Height      int64          `json:"height"`
+	Address     string      `json:"address" yaml:"address"`
+	Unlocked    sdk.Coins   `json:"unlocked"`
+	LockedCoins LockedCoins `json:"locked_coins"`
+	FrozenCoins sdk.Coins   `json:"frozen_coins"`
+	Coins       sdk.Coins   `json:"coins" yaml:"coins"`
+	Height      int64       `json:"height"`
 }
 
 type CommentRef struct {
-	ID           uint64         `json:"id"`
-	RewardTarget sdk.AccAddress `json:"reward_target"`
-	RewardToken  string         `json:"reward_token"`
-	RewardAmount int64          `json:"reward_amount"`
-	Attitudes    []int32        `json:"attitudes"`
+	ID           uint64  `json:"id"`
+	RewardTarget string  `json:"reward_target"`
+	RewardToken  string  `json:"reward_token"`
+	RewardAmount int64   `json:"reward_amount"`
+	Attitudes    []int32 `json:"attitudes"`
 }
 
 type TokenComment struct {
-	ID          uint64         `json:"id"`
-	Height      int64          `json:"height"`
-	Sender      sdk.AccAddress `json:"sender"`
-	Token       string         `json:"token"`
-	Donation    int64          `json:"donation"`
-	Title       string         `json:"title"`
-	Content     string         `json:"content"`
-	ContentType int8           `json:"content_type"`
-	References  []CommentRef   `json:"references"`
+	ID          uint64       `json:"id"`
+	Height      int64        `json:"height"`
+	Sender      string       `json:"sender"`
+	Token       string       `json:"token"`
+	Donation    int64        `json:"donation"`
+	Title       string       `json:"title"`
+	Content     string       `json:"content"`
+	ContentType int8         `json:"content_type"`
+	References  []CommentRef `json:"references"`
 }
 
 type MsgBancorInfoForKafka struct {
-	Owner              sdk.AccAddress `json:"sender"`
-	Stock              string         `json:"stock"`
-	Money              string         `json:"money"`
-	InitPrice          sdk.Dec        `json:"init_price"`
-	MaxSupply          sdk.Int        `json:"max_supply"`
-	MaxPrice           sdk.Dec        `json:"max_price"`
-	Price              sdk.Dec        `json:"price"`
-	StockInPool        sdk.Int        `json:"stock_in_pool"`
-	MoneyInPool        sdk.Int        `json:"money_in_pool"`
-	EarliestCancelTime int64          `json:"earliest_cancel_time"`
-	BlockHeight        int64          `json:"block_height"`
+	Owner              string  `json:"sender"`
+	Stock              string  `json:"stock"`
+	Money              string  `json:"money"`
+	InitPrice          sdk.Dec `json:"init_price"`
+	MaxSupply          sdk.Int `json:"max_supply"`
+	MaxPrice           sdk.Dec `json:"max_price"`
+	Price              sdk.Dec `json:"price"`
+	StockInPool        sdk.Int `json:"stock_in_pool"`
+	MoneyInPool        sdk.Int `json:"money_in_pool"`
+	EarliestCancelTime int64   `json:"earliest_cancel_time"`
+	BlockHeight        int64   `json:"block_height"`
 }
 
 type MsgBancorTradeInfoForKafka struct {
-	Sender      sdk.AccAddress `json:"sender"`
-	Stock       string         `json:"stock"`
-	Money       string         `json:"money"`
-	Amount      int64          `json:"amount"`
-	Side        byte           `json:"side"`
-	MoneyLimit  int64          `json:"money_limit"`
-	TxPrice     sdk.Dec        `json:"transaction_price"`
-	BlockHeight int64          `json:"block_height"`
+	Sender      string  `json:"sender"`
+	Stock       string  `json:"stock"`
+	Money       string  `json:"money"`
+	Amount      int64   `json:"amount"`
+	Side        byte    `json:"side"`
+	MoneyLimit  int64   `json:"money_limit"`
+	TxPrice     sdk.Dec `json:"transaction_price"`
+	BlockHeight int64   `json:"block_height"`
 }
 
 func DecToBigEndianBytes(d sdk.Dec) []byte {

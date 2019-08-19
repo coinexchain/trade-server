@@ -350,7 +350,7 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 	hub.sid++
 
 	for _, acc := range v.Signers {
-		signer := acc.String()
+		signer := acc
 		k := hub.getTxKey(signer)
 		hub.batch.Set(k, snBytes)
 		hub.sid++
@@ -474,7 +474,7 @@ func (hub *Hub) handleNotificationUnlock(bz []byte) {
 		hub.Log("Error in Unmarshal NotificationUnlock")
 		return
 	}
-	addr := v.Address.String()
+	addr := v.Address
 	key := hub.getUnlockEventKey(addr)
 	hub.batch.Set(key, bz)
 	hub.sid++
@@ -647,7 +647,7 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 		return
 	}
 	//Save to KVStore
-	addr := v.Sender.String()
+	addr := v.Sender
 	key := hub.getBancorTradeKey(addr)
 	hub.batch.Set(key, bz)
 	hub.sid++
