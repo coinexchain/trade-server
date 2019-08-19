@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	MaxCount = 1024
+	MaxCount         = 1024
+	Bech32MainPrefix = "coinex"
 	//These bytes are used as the first byte in key
 	CandleStickByte  = byte(0x10)
 	DealByte         = byte(0x12)
@@ -44,6 +45,27 @@ func int64ToBigEndianBytes(n int64) []byte {
 	var b [8]byte
 	binary.BigEndian.PutUint64(b[:], uint64(n))
 	return b[:]
+}
+
+func InitSdkConfig(prefix string) {
+	// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address
+	Bech32PrefixAccAddr := prefix
+	// Bech32PrefixAccPub defines the Bech32 prefix of an account's public keys
+	Bech32PrefixAccPub := prefix + sdk.PrefixPublic
+	// Bech32PrefixValAddr defines the Bech32 prefix of a validator's operator address
+	Bech32PrefixValAddr := prefix + sdk.PrefixValidator + sdk.PrefixOperator
+	// Bech32PrefixValPub defines the Bech32 prefix of a validator's operator public key
+	Bech32PrefixValPub := prefix + sdk.PrefixValidator + sdk.PrefixOperator + sdk.PrefixPublic
+	// Bech32PrefixConsAddr defines the Bech32 prefix of a consensus node address
+	Bech32PrefixConsAddr := prefix + sdk.PrefixValidator + sdk.PrefixConsensus
+	// Bech32PrefixConsPub defines the Bech32 prefix of a consensus node public key
+	Bech32PrefixConsPub := prefix + sdk.PrefixValidator + sdk.PrefixConsensus + sdk.PrefixPublic
+
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(Bech32PrefixAccAddr, Bech32PrefixAccPub)
+	config.SetBech32PrefixForValidator(Bech32PrefixValAddr, Bech32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(Bech32PrefixConsAddr, Bech32PrefixConsPub)
+	config.Seal()
 }
 
 // Following are some functions to generate keys to access the KVStore
