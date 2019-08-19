@@ -279,6 +279,9 @@ func (hub *Hub) beginForCandleSticks() {
 				continue
 			}
 			info := hub.subMan.GetCandleStickSubscribeInfo()
+			if info == nil {
+				continue
+			}
 			sym = cs.Market
 			targets, ok = info[sym]
 			if !ok {
@@ -750,8 +753,8 @@ func (hub *Hub) commitForDepth() {
 			continue
 		}
 
-		buyBz := encodeDepth(depthDeltaBuy, true)
-		sellBz := encodeDepth(depthDeltaSell, false)
+		buyBz := encodeDepth(market, depthDeltaBuy, true)
+		sellBz := encodeDepth(market, depthDeltaSell, false)
 		for _, target := range targets {
 			if len(depthDeltaSell) != 0 {
 				hub.subMan.PushDepthSell(target, sellBz)

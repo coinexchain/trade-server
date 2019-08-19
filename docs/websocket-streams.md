@@ -222,21 +222,22 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
 
 ```json
 {
-	"type": "depth",
-	"payload": {
-            "bids": [
-                {
-                    "price": "0.936",		// price
-                    "amount": "100000"		// amount
-                }
-            ],
-            "asks": [
-                {
-                    "price": "0.936",		// price
-                    "amount": "100000"		// amount
-                }
-            ]
-	}
+    "type": "depth",
+    "payload": {
+        "trading-pair": "ethsw/cet",
+        "bids": [
+            {
+                "price": "0.936",		// price
+                "amount": "100000"		// amount
+            }
+        ],
+        "asks": [
+            {
+                "price": "0.936",		// price
+                "amount": "100000"		// amount
+            }
+        ]
+    }
 }
 ```
 

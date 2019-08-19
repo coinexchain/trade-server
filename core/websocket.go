@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -206,9 +207,13 @@ func (w *WebsocketManager) GetCandleStickSubscribeInfo() map[string][]Subscriber
 	for conn := range conns {
 		params := conn.topicWithParams[KlineKey]
 		for i := 0; i < len(params); i += 2 {
+			level, err := strconv.Atoi(params[i+1])
+			if err != nil {
+				return nil
+			}
 			res[params[i]] = append(res[params[i]], ImplSubscriber{
 				Conn:  conn.Conn,
-				value: params[i+1],
+				value: byte(level),
 			})
 		}
 	}
