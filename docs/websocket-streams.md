@@ -86,9 +86,9 @@ websocket的响应可能含有以下三种类型：
 {
 	"type": "blockinfo",
 	"payload": {	
-        "height": 162537, 			// height
-        "time": 673571293,			// unix time second
-        "hash": "000000000000000000ac6c4c9a6c2e406ac32b53af5910039be27f669d767356" // block hash
+            "height": 162537, 			// height
+            "time": 673571293,			// unix time second
+            "hash": "000000000000000000ac6c4c9a6c2e406ac32b53af5910039be27f669d767356" // block hash
 	}
 }
 ```
@@ -106,28 +106,28 @@ websocket的响应可能含有以下三种类型：
 {
 	"type": "txs",
 	"payload": {
-        "transfers": [
-            {
-                "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-                "recipient": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",
-                "amount": "8467.863"		// amount
-            },
-            {
-                "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-                "recipient": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",
-                "amount": "8467.863"		// amount
-            }
-        ],
-        "signers": [
-            "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-            "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7"
-        ],								    // signers 
-        "serial_number": 100, 				// tx global serial number
-        "msg_types": [
-            "asset/MsgIssueToken"
-        ],								    // tx messages type
-        "tx_json": "...",                   // raw tx json byte
-        "height": 16728						// block height
+            "transfers": [
+                {
+                    "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
+                    "recipient": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",
+                    "amount": "8467.863"		// amount
+                },
+                {
+                    "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
+                    "recipient": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",
+                    "amount": "8467.863"		// amount
+                }
+            ],
+            "signers": [
+                "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
+                "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7"
+            ],							// signers 
+            "serial_number": 100, 				// tx global serial number
+            "msg_types": [
+                "asset/MsgIssueToken"
+            ],							// tx messages type
+            "tx_json": "...",                                   // raw tx json byte
+            "height": 16728				        // block height
 	} 
 }
 
@@ -148,10 +148,10 @@ websocket的响应可能含有以下三种类型：
 {
 	"type": "slash",
 	"payload": {
-        "validator": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",	// validator address
-        "power":	"67.2",				// vote power
-        "reason": "Double Sign", 		// reason
-        "jailed": true					// jailed
+            "validator": "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7",	// validator address
+            "power":	"67.2",				                        // vote power
+            "reason": "Double Sign", 		                                // reason
+            "jailed": true					                // jailed
 	}
 }	
 ```
@@ -170,11 +170,13 @@ websocket的响应可能含有以下三种类型：
 {
 	"type": "ticker",
 	"payload": {
-        {
-            "market": "bch/cet",				// market
-            "new": "0.986",		// new price
-            "old": "1.12" 		// old price
-        }       
+            "tickers": [
+                {
+                    "market": "bch/cet",			// market
+                    "new": "0.986",		                // new price
+                    "old": "1.12"                               // old price
+                }
+            ]       
 	}
 }
 ```
@@ -196,14 +198,14 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
 {
 	"type": "kline",
 	"payload": {
-        "open": "0.989",				// open price
-        "close": "0.97", 				// close price
-        "high": "1.29",					// high price
-        "low": "0.93", 					// low price
-        "total": "8652",				// total deal stock
-        "unix_time":	"786367672",		// ending unix time
-        "time_span": 16,				// Kline internal
-        "market": "etc/cet"			// trading-pai
+            "open": "0.989",				// open price
+            "close": "0.97", 				// close price
+            "high": "1.29",			        // high price
+            "low": "0.93", 			        // low price
+            "total": "8652",				// total deal stock
+            "unix_time":	"786367672",		// ending unix time
+            "time_span": 16,				// Kline internal
+            "market": "etc/cet"                         // trading-pai
 	}
 }	 	
 ```
@@ -222,18 +224,18 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
 {
 	"type": "depth",
 	"payload": {
-        "bids": [
-            {
-                "price": "0.936",		// price
-                "amount": "100000"		// amount
-            }
-        ],
-        "asks": [
-            {
-                "price": "0.936",		// price
-                "amount": "100000"		// amount
-            }
-        ]
+            "bids": [
+                {
+                    "price": "0.936",		// price
+                    "amount": "100000"		// amount
+                }
+            ],
+            "asks": [
+                {
+                    "price": "0.936",		// price
+                    "amount": "100000"		// amount
+                }
+            ]
 	}
 }
 ```
@@ -253,16 +255,16 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
     "type": "deal",
     "payload": {
         "order_id": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x-9",		// order id
-        "trading_pair":	"eth/cet",		// trading-pair
-        "height": 2773,				// block height
-        "side":	1, 					// order side; BUY / SELL
-        "price": "0.73", 			// order price
-        "freeze": 836382,			// freeze sato.CET amount
-        "left_stock": 7753, 		// order left stock
-        "deal_stock": 773,			// order deal stock
-        "deal_money": 726,			// order deal money
-        "curr_stock": 8262,		    // curr stock
-        "curr_money": 7753			// curr money 
+        "trading_pair":	"eth/cet",		      // trading-pair
+        "height": 2773,				      // block height
+        "side":	1, 			              // order side; BUY / SELL
+        "price": "0.73", 			      // order price
+        "freeze": 836382,			      // freeze sato.CET amount
+        "left_stock": 7753, 		              // order left stock
+        "deal_stock": 773,			      // order deal stock
+        "deal_money": 726,			      // order deal money
+        "curr_stock": 8262,		              // curr stock
+        "curr_money": 7753			      // curr money 
     }
 }
 
@@ -286,18 +288,18 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
 {
 	"type": "create_order",
 	"payload": {
-        "order_id": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x-9",		// order id
-        "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x", 		// order sender
-        "trading_pair":	"eth/cet",				// trading-pair
-        "order_type": 2,			// order type; Limit Order
-        "price": "0.73", 			// order price
-        "quantity": 8763892, 	    // order quantity
-        "side":	1, 					// order side; BUY / SELL
-        "time_in_force": 3,		    // GTC / IOC
-        "feature_fee": 21562，	// order feature fee; sato.CET as the unit
-        "height": 2773,				// block height
-        "frozen_fee": 782553,	    // order frozen fee; sato.CET as the unit
-        "freeze": 836382			// freeze sato.CET amount
+            "order_id": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x-9",	    // order id
+            "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x", 		    // order sender
+            "trading_pair":	"eth/cet",           // trading-pair
+            "order_type": 2,                         // order type; Limit Order
+            "price": "0.73", 			     // order price
+            "quantity": 8763892, 	             // order quantity
+            "side":	1, 			     // order side; BUY / SELL
+            "time_in_force": 3,                      // GTC / IOC
+            "feature_fee": 21562,	             // order feature fee; sato.CET as the unit
+            "height": 2773,		             // block height
+            "frozen_fee": 782553,	             // order frozen fee; sato.CET as the unit
+            "freeze": 836382			     // freeze sato.CET amount
 	}
 }
 
@@ -307,17 +309,17 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
 {
 	"type": "fill_order",
 	"payload": {
-        "order_id": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x-9",		// order id
-        "trading_pair":	"eth/cet",		// trading-pair
-        "height": 2773,				// block height
-        "side":	1, 					// order side; BUY / SELL
-        "price": "0.73", 			// order price
-        "freeze": 836382,			// freeze sato.CET amount
-        "left_stock": 7753, 		// order left stock
-        "deal_stock": 773,			// order deal stock
-        "deal_money": 726,			// order deal money
-        "curr_stock": 8262,		    // curr stock
-        "curr_money": 7753			// curr money 
+            "order_id": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x-9",		// order id
+            "trading_pair":	"eth/cet",		// trading-pair
+            "height": 2773,				// block height
+            "side":	1, 				// order side; BUY / SELL
+            "price": "0.73", 			        // order price
+            "freeze": 836382,			        // freeze sato.CET amount
+            "left_stock": 7753, 		        // order left stock
+            "deal_stock": 773,			        // order deal stock
+            "deal_money": 726,			        // order deal money
+            "curr_stock": 8262,		                // curr stock
+            "curr_money": 7753			        // curr money 
 	}
 }
 
@@ -327,17 +329,17 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
 {
 	"type": "cancel_order",
 	"payload": {
-        "order_id": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x-9",		// order id
-        "trading_pair":	"eth/cet",			// trading-pair
-        "height": 2773,				        // block height
-        "side":	1, 					        // order side; BUY / SELL
-        "price": "0.73", 			        // order price
-        "del_reason": "munual delete order", 
-        "used_commission": 37253, 	        // order used commission
-        "left_stock": 7753, 				// order left stock
-        "remain_amount": 7762,			    // order remain amount
-        "deal_stock": 773,			        // order deal stock
-        "deal_money": 722		            // order deal money
+            "order_id": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x-9",		// order id
+            "trading_pair":	"eth/cet",			// trading-pair
+            "height": 2773,				        // block height
+            "side":	1, 					// order side; BUY / SELL
+            "price": "0.73",                                    // order price
+            "del_reason": "munual delete order", 
+            "used_commission": 37253, 	                        // order used commission
+            "left_stock": 7753, 				// order left stock
+            "remain_amount": 7762,			        // order remain amount
+            "deal_stock": 773,			                // order deal stock
+            "deal_money": 722		                        // order deal money
 	}
 }
 
@@ -357,27 +359,27 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
 {
 	"type": "comment",
 	"payload": {
-        "id": 2,
-        "height": 2773,				// block height
-        "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x", 		// comment sender
-        "token": "eth",				// token symbol
-        "donation": 112,			// donation amount
-        "title": "The bese value token", 	// comment title
-        "content": "Its price will grow", 		// "content"
-        "content_type": 2, 			// content type
-        "references": [
-            {
-                "id": 3,
-                "reward_target": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-                "reward_token": "set",	
-                "reward_amount": 726712,
-                "attitudes": [
-                    1, 
-                    2,
-                    3
-                ]		
-            }
-        ],
+            "id": 2,
+            "height": 2773,				// block height
+            "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x", 		// comment sender
+            "token": "eth",				// token symbol
+            "donation": 112,			        // donation amount
+            "title": "The bese value token", 	        // comment title
+            "content": "Its price will grow",           // content
+            "content_type": 2, 			        // content type
+            "references": [
+                {
+                    "id": 3,
+                    "reward_target": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
+                    "reward_token": "set",	
+                    "reward_amount": 726712,
+                    "attitudes": [
+                        1, 
+                        2,
+                        3
+                    ]		
+                }
+            ]
 	}
 }
 
@@ -408,17 +410,17 @@ IPFS | 0
 {
 	"type": "bancor",
 	"payload": {
-        "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-        "stock": "set",
-        "money": "cet",
-        "init_price": "67351", 				// bancor init price
-        "max_supply": "27367129", 			// bancor max supply 
-        "max_price":	"3.212", 			// bancor max price
-        "price": "1.12", 					// bancor curr price
-        "stock_in_pool": "322",			// stock in pool
-        "money_in_pool": "21636", 		// money in pool
-        "enable_cancel_time": 76637128,			// bancor enable cancel time 
-        "block_height": 7632 			// block height
+            "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
+            "stock": "set",
+            "money": "cet",
+            "init_price": "67351", 				// bancor init price
+            "max_supply": "27367129", 			        // bancor max supply 
+            "max_price":	"3.212", 			// bancor max price
+            "price": "1.12", 	                                // bancor curr price
+            "stock_in_pool": "322",			        // stock in pool
+            "money_in_pool": "21636", 		                // money in pool
+            "enable_cancel_time": 76637128,			// bancor enable cancel time 
+            "block_height": 7632 			        // block height
 	} 
 }
 
@@ -430,7 +432,7 @@ IPFS | 0
 
 获取bancor合约的指定交易的成交信息
 
-**SubscriptionTopic** : `bancor-trade:<trading-pair>`
+**SubscriptionTopic** : `bancor-trade:<address>`
 
 **Response**:
 
@@ -439,14 +441,14 @@ IPFS | 0
 {
 	"type": "bancor-trade",
 	"payload": {
-        "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-        "stock": "set",
-        "money": "cet",
-        "amount": 27372,
-        "side": 1,
-        "monet_limit": 231,
-        "transaction_price": "2123.2", 
-        "block_height": 3631,
+            "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
+            "stock": "set",
+            "money": "cet",
+            "amount": 27372,
+            "side": 1,
+            "monet_limit": 231,
+            "transaction_price": "2123.2", 
+            "block_height": 3631,
 	}
 }
 ```
@@ -480,13 +482,13 @@ IPFS | 0
             "signers": [
                 "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
                 "coinex17qtadt7356l0sf0hq5fjycnflq9lnx9c6cx5k7"
-            ],								    // signers 
+            ],						        // signers 
             "serial_number": 100, 				// tx global serial number
             "msg_types": [
                 "asset/MsgIssueToken"
-            ],								    // tx messages type
-            "tx_json": "...",                   // raw tx json byte
-            "height": 16728						// block height
+            ],					                // tx messages type
+            "tx_json": "...",                                   // raw tx json byte
+            "height": 16728                                     // block height
         }
 }
 ```
@@ -505,11 +507,11 @@ IPFS | 0
 {
 	"type": "redelegation",
 	"payload": {        
-        "delegator": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-        "src": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-        "dst": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-        "amount": "32313",
-        "completion_time": "132432"
+            "delegator": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
+            "src": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
+            "dst": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
+            "amount": "32313",
+            "completion_time": "132432"
 	}
 }
 ```
@@ -529,10 +531,10 @@ IPFS | 0
 {
 	"type": "unbonding",
 	"payload": {       
-        "delegator": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-        "validator": "coinex1ughhs0eyames355v4tzq5nx2g806p55r323x",
-        "amount": "9023",
-        "completion_time": "1234323",
+            "delegator": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
+            "validator": "coinex1ughhs0eyames355v4tzq5nx2g806p55r323x",
+            "amount": "9023",
+            "completion_time": "1234323"
 	}
 }
 ```
@@ -552,54 +554,54 @@ IPFS | 0
 {
 	"type": "unlock",
 	"payload": {
-        "address": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
-        "unlocked": [
-            {
-                "amount": "2323",
-                "denom": "cet"
-            },
-            {
-                "amount": "3242",
-                "denom": "eth"
-            }
-        ],
-        "locked_coins": [
-            {
-                "coin": {
+            "address": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
+            "unlocked": [
+                {
                     "amount": "2323",
                     "denom": "cet"
                 },
-                "unlock_time": 212323
-            },
-            {
-                "coin": {
-                    "amount": "2323",
-                    "denom": "etv"
+                {
+                    "amount": "3242",
+                    "denom": "eth"
+                }
+            ],
+            "locked_coins": [
+                {
+                    "coin": {
+                        "amount": "2323",
+                        "denom": "cet"
+                    },
+                    "unlock_time": 212323
                 },
-                "unlock_time": 223312323
-            }
-        ],
-        "frozen_coins": [
-            {
-                "amount": "2323",
-                "denom": "cet"
-            },
-            {
-                "amount": "3242",
-                "denom": "eth"
-            }
-        ],
-        "coins": [
-            {
-                "amount": "2323",
-                "denom": "cet"
-            },
-            {
-                "amount": "3242",
-                "denom": "eth"
-            }
-        ],
-        "height": 100003
+                {
+                    "coin": {
+                        "amount": "2323",
+                        "denom": "etv"
+                    },
+                    "unlock_time": 223312323
+                }
+            ],
+            "frozen_coins": [
+                {
+                    "amount": "2323",
+                    "denom": "cet"
+                },
+                {
+                    "amount": "3242",
+                    "denom": "eth"
+                }
+            ],
+            "coins": [
+                {
+                    "amount": "2323",
+                    "denom": "cet"
+                },
+                {
+                    "amount": "3242",
+                    "denom": "eth"
+                }
+            ],
+            "height": 100003
 	}
 }
 ```
