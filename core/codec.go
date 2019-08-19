@@ -6,10 +6,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Depth struct {
-	Type string        `json:"type"`
+type DepthDetails struct {
 	Bids []*PricePoint `json:"bids"`
 	Asks []*PricePoint `json:"asks"`
+}
+
+type Depth struct {
+	Type    string       `json:"type"`
+	Payload DepthDetails `json:"payload"`
 }
 
 func encodeDepth(depth map[*PricePoint]bool, buy bool) []byte {
@@ -19,9 +23,9 @@ func encodeDepth(depth map[*PricePoint]bool, buy bool) []byte {
 	}
 	msg := Depth{Type: DepthKey}
 	if buy {
-		msg.Bids = values
+		msg.Payload.Bids = values
 	} else {
-		msg.Asks = values
+		msg.Payload.Asks = values
 	}
 
 	bz, err := json.Marshal(msg)

@@ -294,6 +294,9 @@ func (hub *Hub) beginForCandleSticks() {
 			triman.tkm.UpdateNewestPrice(cs.ClosePrice, currMinute)
 		}
 		bz := formatCandleStick(&cs)
+		if bz == nil {
+			continue
+		}
 		// Push candle sticks to subscribers
 		for _, target := range targets {
 			timespan, ok := target.Detail().(byte)
@@ -316,6 +319,7 @@ func formatCandleStick(info *CandleStick) []byte {
 	bz, err := json.Marshal(info)
 	if err != nil {
 		log.Errorf(err.Error())
+		return nil
 	}
 	return bz
 }

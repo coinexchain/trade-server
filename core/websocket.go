@@ -287,12 +287,7 @@ func (w *WebsocketManager) PushHeight(subscriber Subscriber, info []byte) {
 	sendEncodeMsg(subscriber, BlockInfoKey, info)
 }
 func (w *WebsocketManager) PushTicker(subscriber Subscriber, t []*Ticker) {
-	type ticker struct {
-		Type    string
-		Payload []*Ticker
-	}
-
-	msg := ticker{Type: TickerKey, Payload: t}
+	msg := broadTickerMsg{Type: TickerKey, Payload: tickerData{Tickers: t}}
 	bz, err := json.Marshal(msg)
 	if err != nil {
 		log.Error(err)

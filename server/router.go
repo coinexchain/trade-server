@@ -81,7 +81,7 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager) http.HandlerFunc {
 				_, message, err := wsConn.ReadMessage()
 				if err != nil {
 					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-
+						logrus.Error(err)
 					}
 					// TODO. will handle the error
 					_ = wsManager.CloseConn(wsConn)
