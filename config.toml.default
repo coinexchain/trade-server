@@ -10,6 +10,3 @@ kafka-addrs = "localhost:9092"
 
 # level DB
 data-dir = "data"
-
-# address prefix
-addr-prefix = "coinex"

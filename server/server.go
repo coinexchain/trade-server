@@ -37,9 +37,6 @@ func NewServer(cfgFile string) *TradeSever {
 		log.Printf("load config file fail:%v\n", err)
 	}
 
-	addrPrefix := svrConfig.GetDefault("addr-prefix", "coinex").(string)
-	core.InitSdkConfig(addrPrefix)
-
 	// websocket manager
 	wsManager := core.NewWebSocketManager()
 
