@@ -60,20 +60,16 @@ func NewConn(c *websocket.Conn) *Conn {
 	}
 }
 
-type ConnWithParams map[string]map[*Conn]struct{}
-
 type WebsocketManager struct {
 	sync.RWMutex
 
-	subs           map[string]ConnWithParams     // topic --> params
 	connWithTopics map[*Conn]map[string]struct{} // conn --> topics
-
-	topicAndConns map[string]map[*Conn]struct{}
+	topicAndConns  map[string]map[*Conn]struct{}
 }
 
 func NewWebSocketManager() *WebsocketManager {
 	return &WebsocketManager{
-		subs:           make(map[string]ConnWithParams),
+		topicAndConns:  make(map[string]map[*Conn]struct{}),
 		connWithTopics: make(map[*Conn]map[string]struct{}),
 	}
 }
@@ -81,10 +77,9 @@ func NewWebSocketManager() *WebsocketManager {
 func (w *WebsocketManager) CloseConn(c *Conn) error {
 	w.Lock()
 	defer w.Unlock()
-
 	topics, ok := w.connWithTopics[c]
 	if !ok {
-		panic("the remove conn not cache in websocketManager : ")
+		panic("the remove conn not cache in websocketManager ")
 	}
 
 	for topic := range topics {
@@ -117,7 +112,6 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, c *Conn) e
 func (w *WebsocketManager) RemoveSubscribeConn(c *Conn, topic string) {
 	w.Lock()
 	defer w.Unlock()
-
 	if topics, ok := w.connWithTopics[c]; ok {
 		if _, ok := topics[topic]; ok {
 			delete(topics, topic)
@@ -131,6 +125,8 @@ func (w *WebsocketManager) RemoveSubscribeConn(c *Conn, topic string) {
 }
 
 func (w *WebsocketManager) GetSlashSubscribeInfo() []Subscriber {
+	w.RLock()
+	defer w.RUnlock()
 	conns := w.topicAndConns[SlashKey]
 	res := make([]Subscriber, 0, len(conns))
 	for conn := range conns {
@@ -140,6 +136,8 @@ func (w *WebsocketManager) GetSlashSubscribeInfo() []Subscriber {
 }
 
 func (w *WebsocketManager) GetHeightSubscribeInfo() []Subscriber {
+	w.RLock()
+	defer w.RUnlock()
 	conns := w.topicAndConns[BlockInfoKey]
 	res := make([]Subscriber, 0, len(conns))
 	for conn := range conns {
@@ -149,6 +147,8 @@ func (w *WebsocketManager) GetHeightSubscribeInfo() []Subscriber {
 }
 
 func (w *WebsocketManager) GetTickerSubscribeInfo() []Subscriber {
+	w.RLock()
+	defer w.RUnlock()
 	conns := w.topicAndConns[TickerKey]
 	res := make([]Subscriber, 0, len(conns))
 	for conn := range conns {
@@ -162,6 +162,8 @@ func (w *WebsocketManager) GetTickerSubscribeInfo() []Subscriber {
 }
 
 func (w *WebsocketManager) GetCandleStickSubscribeInfo() map[string][]Subscriber {
+	w.RLock()
+	defer w.RUnlock()
 	conns := w.topicAndConns[KlineKey]
 	res := make(map[string][]Subscriber)
 	for conn := range conns {
@@ -178,6 +180,8 @@ func (w *WebsocketManager) GetCandleStickSubscribeInfo() map[string][]Subscriber
 }
 
 func (w *WebsocketManager) getNoDetailSubscribe(topic string) map[string][]Subscriber {
+	w.RLock()
+	defer w.RUnlock()
 	conns := w.topicAndConns[topic]
 	res := make(map[string][]Subscriber)
 	for conn := range conns {
