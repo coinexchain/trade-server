@@ -125,7 +125,6 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager) http.HandlerFunc {
 	}
 }
 
-// QueryBlockTimesRequestHandlerFn - func
 func QueryBlockTimesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -150,7 +149,6 @@ func QueryBlockTimesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	}
 }
 
-// QueryTickersRequestHandlerFn - func
 func QueryTickersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
@@ -161,7 +159,6 @@ func QueryTickersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	}
 }
 
-// QueryDepthsRequestHandlerFn - func
 func QueryDepthsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -183,7 +180,6 @@ func QueryDepthsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	}
 }
 
-// QueryCandleSticksRequestHandlerFn - func
 func QueryCandleSticksRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -210,7 +206,6 @@ func QueryCandleSticksRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	}
 }
 
-// QueryOrdersRequestHandlerFn - func
 func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -229,11 +224,20 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryDeal(account, time, sid, count)
 
-		postQueryKVStoreResponse(w, data, timesid)
+		var order core.OrderInfo
+		orders := make([]core.OrderInfo, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &order); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			orders = append(orders, order)
+		}
+
+		postQueryKVStoreResponse(w, orders, timesid)
 	}
 }
 
-// QueryDealsRequestHandlerFn - func
 func QueryDealsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -252,11 +256,20 @@ func QueryDealsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryDeal(market, time, sid, count)
 
-		postQueryKVStoreResponse(w, data, timesid)
+		var deal core.FillOrderInfo
+		deals := make([]core.FillOrderInfo, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &deal); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			deals = append(deals, deal)
+		}
+
+		postQueryKVStoreResponse(w, deals, timesid)
 	}
 }
 
-// QueryBancorInfosRequestHandlerFn - func
 func QueryBancorInfosRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -275,11 +288,20 @@ func QueryBancorInfosRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryBancorInfo(market, time, sid, count)
 
-		postQueryKVStoreResponse(w, data, timesid)
+		var info core.MsgBancorInfoForKafka
+		infos := make([]core.MsgBancorInfoForKafka, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &info); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			infos = append(infos, info)
+		}
+
+		postQueryKVStoreResponse(w, infos, timesid)
 	}
 }
 
-// QueryBancorTradesRequestHandlerFn - func
 func QueryBancorTradesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -298,11 +320,20 @@ func QueryBancorTradesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryBancorTrade(account, time, sid, count)
 
-		postQueryKVStoreResponse(w, data, timesid)
+		var trade core.MsgBancorTradeInfoForKafka
+		trades := make([]core.MsgBancorTradeInfoForKafka, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &trade); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			trades = append(trades, trade)
+		}
+
+		postQueryKVStoreResponse(w, trades, timesid)
 	}
 }
 
-// QueryRedelegationsRequestHandlerFn - func
 func QueryRedelegationsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -321,11 +352,20 @@ func QueryRedelegationsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryRedelegation(account, time, sid, count)
 
-		postQueryKVStoreResponse(w, data, timesid)
+		var redelegation core.NotificationBeginRedelegation
+		redelegations := make([]core.NotificationBeginRedelegation, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &redelegation); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			redelegations = append(redelegations, redelegation)
+		}
+
+		postQueryKVStoreResponse(w, redelegations, timesid)
 	}
 }
 
-// QueryUnbondingsRequestHandlerFn - func
 func QueryUnbondingsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -344,11 +384,20 @@ func QueryUnbondingsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryUnbonding(account, time, sid, count)
 
-		postQueryKVStoreResponse(w, data, timesid)
+		var unbonding core.NotificationBeginUnbonding
+		unbondings := make([]core.NotificationBeginUnbonding, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &unbonding); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			unbondings = append(unbondings, unbonding)
+		}
+
+		postQueryKVStoreResponse(w, unbondings, timesid)
 	}
 }
 
-// QueryUnlocksRequestHandlerFn - func
 func QueryUnlocksRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -367,11 +416,20 @@ func QueryUnlocksRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryUnlock(account, time, sid, count)
 
-		postQueryKVStoreResponse(w, data, timesid)
+		var unLock core.NotificationUnlock
+		unLocks := make([]core.NotificationUnlock, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &unLock); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			unLocks = append(unLocks, unLock)
+		}
+
+		postQueryKVStoreResponse(w, unLocks, timesid)
 	}
 }
 
-// QueryIncomesRequestHandlerFn - func
 func QueryIncomesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -390,11 +448,20 @@ func QueryIncomesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryIncome(account, time, sid, count)
 
-		postQueryKVStoreResponse(w, data, timesid)
+		var tx core.NotificationTx
+		txs := make([]core.NotificationTx, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &tx); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			txs = append(txs, tx)
+		}
+
+		postQueryKVStoreResponse(w, txs, timesid)
 	}
 }
 
-// QueryTxsRequestHandlerFn - func
 func QueryTxsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -413,11 +480,20 @@ func QueryTxsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryTx(account, time, sid, count)
 
-		postQueryKVStoreResponse(w, data, timesid)
+		var tx core.NotificationTx
+		txs := make([]core.NotificationTx, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &tx); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			txs = append(txs, tx)
+		}
+
+		postQueryKVStoreResponse(w, txs, timesid)
 	}
 }
 
-// QueryCommentsRequestHandlerFn - func
 func QueryCommentsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -436,11 +512,20 @@ func QueryCommentsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryComment(token, time, sid, count)
 
-		postQueryKVStoreResponse(w, data, timesid)
+		var comment core.TokenComment
+		comments := make([]core.TokenComment, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &comment); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			comments = append(comments, comment)
+		}
+
+		postQueryKVStoreResponse(w, comments, timesid)
 	}
 }
 
-// QuerySlashingsRequestHandlerFn - func
 func QuerySlashingsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
@@ -458,7 +543,17 @@ func QuerySlashingsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QuerySlash(time, sid, count)
 
-		postQueryKVStoreResponse(w, data, timesid)
+		var slashing core.NotificationSlash
+		slashings := make([]core.NotificationSlash, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &slashing); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			slashings = append(slashings, slashing)
+		}
+
+		postQueryKVStoreResponse(w, slashings, timesid)
 	}
 }
 func postQueryResponse(w http.ResponseWriter, data interface{}) {
@@ -483,15 +578,8 @@ func postQueryResponse(w http.ResponseWriter, data interface{}) {
 	_, _ = w.Write(baseData)
 }
 
-func postQueryKVStoreResponse(w http.ResponseWriter, data [][]byte, timesid []int64) {
-
-	baseData, err := json.Marshal(data)
-	if err != nil {
-		rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	wrappedData := NewDataWrapped(baseData, timesid)
+func postQueryKVStoreResponse(w http.ResponseWriter, data interface{}, timesid []int64) {
+	wrappedData := NewDataWrapped(data, timesid)
 	output, err := json.Marshal(wrappedData)
 	if err != nil {
 		rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -609,11 +697,11 @@ func ErrInvalidTimespan() error {
 }
 
 type DataWrapped struct {
-	Data    json.RawMessage `json:"data"`
-	TimeSid []int64         `json:"timesid"`
+	Data    interface{} `json:"data"`
+	TimeSid []int64     `json:"timesid"`
 }
 
-func NewDataWrapped(data json.RawMessage, timesid []int64) DataWrapped {
+func NewDataWrapped(data interface{}, timesid []int64) DataWrapped {
 	return DataWrapped{
 		Data:    data,
 		TimeSid: timesid,

@@ -41,6 +41,11 @@ import (
 const DecByteCount = 40
 const SELL = 2
 
+type OrderInfo struct {
+	CreateOrderInfo CreateOrderInfo `json:"create_order_info"`
+	FillOrderInfo   FillOrderInfo   `json:"fill_order_info"`
+	CancelOrderInfo CancelOrderInfo `json:"cancel_order_info"`
+}
 type CreateOrderInfo struct {
 	OrderID     string  `json:"order_id"`
 	Sender      string  `json:"sender"`
