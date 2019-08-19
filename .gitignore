@@ -2,6 +2,7 @@ vendor/
 .idea/
 .DS_Store
 config.toml
+data/
 
 # Binaries for programs and plugins
 *.exe
