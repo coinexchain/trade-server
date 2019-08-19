@@ -12,17 +12,19 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 const (
-	queryKeyHeight   = "height"
-	queryKeyTimespan = "timespan"
-	queryKeyTime     = "time"
-	queryKeySid      = "sid"
-	queryKeyCount    = "count"
-	queryKeyMarket   = "market"
-	queryKeyAccount  = "account"
-	queryKeyToken    = "token"
+	queryKeyHeight     = "height"
+	queryKeyTimespan   = "timespan"
+	queryKeyTime       = "time"
+	queryKeySid        = "sid"
+	queryKeyCount      = "count"
+	queryKeyMarket     = "market"
+	queryKeyAccount    = "account"
+	queryKeyToken      = "token"
+	queryKeyMarketList = "market_list"
 )
 
 const (
@@ -48,7 +50,6 @@ func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager) http.Handl
 	router.HandleFunc("/market/tickers", QueryTickersRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/market/depths", QueryDepthsRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/market/candle-sticks", QueryCandleSticksRequestHandlerFn(hub)).Methods("GET")
-
 	router.HandleFunc("/market/orders", QueryOrdersRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/market/deals", QueryDealsRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/bancorlite/infos", QueryBancorInfosRequestHandlerFn(hub)).Methods("GET")
@@ -143,7 +144,11 @@ func QueryBlockTimesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 // QueryTickersRequestHandlerFn - func
 func QueryTickersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// todo
+		vars := r.URL.Query()
+		marketStr := vars.Get(queryKeyMarketList)
+
+		Tickers := hub.QueryTickers(strings.Split(marketStr, ","))
+		postQueryResponse(w, Tickers)
 	}
 }
 
