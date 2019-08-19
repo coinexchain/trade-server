@@ -165,7 +165,7 @@ paths:
               $ref: '#/definitions/CandleStick'
         500:
           description: Server internal error
-  /market/orders:
+  /market/user-orders:
     get:
       tags:
         - Market
@@ -202,7 +202,7 @@ paths:
         200:
           description: OK
           schema:
-            $ref: '#/definitions/Order'
+            $ref: '#/definitions/UserOrder'
         500:
           description: Server internal error
   /market/deals:
@@ -795,7 +795,7 @@ definitions:
       market:
         type: string
         example: abc/cet
-  Order:
+  UserOrder:
     type: object
     properties:
       createOrderInfo:

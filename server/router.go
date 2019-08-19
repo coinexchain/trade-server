@@ -50,7 +50,7 @@ func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager) http.Handl
 	router.HandleFunc("/market/tickers", QueryTickersRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/market/depths", QueryDepthsRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/market/candle-sticks", QueryCandleSticksRequestHandlerFn(hub)).Methods("GET")
-	router.HandleFunc("/market/orders", QueryOrdersRequestHandlerFn(hub)).Methods("GET")
+	router.HandleFunc("/market/user-orders", QueryOrdersRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/market/deals", QueryDealsRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/bancorlite/infos", QueryBancorInfosRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/bancorlite/trades", QueryBancorTradesRequestHandlerFn(hub)).Methods("GET")
