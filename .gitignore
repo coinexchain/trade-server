@@ -4,6 +4,7 @@ vendor/
 config.toml
 main
 data/
+trade-server
 
 # Binaries for programs and plugins
 *.exe
