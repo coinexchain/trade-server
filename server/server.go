@@ -36,6 +36,9 @@ func NewServer(cfgFile string) *TradeSever {
 		log.Printf("load config file fail:%v\n", err)
 	}
 
+	// websocket server
+	wsManager := core.NewWebSocketManager()
+
 	// hub
 	dataDir := svrConfig.GetDefault("data-dir", "data").(string)
 	db, err := newLevelDB(DbName, dataDir)
@@ -43,7 +46,7 @@ func NewServer(cfgFile string) *TradeSever {
 		log.Fatalf("open db fail. %v\n", err)
 	}
 	// TODO: SubscribeManager
-	hub := core.NewHub(db, TestSubscribeManager{})
+	hub := core.NewHub(db, wsManager)
 
 	// http server
 	router := registerHandler(&hub)
