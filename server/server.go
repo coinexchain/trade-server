@@ -3,13 +3,14 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/coinexchain/trade-server/core"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/coinexchain/trade-server/core"
 
 	"github.com/pelletier/go-toml"
 	dbm "github.com/tendermint/tm-db"
@@ -36,7 +37,7 @@ func NewServer(cfgFile string) *TradeSever {
 		log.Printf("load config file fail:%v\n", err)
 	}
 
-	// websocket server
+	// websocket manager
 	wsManager := core.NewWebSocketManager()
 
 	// hub
@@ -48,8 +49,10 @@ func NewServer(cfgFile string) *TradeSever {
 	// TODO: SubscribeManager
 	hub := core.NewHub(db, wsManager)
 
+	// websocket server
+
 	// http server
-	router := registerHandler(&hub)
+	router := registerHandler(&hub, wsManager)
 	httpSvr := &http.Server{
 		Addr:         fmt.Sprintf(":%d", svrConfig.GetDefault("port", 8000).(int64)),
 		Handler:      router,

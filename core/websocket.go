@@ -74,6 +74,12 @@ func NewWebSocketManager() *WebsocketManager {
 	}
 }
 
+func (w *WebsocketManager) AddConn(c *Conn) {
+	w.Lock()
+	defer w.Unlock()
+	w.connWithTopics[c] = make(map[string]struct{})
+}
+
 func (w *WebsocketManager) CloseConn(c *Conn) error {
 	w.Lock()
 	defer w.Unlock()
@@ -102,16 +108,25 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, c *Conn) e
 
 	topic := values[0]
 	params := values[1:]
+	if !checkTopicValid(topic) {
+		log.Errorf("The subscribed topic [%s] is illegal ", topic)
+		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
+	}
 	if len(params) != MinArguNum {
 		c.topicWithParams[topic] = append(c.topicWithParams[topic], params...)
 	}
 	w.topicAndConns[topic][c] = struct{}{}
+	w.connWithTopics[c][topic] = struct{}{}
 	return nil
 }
 
-func (w *WebsocketManager) RemoveSubscribeConn(c *Conn, topic string) {
+func (w *WebsocketManager) RemoveSubscribeConn(topic string, c *Conn) error {
 	w.Lock()
 	defer w.Unlock()
+	if !checkTopicValid(topic) {
+		log.Errorf("The subscribed topic [%s] is illegal ", topic)
+		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
+	}
 	if topics, ok := w.connWithTopics[c]; ok {
 		if _, ok := topics[topic]; ok {
 			delete(topics, topic)
@@ -121,6 +136,21 @@ func (w *WebsocketManager) RemoveSubscribeConn(c *Conn, topic string) {
 		if _, ok := conns[c]; ok {
 			delete(conns, c)
 		}
+	}
+	return nil
+}
+
+func checkTopicValid(topic string) bool {
+	switch topic {
+	case BlockInfoKey, SlashKey, TickerKey,
+		KlineKey, DepthKey, DealKey, BancorKey,
+		BancorTradeKey, CommentKey, OrderKey,
+		IncomeKey, UnbondingKey, RedelegationKey,
+		UnlockKey, TxKey:
+		return true
+	default:
+		return false
+
 	}
 }
 

@@ -3,12 +3,15 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/coinexchain/trade-server/core"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
-	"net/http"
-	"strconv"
+	"github.com/gorilla/websocket"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -22,7 +25,23 @@ const (
 	queryKeyToken    = "token"
 )
 
-func registerHandler(hub *core.Hub) http.Handler {
+const (
+	Subscribe   = "subscribe"
+	Unsubscribe = "unsubscribe"
+	Ping        = "ping"
+)
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+type OpCommand struct {
+	Op   string   `json:"op"`
+	Args []string `json:"args"`
+}
+
+func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager) http.Handler {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/misc/block-times", QueryBlockTimesRequestHandlerFn(hub)).Methods("GET")
@@ -42,7 +61,58 @@ func registerHandler(hub *core.Hub) http.Handler {
 	router.HandleFunc("/comment/comments", QueryCommentsRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/slash/slashings", QuerySlashingsRequestHandlerFn(hub)).Methods("GET")
 
+	router.HandleFunc("/ws", ServeWsHandleFn(wsManager))
+
 	return router
+}
+
+func ServeWsHandleFn(wsManager *core.WebsocketManager) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			logrus.Error(err)
+			return
+		}
+		wsConn := core.NewConn(c)
+		wsManager.AddConn(wsConn)
+
+		go func() {
+			for {
+				_, message, err := wsConn.ReadMessage()
+				if err != nil {
+					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+
+					}
+					// TODO. will handle the error
+					_ = wsManager.CloseConn(wsConn)
+					break
+				}
+
+				// TODO. will handler the error
+				var command OpCommand
+				if err := json.Unmarshal(message, &command); err != nil {
+					logrus.Error(err)
+					continue
+				}
+
+				// TODO. will handler the error
+				switch command.Op {
+				case Subscribe:
+					for _, subTopic := range command.Args {
+						_ = wsManager.AddSubscribeConn(subTopic, wsConn)
+					}
+				case Unsubscribe:
+					for _, subTopic := range command.Args {
+						_ = wsManager.RemoveSubscribeConn(subTopic, wsConn)
+					}
+				case Ping:
+					_ = wsConn.PongHandler()(`{"type": "pong"}`)
+				}
+
+			}
+		}()
+
+	}
 }
 
 // QueryBlockTimesRequestHandlerFn - func
