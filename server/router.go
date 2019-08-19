@@ -202,7 +202,19 @@ func QueryCandleSticksRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 			return
 		}
 
-		postQueryResponse(w, hub.QueryCandleStick(market, timespan, time, sid, count))
+		data := hub.QueryCandleStick(market, timespan, time, sid, count)
+
+		var stick core.CandleStick
+		sticks := make([]core.CandleStick, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &stick); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			sticks = append(sticks, stick)
+		}
+
+		postQueryResponse(w, sticks)
 	}
 }
 
