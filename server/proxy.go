@@ -1,94 +1,83 @@
 package server
 
-import "github.com/coinexchain/trade-server/core"
+import (
+	"io/ioutil"
+	"log"
+	"net/http"
 
-// TODO: delete later
-type TestSubscriber struct {
+	"github.com/gorilla/mux"
+	"gopkg.in/yaml.v2"
+)
+
+const (
+	SwaggerPath = "/swagger/swagger.yaml"
+)
+
+var (
+	LcdAddr string
+)
+
+type RestSwagger struct {
+	Paths map[string]interface{} `yaml:"paths"`
 }
 
-func (t TestSubscriber) Detail() interface{} {
-	return []string{"detail"}
-}
-
-func (t TestSubscriber) WriteMsg([]byte) error {
+func registerProxyHandler(lcd string, router *mux.Router) error {
+	LcdAddr = lcd
+	paths, err := getRestPaths(lcd)
+	if err != nil {
+		log.Fatalf("get rest paths fail: %v\n", err)
+	}
+	for _, path := range paths {
+		router.HandleFunc(path, httpProxy)
+	}
 	return nil
 }
 
-type TestSubscribeManager struct {
+func getRestPaths(lcd string) ([]string, error) {
+	url := lcd + SwaggerPath
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	restSwagger := &RestSwagger{}
+	if err = yaml.Unmarshal(body, restSwagger); err != nil {
+		return nil, err
+	}
+	paths := make([]string, 0, len(restSwagger.Paths))
+	for path := range restSwagger.Paths {
+		paths = append(paths, path)
+	}
+	return paths, nil
 }
 
-func (sm TestSubscribeManager) GetSlashSubscribeInfo() []core.Subscriber {
-	return []core.Subscriber{TestSubscriber{}}
-}
+func httpProxy(w http.ResponseWriter, r *http.Request) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", LcdAddr+r.URL.Path, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-func (sm TestSubscribeManager) GetHeightSubscribeInfo() []core.Subscriber {
-	return []core.Subscriber{TestSubscriber{}}
-}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-func (sm TestSubscribeManager) GetTickerSubscribeInfo() []core.Subscriber {
-	return []core.Subscriber{TestSubscriber{}}
-}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-func (sm TestSubscribeManager) GetCandleStickSubscribeInfo() map[string][]core.Subscriber {
-	return map[string][]core.Subscriber{"test": {TestSubscriber{}}}
+	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
+	_, err = w.Write(body)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
-
-func (sm TestSubscribeManager) GetDepthSubscribeInfo() map[string][]core.Subscriber {
-	return map[string][]core.Subscriber{"test": {TestSubscriber{}}}
-}
-
-func (sm TestSubscribeManager) GetDealSubscribeInfo() map[string][]core.Subscriber {
-	return map[string][]core.Subscriber{"test": {TestSubscriber{}}}
-}
-
-func (sm TestSubscribeManager) GetBancorInfoSubscribeInfo() map[string][]core.Subscriber {
-	return map[string][]core.Subscriber{"test": {TestSubscriber{}}}
-}
-
-func (sm TestSubscribeManager) GetCommentSubscribeInfo() map[string][]core.Subscriber {
-	return map[string][]core.Subscriber{"test": {TestSubscriber{}}}
-}
-
-func (sm TestSubscribeManager) GetOrderSubscribeInfo() map[string][]core.Subscriber {
-	return map[string][]core.Subscriber{"test": {TestSubscriber{}}}
-}
-
-func (sm TestSubscribeManager) GetBancorTradeSubscribeInfo() map[string][]core.Subscriber {
-	return map[string][]core.Subscriber{"test": {TestSubscriber{}}}
-}
-func (sm TestSubscribeManager) GetIncomeSubscribeInfo() map[string][]core.Subscriber {
-	return map[string][]core.Subscriber{"test": {TestSubscriber{}}}
-}
-func (sm TestSubscribeManager) GetUnbondingSubscribeInfo() map[string][]core.Subscriber {
-	return map[string][]core.Subscriber{"test": {TestSubscriber{}}}
-}
-func (sm TestSubscribeManager) GetRedelegationSubscribeInfo() map[string][]core.Subscriber {
-	return map[string][]core.Subscriber{"test": {TestSubscriber{}}}
-}
-func (sm TestSubscribeManager) GetUnlockSubscribeInfo() map[string][]core.Subscriber {
-	return map[string][]core.Subscriber{"test": {TestSubscriber{}}}
-}
-func (sm TestSubscribeManager) GetTxSubscribeInfo() map[string][]core.Subscriber {
-	return map[string][]core.Subscriber{"test": {TestSubscriber{}}}
-}
-
-func (sm TestSubscribeManager) PushSlash(subscriber core.Subscriber, info []byte)       {}
-func (sm TestSubscribeManager) PushHeight(subscriber core.Subscriber, info []byte)      {}
-func (sm TestSubscribeManager) PushTicker(subscriber core.Subscriber, t []*core.Ticker) {}
-func (sm TestSubscribeManager) PushDepthSell(subscriber core.Subscriber, info []byte)   {}
-
-func (sm TestSubscribeManager) PushDepthBuy(subscriber core.Subscriber, info []byte) {}
-
-func (sm TestSubscribeManager) PushCandleStick(subscriber core.Subscriber, info []byte)  {}
-func (sm TestSubscribeManager) PushDeal(subscriber core.Subscriber, info []byte)         {}
-func (sm TestSubscribeManager) PushCreateOrder(subscriber core.Subscriber, info []byte)  {}
-func (sm TestSubscribeManager) PushFillOrder(subscriber core.Subscriber, info []byte)    {}
-func (sm TestSubscribeManager) PushCancelOrder(subscriber core.Subscriber, info []byte)  {}
-func (sm TestSubscribeManager) PushBancorInfo(subscriber core.Subscriber, info []byte)   {}
-func (sm TestSubscribeManager) PushBancorTrade(subscriber core.Subscriber, info []byte)  {}
-func (sm TestSubscribeManager) PushIncome(subscriber core.Subscriber, info []byte)       {}
-func (sm TestSubscribeManager) PushUnbonding(subscriber core.Subscriber, info []byte)    {}
-func (sm TestSubscribeManager) PushRedelegation(subscriber core.Subscriber, info []byte) {}
-func (sm TestSubscribeManager) PushUnlock(subscriber core.Subscriber, info []byte)       {}
-func (sm TestSubscribeManager) PushTx(subscriber core.Subscriber, info []byte)           {}
-func (sm TestSubscribeManager) PushComment(subscriber core.Subscriber, info []byte)      {}

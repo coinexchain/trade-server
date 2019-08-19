@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/coinexchain/trade-server/core"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +13,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
-	"strings"
 )
 
 const (
@@ -43,9 +43,17 @@ type OpCommand struct {
 	Args []string `json:"args"`
 }
 
-func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager) http.Handler {
+func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager, proxy bool, lcd string) (http.Handler, error) {
 	router := mux.NewRouter()
 
+	// REST API Proxy
+	if proxy {
+		if err := registerProxyHandler(lcd, router); err != nil {
+			return nil, err
+		}
+	}
+
+	// REST
 	router.HandleFunc("/misc/block-times", QueryBlockTimesRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/market/tickers", QueryTickersRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/market/depths", QueryDepthsRequestHandlerFn(hub)).Methods("GET")
@@ -62,9 +70,10 @@ func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager) http.Handl
 	router.HandleFunc("/comment/comments", QueryCommentsRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/slash/slashings", QuerySlashingsRequestHandlerFn(hub)).Methods("GET")
 
+	// websocket
 	router.HandleFunc("/ws", ServeWsHandleFn(wsManager))
 
-	return router
+	return router, nil
 }
 
 func ServeWsHandleFn(wsManager *core.WebsocketManager) http.HandlerFunc {

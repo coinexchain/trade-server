@@ -46,13 +46,17 @@ func NewServer(cfgFile string) *TradeSever {
 	if err != nil {
 		log.Fatalf("open db fail. %v\n", err)
 	}
-	// TODO: SubscribeManager
 	hub := core.NewHub(db, wsManager)
 
 	// websocket server
 
 	// http server
-	router := registerHandler(&hub, wsManager)
+	proxy := svrConfig.GetDefault("proxy", false).(bool)
+	lcd := svrConfig.GetDefault("lcd", "").(string)
+	router, err := registerHandler(&hub, wsManager, proxy, lcd)
+	if err != nil {
+		log.Fatalf("open db fail. %v\n", err)
+	}
 	httpSvr := &http.Server{
 		Addr:         fmt.Sprintf(":%d", svrConfig.GetDefault("port", 8000).(int64)),
 		Handler:      router,
@@ -61,7 +65,7 @@ func NewServer(cfgFile string) *TradeSever {
 	}
 
 	// consumer
-	addrs := svrConfig.Get("kafka-addrs").(string)
+	addrs := svrConfig.GetDefault("kafka-addrs", "").(string)
 	if len(addrs) == 0 {
 		log.Fatalln("kafka address is empty")
 	}
@@ -102,6 +106,7 @@ func (ts *TradeSever) Stop() {
 	// stop consumer
 	ts.consumer.Close()
 
+	// stop hub
 	ts.hub.Close()
 
 	log.Println("Server stop...")
