@@ -3,6 +3,7 @@ vendor/
 .DS_Store
 config.toml
 main
+data/
 
 # Binaries for programs and plugins
 *.exe
