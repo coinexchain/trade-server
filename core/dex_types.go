@@ -39,7 +39,11 @@ import (
 //)
 
 const DecByteCount = 40
+const BUY = 1
 const SELL = 2
+const IOC = 4
+const GTE = 3
+const LIMIT = 2
 
 type OrderInfo struct {
 	CreateOrderInfo CreateOrderInfo `json:"create_order_info"`

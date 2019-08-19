@@ -393,6 +393,7 @@ func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
 	}
 	t, err := time.Parse(time.RFC3339, v.CompletionTime)
 	if err != nil {
+		hub.Log("Error in Parsing Time")
 		return
 	}
 	// Use completion time as the key
@@ -409,6 +410,7 @@ func (hub *Hub) handleNotificationBeginUnbonding(bz []byte) {
 	}
 	t, err := time.Parse(time.RFC3339, v.CompletionTime)
 	if err != nil {
+		hub.Log("Error in Parsing Time")
 		return
 	}
 	// Use completion time as the key
@@ -597,8 +599,11 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 	defer func() {
 		hub.depthMutex.Unlock()
 	}()
-	triman.sell.DeltaChange(v.Price, negStock)
-	triman.buy.DeltaChange(v.Price, negStock)
+	if v.Side == SELL {
+		triman.sell.DeltaChange(v.Price, negStock)
+	} else {
+		triman.buy.DeltaChange(v.Price, negStock)
+	}
 }
 
 func (hub *Hub) handleCancelOrderInfo(bz []byte) {
@@ -673,7 +678,7 @@ func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
 		return
 	}
 	//Save to KVStore
-	key := hub.getBancorInfoKey(v.Money + "/" + v.Stock)
+	key := hub.getBancorInfoKey(v.Stock + "/" + v.Money)
 	hub.batch.Set(key, bz)
 	hub.sid++
 	//Push to subscribers
@@ -707,7 +712,7 @@ func (hub *Hub) commitForSlash() {
 		hub.batch.Set(key, bz)
 		hub.sid++
 	}
-	hub.slashSlice = hub.slashSlice[:]
+	hub.slashSlice = hub.slashSlice[:0]
 }
 
 func (hub *Hub) commitForTicker() {
@@ -726,7 +731,9 @@ func (hub *Hub) commitForTicker() {
 				tickerList = append(tickerList, ticker)
 			}
 		}
-		hub.subMan.PushTicker(subscriber, tickerList)
+		if len(tickerList)!=0 {
+			hub.subMan.PushTicker(subscriber, tickerList)
+		}
 	}
 
 	hub.tickerMapMutex.Lock()
@@ -767,6 +774,7 @@ func (hub *Hub) commitForDepth() {
 }
 
 func (hub *Hub) commit() {
+	hub.commitForSlash()
 	hub.commitForTicker()
 	hub.commitForDepth()
 	hub.dbMutex.Lock()
