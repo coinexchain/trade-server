@@ -112,8 +112,15 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, c *Conn) e
 		log.Errorf("The subscribed topic [%s] is illegal ", topic)
 		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
 	}
+
 	if len(params) != MinArguNum {
 		c.topicWithParams[topic] = append(c.topicWithParams[topic], params...)
+	}
+	if len(w.topicAndConns[topic]) == 0 {
+		w.topicAndConns[topic] = make(map[*Conn]struct{})
+	}
+	if len(w.connWithTopics[c]) == 0 {
+		w.connWithTopics[c] = make(map[string]struct{})
 	}
 	w.topicAndConns[topic][c] = struct{}{}
 	w.connWithTopics[c][topic] = struct{}{}
@@ -262,18 +269,8 @@ func (w *WebsocketManager) GetTxSubscribeInfo() map[string][]Subscriber {
 }
 
 // Push msgs----------------------------
-
-func assembleJSON(typeKey string, info []byte) []byte {
-	m := make(map[string]string)
-	m[Type] = typeKey
-	m[Payload] = ""
-	bz, _ := json.Marshal(m)
-	msg := string(bz[:len(bz)-3]) + string(info) + "}"
-	return []byte(msg)
-}
-
 func sendEncodeMsg(subscriber Subscriber, typeKey string, info []byte) {
-	msg := assembleJSON(typeKey, info)
+	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":\"%s\"}", typeKey, string(info)))
 	if err := subscriber.WriteMsg(msg); err != nil {
 		log.Errorf(err.Error())
 	}
