@@ -10,3 +10,10 @@ kafka-addrs = "localhost:9092"
 
 # level DB
 data-dir = "data"
+
+# log
+log-dir = "log"
+# log level: debug | info | warn | error
+log-level = "info"
+# log format: plain | json
+log-format = "plain"

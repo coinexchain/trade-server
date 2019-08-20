@@ -3,7 +3,6 @@ package core
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -17,24 +16,6 @@ const (
 	MinArguNum   = 0
 	MaxArguNum   = 2
 )
-
-func init() {
-	log.SetFormatter(&log.TextFormatter{})
-	log.SetLevel(log.WarnLevel)
-
-	if _, err := os.Stat("log"); err != nil && os.IsNotExist(err) {
-		if err = os.Mkdir("log", 0755); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	file, err := os.OpenFile("log/log.out", os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.SetOutput(file)
-	log.SetReportCaller(true)
-}
 
 type ImplSubscriber struct {
 	*websocket.Conn

@@ -200,7 +200,7 @@ func (hub *Hub) AddMarket(market string) {
 }
 
 func (hub *Hub) Log(s string) {
-	fmt.Print(s)
+	log.Error(s)
 }
 
 //============================================================
@@ -731,7 +731,7 @@ func (hub *Hub) commitForTicker() {
 				tickerList = append(tickerList, ticker)
 			}
 		}
-		if len(tickerList)!=0 {
+		if len(tickerList) != 0 {
 			hub.subMan.PushTicker(subscriber, tickerList)
 		}
 	}

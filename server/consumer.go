@@ -1,13 +1,13 @@
 package server
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"sync"
 
 	"github.com/Shopify/sarama"
 	"github.com/coinexchain/trade-server/core"
+	log "github.com/sirupsen/logrus"
 )
 
 type TradeConsumer struct {
@@ -17,11 +17,10 @@ type TradeConsumer struct {
 	hub      *core.Hub
 }
 
-func init() {
-	sarama.Logger = log.New(os.Stdout, "[sarama] ", log.LstdFlags)
-}
-
 func NewConsumer(addrs []string, topic string, hub *core.Hub) (*TradeConsumer, error) {
+	// set logger
+	sarama.Logger = log.StandardLogger()
+
 	consumer, err := sarama.NewConsumer(addrs, nil)
 	if err != nil {
 		panic(err)
@@ -42,7 +41,7 @@ func (tc *TradeConsumer) Consume() {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Partition size:%v\n", len(partitionList))
+	log.Infof("Partition size:%v", len(partitionList))
 
 	wg := &sync.WaitGroup{}
 	for _, partition := range partitionList {
@@ -56,17 +55,17 @@ func (tc *TradeConsumer) Consume() {
 		}
 		pc, err := tc.ConsumePartition(tc.topic, partition, offset)
 		if err != nil {
-			log.Printf("Failed to start consumer for partition %d: %s\n", partition, err)
+			log.Errorf("Failed to start consumer for partition %d: %s", partition, err)
 			continue
 		}
 		wg.Add(1)
 
 		go func(pc sarama.PartitionConsumer, partition int32) {
-			log.Printf("PartitionConsumer %v start from %v\n", partition, offset)
+			log.Errorf("PartitionConsumer %v start from %v", partition, offset)
 			defer func() {
 				pc.AsyncClose()
 				wg.Done()
-				log.Printf("PartitionConsumer %v close in %v\n", partition, offset)
+				log.Infof("PartitionConsumer %v close in %v", partition, offset)
 			}()
 
 			signals := make(chan os.Signal, 1)
@@ -92,7 +91,7 @@ func (tc *TradeConsumer) Consume() {
 func (tc *TradeConsumer) Close() {
 	<-tc.stopChan
 	if err := tc.Consumer.Close(); err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
-	log.Println("Consumer close")
+	log.Info("Consumer close")
 }

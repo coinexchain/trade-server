@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -80,7 +80,7 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			logrus.Error(err)
+			log.Error(err)
 			return
 		}
 		wsConn := core.NewConn(c)
@@ -91,7 +91,7 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager) http.HandlerFunc {
 				_, message, err := wsConn.ReadMessage()
 				if err != nil {
 					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-						logrus.Error(err)
+						log.Error(err)
 					}
 					// TODO. will handle the error
 					_ = wsManager.CloseConn(wsConn)
@@ -101,7 +101,7 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager) http.HandlerFunc {
 				// TODO. will handler the error
 				var command OpCommand
 				if err := json.Unmarshal(message, &command); err != nil {
-					logrus.Error(err)
+					log.Error(err)
 					continue
 				}
 

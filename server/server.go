@@ -3,16 +3,13 @@ package server
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/coinexchain/trade-server/core"
-
 	"github.com/pelletier/go-toml"
+	log "github.com/sirupsen/logrus"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -31,12 +28,7 @@ type TradeSever struct {
 	consumer *TradeConsumer
 }
 
-func NewServer(cfgFile string) *TradeSever {
-	svrConfig, err := loadConfigFile(cfgFile)
-	if err != nil {
-		log.Printf("load config file fail:%v\n", err)
-	}
-
+func NewServer(svrConfig *toml.Tree) *TradeSever {
 	// websocket manager
 	wsManager := core.NewWebSocketManager()
 
@@ -44,7 +36,7 @@ func NewServer(cfgFile string) *TradeSever {
 	dataDir := svrConfig.GetDefault("data-dir", "data").(string)
 	db, err := newLevelDB(DbName, dataDir)
 	if err != nil {
-		log.Fatalf("open db fail. %v\n", err)
+		log.Fatalf("open db fail. %v", err)
 	}
 	hub := core.NewHub(db, wsManager)
 
@@ -53,7 +45,7 @@ func NewServer(cfgFile string) *TradeSever {
 	lcd := svrConfig.GetDefault("lcd", "").(string)
 	router, err := registerHandler(&hub, wsManager, proxy, lcd)
 	if err != nil {
-		log.Fatalf("open db fail. %v\n", err)
+		log.Fatalf("registerHandler fail. %v", err)
 	}
 	httpSvr := &http.Server{
 		Addr:         fmt.Sprintf(":%d", svrConfig.GetDefault("port", 8000).(int64)),
@@ -65,11 +57,11 @@ func NewServer(cfgFile string) *TradeSever {
 	// consumer
 	addrs := svrConfig.GetDefault("kafka-addrs", "").(string)
 	if len(addrs) == 0 {
-		log.Fatalln("kafka address is empty")
+		log.Fatal("kafka address is empty")
 	}
 	consumer, err := NewConsumer(strings.Split(addrs, ","), DexTopic, &hub)
 	if err != nil {
-		log.Fatalf("create consumer error:%v\n", err)
+		log.Fatalf("create consumer error:%v", err)
 	}
 
 	return &TradeSever{
@@ -80,7 +72,7 @@ func NewServer(cfgFile string) *TradeSever {
 }
 
 func (ts *TradeSever) Start() {
-	log.Printf("Server start... (%v)\n", ts.httpSvr.Addr)
+	log.Infof("Server start... (%v)", ts.httpSvr.Addr)
 
 	// start consumer
 	go ts.consumer.Consume()
@@ -88,7 +80,7 @@ func (ts *TradeSever) Start() {
 	// start http server
 	go func() {
 		if err := ts.httpSvr.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("error occur:%v\n", err)
+			log.Fatalf("error occur:%v", err)
 		}
 	}()
 }
@@ -98,7 +90,7 @@ func (ts *TradeSever) Stop() {
 	ctx, cancel := context.WithTimeout(context.Background(), WaitTimeout*time.Second)
 	defer cancel()
 	if err := ts.httpSvr.Shutdown(ctx); err != nil {
-		log.Fatalf("shutdown failed. error:%v\n", err)
+		log.Fatalf("shutdown failed. error:%v", err)
 	}
 
 	// stop consumer
@@ -107,26 +99,7 @@ func (ts *TradeSever) Stop() {
 	// stop hub
 	ts.hub.Close()
 
-	log.Println("Server stop...")
-}
-
-func loadConfigFile(cfgFile string) (*toml.Tree, error) {
-	if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
-		log.Printf("%s does not exist\n", cfgFile)
-		return toml.Load(``)
-	}
-
-	bz, err := ioutil.ReadFile(cfgFile)
-	if err != nil {
-		return nil, err
-	}
-
-	tree, err := toml.LoadBytes(bz)
-	if err != nil {
-		return nil, err
-	}
-
-	return tree, nil
+	log.Info("Server stop...")
 }
 
 func newLevelDB(name string, dir string) (db dbm.DB, err error) {
