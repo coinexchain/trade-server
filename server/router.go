@@ -721,13 +721,13 @@ func NewDataWrapped(data interface{}, timesid []int64) DataWrapped {
 }
 
 type DepthResponse struct {
-	sell []*core.PricePoint
-	buy  []*core.PricePoint
+	Sell []*core.PricePoint `json:"sell"`
+	Buy  []*core.PricePoint `json:"buy"`
 }
 
 func NewDepthResponse(sell []*core.PricePoint, buy []*core.PricePoint) DepthResponse {
 	return DepthResponse{
-		sell: sell,
-		buy:  buy,
+		Sell: sell,
+		Buy:  buy,
 	}
 }
