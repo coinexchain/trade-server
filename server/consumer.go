@@ -61,7 +61,7 @@ func (tc *TradeConsumer) Consume() {
 		wg.Add(1)
 
 		go func(pc sarama.PartitionConsumer, partition int32) {
-			log.Errorf("PartitionConsumer %v start from %v", partition, offset)
+			log.Infof("PartitionConsumer %v start from %v", partition, offset)
 			defer func() {
 				pc.AsyncClose()
 				wg.Done()
