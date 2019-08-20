@@ -45,9 +45,13 @@ func main() {
 	op := OpCommand{
 		Op: "subscribe",
 		Args: []string{
-			"blockinfo",
+			// "blockinfo",
 			"slash",
-			"depth:sdu1/cet",
+			// "depth:sdu1/cet",
+			"bancor:sdu1/cet",
+			"bancor-trade:coinex18c3hryxtjdtjjvnjm63r8k3p8tlhm0l6k96l9v",
+			"unlock:coinex18c3hryxtjdtjjvnjm63r8k3p8tlhm0l6k96l9v",
+			"unlock:coinex1kc2nguz9xfttfpav4drldh2w96xyzrnqss9scw",
 			// "ticker:sdu1/cet",
 			// "deal:sdu1/cet",
 			"comment:cet",

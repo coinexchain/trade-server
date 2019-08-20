@@ -106,3 +106,88 @@
 2019/08/19 21:09:10 recv: {"type":"kline", "payload":"{"open":"5.199999998894717703","close":"4.899999999013645027","high":"5.300000000000000000","low":"4.899999991850623725","total":"507280335742","unix_time":1566220136,"time_span":16,"market":"sdu1/cet"}"}
 2019/08/19 21:09:11 recv: {"type":"ticker","payload":{"tickers":[{"market":"sdu1/cet","new":"4.899999999013645027","old":"4.899999999013645027"}]}}
 ```
+
+## 订阅bancor 信息
+
+`bancor:<trading-pair>`
+
+示例：`bancor:sdu1/cet`
+
+应答：
+
+```
+{"type":"bancor", "payload":"{"sender":"coinex1kc2nguz9xfttfpav4drldh2w96xyzrnqss9scw","stock":"sdu1","money":"cet","init_price":"1.000000000000000000","max_supply":"10000000000000","max_price":"500.000000000000000000","price":"1.000000002994000000","stock_in_pool":"9999999999940","money_in_pool":"60","earliest_cancel_time":1917014400}"}
+```
+
+## 订阅 bancor trade 信息
+
+`bancor-trade`
+
+示例: `bancor-trade:coinex18c3hryxtjdtjjvnjm63r8k3p8tlhm0l6k96l9v`
+
+应答：
+
+```
+{"type":"bancor-trade", "payload":"{"sender":"coinex18c3hryxtjdtjjvnjm63r8k3p8tlhm0l6k96l9v","stock":"sdu1","money":"cet","amount":60,"side":1,"money_limit":100,"transaction_price":"5.400000000000000000","block_height":9532}"}
+```
+
+
+## 订阅comment 信息
+
+`comment:<symbol>`
+
+示例：`comment:cet`
+
+应答：
+
+```
+{"type":"comment", "payload":"{"id":0,"height":9710,"sender":"coinex18c3hryxtjdtjjvnjm63r8k3p8tlhm0l6k96l9v","token":"cet","donation":2,"title":"I love cet.","content":"CET to da moon","content_type":3,"references":null}"}
+```
+
+## 订阅unlock 信息
+
+`unlock:<address>`
+
+示例: `unlock:coinex18c3hryxtjdtjjvnjm63r8k3p8tlhm0l6k96l9v`
+
+应答:
+
+```
+{"type":"unlock", "payload":"{"address":"coinex18c3hryxtjdtjjvnjm63r8k3p8tlhm0l6k96l9v","unlocked":[{"denom":"cet","amount":"1000000"}],"locked_coins":null,"frozen_coins":[{"denom":"cet","amount":"1711856251008"},{"denom":"sdu1","amount":"663131006349"}],"coins":[{"denom":"cet","amount":"12483077110822102"},{"denom":"sdu1","amount":"12499299245036521"}],"height":10281}"}
+```
+
+## 订阅 Redelegation 信息
+
+`redelegation:<address>`
+
+示例: ``
+
+应答:
+
+```
+
+```
+
+## 订阅 unbonding 信息
+
+`unbonding:<address>`
+
+示例: `unboding:`
+
+应答:
+
+```
+
+```
+
+## 订阅slash 信息
+
+`slash`
+
+示例:
+
+应答:
+
+```
+
+```
