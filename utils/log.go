@@ -13,9 +13,8 @@ const (
 	PlainFormat = "plain"
 	JSONFormat  = "json"
 
-	FileName     = "server.log"
-	LineLogFmt   = "[%v] %v %v:%v %v%v"
-	LineLogFmtRn = LineLogFmt + "\n"
+	FileName   = "server.log"
+	LineLogFmt = "[%v] %v %v:%v %v %v\n"
 )
 
 type PlainFormatter struct{}
@@ -24,21 +23,20 @@ func (f *PlainFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	dirs := strings.Split(entry.Caller.File, "/")
 	fileName := dirs[len(dirs)-1]
 
-	format := LineLogFmt
-	if entry.Message[len(entry.Message)-1] != '\n' {
-		format = LineLogFmtRn
-	}
 	fields := ""
 	for k, v := range entry.Data {
-		fields += fmt.Sprintf(", %v:%v", k, v)
+		fields += fmt.Sprintf("%v:%v | ", k, v)
+	}
+	if len(fields) > 0 {
+		fields = "| " + fields
 	}
 
-	output := fmt.Sprintf(format,
+	output := fmt.Sprintf(LineLogFmt,
 		strings.ToUpper(entry.Level.String()),
 		entry.Time.Format("2006-01-02 15:04:05"),
 		fileName,
 		entry.Caller.Line,
-		entry.Message,
+		strings.TrimRight(entry.Message, "\n"),
 		fields)
 
 	return []byte(output), nil

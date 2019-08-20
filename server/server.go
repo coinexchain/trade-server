@@ -72,7 +72,7 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 }
 
 func (ts *TradeSever) Start() {
-	log.Infof("Server start... (%v)", ts.httpSvr.Addr)
+	log.WithField("addr", ts.httpSvr.Addr).Infof("Server start...")
 
 	// start consumer
 	go ts.consumer.Consume()
