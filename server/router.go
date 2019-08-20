@@ -234,17 +234,37 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 			return
 		}
 
-		data, timesid := hub.QueryDeal(account, time, sid, count)
-
-		var order core.OrderInfo
-		orders := make([]core.OrderInfo, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &order); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
+		data, tags, timesid := hub.QueryOrder(account, time, sid, count)
+		createOrders := make([]core.CreateOrderInfo, 0)
+		fillOrders := make([]core.FillOrderInfo, 0)
+		cancelOrders := make([]core.CancelOrderInfo, 0)
+		for i, tag := range tags {
+			if tag == core.CreateOrderEndByte {
+				var order core.CreateOrderInfo
+				if err = json.Unmarshal(data[i], &order); err != nil {
+					rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+					return
+				}
+				createOrders = append(createOrders, order)
 			}
-			orders = append(orders, order)
+			if tag == core.FillOrderEndByte {
+				var order core.FillOrderInfo
+				if err = json.Unmarshal(data[i], &order); err != nil {
+					rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+					return
+				}
+				fillOrders = append(fillOrders, order)
+			}
+			if tag == core.CancelOrderEndByte {
+				var order core.CancelOrderInfo
+				if err = json.Unmarshal(data[i], &order); err != nil {
+					rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+					return
+				}
+				cancelOrders = append(cancelOrders, order)
+			}
 		}
+		orders := core.OrderInfo{CreateOrderInfo: createOrders, FillOrderInfo: fillOrders, CancelOrderInfo: cancelOrders}
 
 		postQueryKVStoreResponse(w, orders, timesid)
 	}
