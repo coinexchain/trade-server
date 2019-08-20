@@ -172,12 +172,12 @@
 
 `unbonding:<address>`
 
-示例: `unboding:`
+示例: `unboding:coinex19yl5cehvef8aghtpv0xf9wrmgn3s244deafs57`
 
 应答:
 
 ```
-
+{"type":"unbonding", "payload":"{"delegator":"coinex19yl5cehvef8aghtpv0xf9wrmgn3s244deafs57","validator":"coinexvaloper1htx25v7pex9lkqr77axdq33cy50ws8dquf0psu","amount":"100000","completion_time":"2019-08-20T14:19:49Z"}"}
 ```
 
 ## 订阅slash 信息
