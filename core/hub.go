@@ -814,7 +814,7 @@ func (hub *Hub) QueryBlockTime(height int64, count int) []int64 {
 	for ; iter.Valid(); iter.Next() {
 		unixSec := binary.LittleEndian.Uint64(iter.Value())
 		data = append(data, int64(unixSec))
-		if count--; count < 0 {
+		if count--; count == 0 {
 			break
 		}
 	}
@@ -847,7 +847,7 @@ func (hub *Hub) QueryCandleStick(market string, timespan byte, time int64, sid i
 	}()
 	for ; iter.Valid(); iter.Next() {
 		data = append(data, iter.Value())
-		if count--; count < 0 {
+		if count--; count == 0 {
 			break
 		}
 	}
@@ -935,7 +935,7 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64,
 		} else {
 			data = append(data, iter.Value())
 		}
-		if count--; count < 0 {
+		if count--; count == 0 {
 			break
 		}
 	}
