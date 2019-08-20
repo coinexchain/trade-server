@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/pelletier/go-toml"
@@ -13,34 +14,8 @@ const (
 	PlainFormat = "plain"
 	JSONFormat  = "json"
 
-	FileName   = "server.log"
-	LineLogFmt = "[%v] %v %v:%v %v %v\n"
+	FileName = "server.log"
 )
-
-type PlainFormatter struct{}
-
-func (f *PlainFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	dirs := strings.Split(entry.Caller.File, "/")
-	fileName := dirs[len(dirs)-1]
-
-	fields := ""
-	for k, v := range entry.Data {
-		fields += fmt.Sprintf("%v:%v | ", k, v)
-	}
-	if len(fields) > 0 {
-		fields = "| " + fields
-	}
-
-	output := fmt.Sprintf(LineLogFmt,
-		strings.ToUpper(entry.Level.String()),
-		entry.Time.Format("2006-01-02 15:04:05"),
-		fileName,
-		entry.Caller.Line,
-		strings.TrimRight(entry.Message, "\n"),
-		fields)
-
-	return []byte(output), nil
-}
 
 func InitLog(svrConfig *toml.Tree) error {
 	logDir := svrConfig.GetDefault("log-dir", "log").(string)
@@ -60,12 +35,11 @@ func InitLog(svrConfig *toml.Tree) error {
 	}
 
 	if format == JSONFormat {
-		logrus.SetFormatter(&logrus.JSONFormatter{})
-		logrus.SetReportCaller(false)
+		logrus.SetFormatter(&logrus.JSONFormatter{CallerPrettyfier: callerPrettyfier})
 	} else {
 		logrus.SetFormatter(&PlainFormatter{})
-		logrus.SetReportCaller(true)
 	}
+	logrus.SetReportCaller(true)
 	logrus.SetLevel(getLogLevel(level))
 	logrus.SetOutput(file)
 
@@ -88,4 +62,45 @@ func getLogLevel(level string) logrus.Level {
 	default:
 		return logrus.WarnLevel
 	}
+}
+
+func callerPrettyfier(frame *runtime.Frame) (string, string) {
+	dirs := strings.Split(frame.File, "/")
+	fileName := dirs[len(dirs)-1]
+	file := fmt.Sprintf("%s:%d", fileName, frame.Line)
+
+	funcPaths := strings.Split(frame.Function, "/")
+	function := funcPaths[len(funcPaths)-1]
+
+	return function, file
+}
+
+type PlainFormatter struct{}
+
+func (f *PlainFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+
+	level := strings.ToUpper(entry.Level.String())
+	logTime := entry.Time.Format("2006-01-02 15:04:05")
+	message := strings.TrimRight(entry.Message, "\n")
+
+	fileName := ""
+	lineNum := 0
+	if entry.HasCaller() {
+		dirs := strings.Split(entry.Caller.File, "/")
+		fileName = dirs[len(dirs)-1]
+		lineNum = entry.Caller.Line
+	}
+
+	fields := ""
+	for k, v := range entry.Data {
+		fields += fmt.Sprintf("%v:%v | ", k, v)
+	}
+	if len(fields) > 0 {
+		fields = "| " + fields
+	}
+
+	output := fmt.Sprintf("[%v] %v %v:%v %v %v\n",
+		level, logTime, fileName, lineNum, message, fields)
+
+	return []byte(output), nil
 }
