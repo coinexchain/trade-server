@@ -3,7 +3,6 @@ package utils
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/pelletier/go-toml"
@@ -15,7 +14,7 @@ const (
 	JSONFormat  = "json"
 
 	FileName     = "server.log"
-	LineLogFmt   = "[%v] %v %v:%v %v"
+	LineLogFmt   = "[%v] %v %v:%v %v%v"
 	LineLogFmtRn = LineLogFmt + "\n"
 )
 
@@ -29,25 +28,18 @@ func (f *PlainFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	if entry.Message[len(entry.Message)-1] != '\n' {
 		format = LineLogFmtRn
 	}
+	fields := ""
+	for k, v := range entry.Data {
+		fields += fmt.Sprintf(", %v:%v", k, v)
+	}
+
 	output := fmt.Sprintf(format,
 		strings.ToUpper(entry.Level.String()),
 		entry.Time.Format("2006-01-02 15:04:05"),
 		fileName,
 		entry.Caller.Line,
-		entry.Message)
-
-	for k, val := range entry.Data {
-		switch v := val.(type) {
-		case string:
-			output = strings.Replace(output, "%"+k+"%", v, 1)
-		case int:
-			s := strconv.Itoa(v)
-			output = strings.Replace(output, "%"+k+"%", s, 1)
-		case bool:
-			s := strconv.FormatBool(v)
-			output = strings.Replace(output, "%"+k+"%", s, 1)
-		}
-	}
+		entry.Message,
+		fields)
 
 	return []byte(output), nil
 }

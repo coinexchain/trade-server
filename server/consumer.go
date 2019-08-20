@@ -41,7 +41,7 @@ func (tc *TradeConsumer) Consume() {
 	if err != nil {
 		panic(err)
 	}
-	log.Infof("Partition size:%v", len(partitionList))
+	log.WithField("size", len(partitionList)).Info("consumer partitions")
 
 	wg := &sync.WaitGroup{}
 	for _, partition := range partitionList {
@@ -61,11 +61,11 @@ func (tc *TradeConsumer) Consume() {
 		wg.Add(1)
 
 		go func(pc sarama.PartitionConsumer, partition int32) {
-			log.Infof("PartitionConsumer %v start from %v", partition, offset)
+			log.WithFields(log.Fields{"partition": partition, "offset": offset}).Info("PartitionConsumer start")
 			defer func() {
 				pc.AsyncClose()
 				wg.Done()
-				log.Infof("PartitionConsumer %v close in %v", partition, offset)
+				log.WithFields(log.Fields{"partition": partition, "offset": offset}).Info("PartitionConsumer close")
 			}()
 
 			signals := make(chan os.Signal, 1)
@@ -91,7 +91,7 @@ func (tc *TradeConsumer) Consume() {
 func (tc *TradeConsumer) Close() {
 	<-tc.stopChan
 	if err := tc.Consumer.Close(); err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal("consumer close")
 	}
 	log.Info("Consumer close")
 }

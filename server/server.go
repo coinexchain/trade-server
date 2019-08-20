@@ -36,7 +36,7 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	dataDir := svrConfig.GetDefault("data-dir", "data").(string)
 	db, err := newLevelDB(DbName, dataDir)
 	if err != nil {
-		log.Fatalf("open db fail. %v", err)
+		log.WithError(err).Fatal("open db fail")
 	}
 	hub := core.NewHub(db, wsManager)
 
@@ -45,7 +45,7 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	lcd := svrConfig.GetDefault("lcd", "").(string)
 	router, err := registerHandler(&hub, wsManager, proxy, lcd)
 	if err != nil {
-		log.Fatalf("registerHandler fail. %v", err)
+		log.WithError(err).Fatal("registerHandler fail")
 	}
 	httpSvr := &http.Server{
 		Addr:         fmt.Sprintf(":%d", svrConfig.GetDefault("port", 8000).(int64)),
@@ -61,7 +61,7 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	}
 	consumer, err := NewConsumer(strings.Split(addrs, ","), DexTopic, &hub)
 	if err != nil {
-		log.Fatalf("create consumer error:%v", err)
+		log.WithError(err).Fatalf("create consumer error")
 	}
 
 	return &TradeSever{
@@ -80,7 +80,7 @@ func (ts *TradeSever) Start() {
 	// start http server
 	go func() {
 		if err := ts.httpSvr.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("error occur:%v", err)
+			log.WithError(err).Fatal("http server listen and serve error")
 		}
 	}()
 }
@@ -90,7 +90,7 @@ func (ts *TradeSever) Stop() {
 	ctx, cancel := context.WithTimeout(context.Background(), WaitTimeout*time.Second)
 	defer cancel()
 	if err := ts.httpSvr.Shutdown(ctx); err != nil {
-		log.Fatalf("shutdown failed. error:%v", err)
+		log.WithError(err).Fatal("http server shutdown failed")
 	}
 
 	// stop consumer
