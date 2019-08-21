@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"os"
-	"os/signal"
 
 	"github.com/gorilla/websocket"
 )
@@ -16,12 +14,8 @@ var addr = flag.String("addr", "localhost:8000", "http service address")
 
 func main() {
 	flag.Parse()
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-
 	u := url.URL{Scheme: "ws", Host: *addr, Path: "/ws"}
 	fmt.Println(u.String())
-
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		log.Fatal("dial: ", err)
@@ -29,16 +23,17 @@ func main() {
 	defer c.Close()
 
 	done := make(chan struct{})
-
 	go func() {
 		defer close(done)
 		for {
+
 			_, message, err := c.ReadMessage()
 			if err != nil {
 				log.Println("read:", err)
 				return
 			}
 			log.Printf("recv: %s", message)
+
 		}
 	}()
 
