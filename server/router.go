@@ -238,6 +238,9 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		createOrders := make([]core.CreateOrderInfo, 0)
 		fillOrders := make([]core.FillOrderInfo, 0)
 		cancelOrders := make([]core.CancelOrderInfo, 0)
+		createTimeSid := make([]int64, 0)
+		fillTimeSid := make([]int64, 0)
+		cancelTimeSid := make([]int64, 0)
 		for i, tag := range tags {
 			if tag == core.CreateOrderEndByte {
 				var order core.CreateOrderInfo
@@ -246,6 +249,8 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 					return
 				}
 				createOrders = append(createOrders, order)
+				createTimeSid = append(createTimeSid, timesid[i*2])
+				createTimeSid = append(createTimeSid, timesid[i*2+1])
 			}
 			if tag == core.FillOrderEndByte {
 				var order core.FillOrderInfo
@@ -254,6 +259,8 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 					return
 				}
 				fillOrders = append(fillOrders, order)
+				fillTimeSid = append(fillTimeSid, timesid[i*2])
+				fillTimeSid = append(fillTimeSid, timesid[i*2+1])
 			}
 			if tag == core.CancelOrderEndByte {
 				var order core.CancelOrderInfo
@@ -262,11 +269,17 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 					return
 				}
 				cancelOrders = append(cancelOrders, order)
+				cancelTimeSid = append(cancelTimeSid, timesid[i*2])
+				cancelTimeSid = append(cancelTimeSid, timesid[i*2+1])
 			}
 		}
-		orders := core.OrderInfo{CreateOrderInfo: createOrders, FillOrderInfo: fillOrders, CancelOrderInfo: cancelOrders}
+		orders := core.OrderInfo{
+			CreateOrderInfo: core.CreateOrderResponse{Data: createOrders, Timesid: timesid},
+			FillOrderInfo:   core.FillOrderResponse{Data: fillOrders, Timesid: timesid},
+			CancelOrderInfo: core.CancelOrderResponse{Data: cancelOrders, Timesid: timesid},
+		}
 
-		postQueryKVStoreResponse(w, orders, timesid)
+		postQueryResponse(w, orders)
 	}
 }
 

@@ -45,10 +45,23 @@ const IOC = 4
 const GTE = 3
 const LIMIT = 2
 
+type CreateOrderResponse struct {
+	Data    []CreateOrderInfo `json:"data"`
+	Timesid []int64           `json:"timesid"`
+}
+type FillOrderResponse struct {
+	Data    []FillOrderInfo `json:"data"`
+	Timesid []int64         `json:"timesid"`
+}
+type CancelOrderResponse struct {
+	Data    []CancelOrderInfo `json:"data"`
+	Timesid []int64           `json:"timesid"`
+}
+
 type OrderInfo struct {
-	CreateOrderInfo []CreateOrderInfo `json:"create_order_info"`
-	FillOrderInfo   []FillOrderInfo   `json:"fill_order_info"`
-	CancelOrderInfo []CancelOrderInfo `json:"cancel_order_info"`
+	CreateOrderInfo CreateOrderResponse `json:"create_order_info"`
+	FillOrderInfo   FillOrderResponse   `json:"fill_order_info"`
+	CancelOrderInfo CancelOrderResponse `json:"cancel_order_info"`
 }
 type CreateOrderInfo struct {
 	OrderID     string  `json:"order_id"`
