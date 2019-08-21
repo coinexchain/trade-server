@@ -274,9 +274,9 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 			}
 		}
 		orders := core.OrderInfo{
-			CreateOrderInfo: core.CreateOrderResponse{Data: createOrders, Timesid: timesid},
-			FillOrderInfo:   core.FillOrderResponse{Data: fillOrders, Timesid: timesid},
-			CancelOrderInfo: core.CancelOrderResponse{Data: cancelOrders, Timesid: timesid},
+			CreateOrderInfo: core.CreateOrderResponse{Data: createOrders, Timesid: createTimeSid},
+			FillOrderInfo:   core.FillOrderResponse{Data: fillOrders, Timesid: fillTimeSid},
+			CancelOrderInfo: core.CancelOrderResponse{Data: cancelOrders, Timesid: cancelTimeSid},
 		}
 
 		postQueryResponse(w, orders)
