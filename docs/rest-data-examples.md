@@ -285,6 +285,27 @@ curl -X GET "http://localhost:8000/expiry/unlocks?account=coinex1fxdvpzaw2qcc7dc
 }
 ```
 
+- 查询用户的redelegations信息
+
+```bash
+curl -X GET "http://localhost:8000/expiry/redelegations?account=coinex1hclkyahl2fmf0qng4ksz9su6zl4d8q3s4h5t7k&time=1597927914&sid=0&count=1" -H "accept: application/json"
+{
+  "data": [
+    {
+      "delegator": "coinex1hclkyahl2fmf0qng4ksz9su6zl4d8q3s4h5t7k",
+      "src": "coinexvaloper1k4vfyednnrst48we29phjdu09tprdqv5h8cvga",
+      "dst": "coinexvaloper1mxewdqph6qq7vudhjlhq5vcpvp28utnnnedtr2",
+      "amount": "300000000000",
+      "completion_time": "2019-08-21T06:23:00Z"
+    }
+  ],
+  "timesid": [
+    1566368580,
+    0
+  ]
+}
+```
+
 
 
 
