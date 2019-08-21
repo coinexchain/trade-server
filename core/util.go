@@ -307,11 +307,18 @@ func (tm *TickerManager) UpdateNewestPrice(currPrice sdk.Dec, currMinute int) {
 		tm.NewestMinute = currMinute
 		return
 	}
+	if tm.NewestPrice == currPrice {
+		return
+	}
 	tm.PriceList[tm.NewestMinute].Price = tm.NewestPrice
 	tm.PriceList[tm.NewestMinute].Updated = true
-	for tm.NewestMinute++; tm.NewestMinute != currMinute; tm.NewestMinute++ {
-		if tm.NewestMinute == MinuteNumInDay {
+	for {
+		tm.NewestMinute++
+		if tm.NewestMinute >= MinuteNumInDay {
 			tm.NewestMinute = 0
+		}
+		if tm.NewestMinute == currMinute {
+			break
 		}
 		tm.PriceList[tm.NewestMinute].Price = tm.NewestPrice
 		tm.PriceList[tm.NewestMinute].Updated = false

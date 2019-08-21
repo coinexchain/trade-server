@@ -140,9 +140,10 @@ func getSubscribeManager() *mocSubscribeManager {
 	res.TickerSubscribeInfo = make([]Subscriber, 1)
 	res.TickerSubscribeInfo[0] = NewTickerSubscriber(0, []string{"abc/cet", "xyz/cet"})
 	res.CandleStickSubscribeInfo = make(map[string][]Subscriber)
-	res.CandleStickSubscribeInfo["abc/cet"] = make([]Subscriber, 2)
+	res.CandleStickSubscribeInfo["abc/cet"] = make([]Subscriber, 3)
 	res.CandleStickSubscribeInfo["abc/cet"][0] = NewCandleStickSubscriber(6, Minute)
 	res.CandleStickSubscribeInfo["abc/cet"][1] = NewCandleStickSubscriber(7, Hour)
+	res.CandleStickSubscribeInfo["abc/cet"][2] = NewCandleStickSubscriber(5, Day)
 	res.DepthSubscribeInfo = make(map[string][]Subscriber)
 	res.DepthSubscribeInfo["abc/cet"] = make([]Subscriber, 2)
 	res.DepthSubscribeInfo["abc/cet"][0] = &PlainSubscriber{ID: 8}
@@ -737,4 +738,98 @@ func Test1(t *testing.T) {
 	require.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
 	require.Equal(t, "[1563178030,8]", string(bytes))
+
+	newHeightInfo = &NewHeightInfo{
+		Height:        1002,
+		TimeStamp:     T("2019-07-15T08:31:10Z"),
+		LastBlockHash: []byte("23456789012345678901"),
+	}
+	bytes, _ = json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+	correct = `
+3: {"height":1002,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
+4: {"height":1002,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
+6: {"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"100","unix_time":1563178750,"time_span":16,"market":"abc/cet"}
+`
+	subMan.compareResult(t, correct)
+	subMan.clearPushList()
+
+	fillOrderInfo = &FillOrderInfo{
+		OrderID:     addr1 + "-1",
+		TradingPair: "abc/cet",
+		Height:      1003,
+		Side:        SELL,
+		Price:       sdk.NewDec(100),
+		LeftStock:   0,
+		Freeze:      0,
+		DealStock:   200,
+		DealMoney:   25,
+		CurrStock:   0,
+		CurrMoney:   0,
+	}
+	bytes, _ = json.Marshal(fillOrderInfo)
+	hub.ConsumeMessage("fill_order_info", bytes)
+	correct = `
+15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":0,"curr_money":0}
+16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":0,"curr_money":0}
+`
+	subMan.compareResult(t, correct)
+	subMan.clearPushList()
+
+	hub.ConsumeMessage("commit", nil)
+	correct = `
+8: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}}
+9: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}}
+`
+	subMan.compareResult(t, correct)
+	subMan.clearPushList()
+
+	newHeightInfo = &NewHeightInfo{
+		Height:        1003,
+		TimeStamp:     T("2019-07-16T00:01:10Z"),
+		LastBlockHash: []byte("23456789012345678901"),
+	}
+	bytes, _ = json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+	correct = `
+3: {"height":1003,"timestamp":"2019-07-16T00:01:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
+4: {"height":1003,"timestamp":"2019-07-16T00:01:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
+6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563179470,"time_span":16,"market":"abc/cet"}
+7: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":32,"market":"abc/cet"}
+5: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":48,"market":"abc/cet"}
+`
+	subMan.compareResult(t, correct)
+	subMan.clearPushList()
+
+	fillOrderInfo = &FillOrderInfo{
+		OrderID:     addr1 + "-1",
+		TradingPair: "abc/cet",
+		Height:      1003,
+		Side:        SELL,
+		Price:       sdk.NewDec(110),
+		LeftStock:   0,
+		Freeze:      0,
+		DealStock:   200,
+		DealMoney:   25,
+		CurrStock:   0,
+		CurrMoney:   0,
+	}
+	bytes, _ = json.Marshal(fillOrderInfo)
+	hub.ConsumeMessage("fill_order_info", bytes)
+	correct = `
+15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"110.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":0,"curr_money":0}
+16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"110.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":0,"curr_money":0}
+`
+	subMan.compareResult(t, correct)
+	subMan.clearPushList()
+
+	hub.ConsumeMessage("commit", nil)
+	correct = `
+0: [{"market":"abc/cet","new":"0.125000000000000000","old":"0.100000000000000000"}]
+8: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"110.000000000000000000","a":"-200"}]}}
+9: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"110.000000000000000000","a":"-200"}]}}
+`
+	subMan.compareResult(t, correct)
+	subMan.clearPushList()
 }
+
