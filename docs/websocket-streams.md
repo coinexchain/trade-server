@@ -1,29 +1,19 @@
 # trade-server websocket 订阅
 
-## General WSS information
-
-* websocket的链接端口：wss://stream.coinexchain.com:8080
-* 订阅单个信息： /ws/<streamName>
-* 订阅组合信息
-* 所有的订阅信息符号必须是小写; 
-* 每个websocket链接的有效时间 : 
-
-Note : 此处的实现方案还在确定中，针对链接的建立可能会有修改；
-
 ## 链接
 
-将您的 websocket 客户端连接到 `wss://stream.coinexchain.com`
-
-通过发送 "help"，你可以基本了解如何使用我们的 websocket API.
+将您的 websocket 客户端连接到 `ws://localhost:8000/ws`
 
 ## 所有指令
+
+在链接建立后，通过发送下列格式的指令数据，来订阅、解订阅相关的topic.
 
 基本的指令发送格式
 
 `{"op":"<command>", "args":["args1", "args2", "args3", ...] }`
 
 *	订阅
-	* 	subscribe
+	*  subscribe
 	*  unsubscribe
 * 心跳
 	* Ping
@@ -33,11 +23,9 @@ Note : 此处的实现方案还在确定中，针对链接的建立可能会有�
 
 trader-server 是用来订阅实时数据的，一旦链接成功，会获取到订阅主题的最新信息推送，它是获取最新数据的最好方法。
 
-订阅主题，分为两种方式；
+订阅主题，采用下列这种方式；
 
-*	建立链接建立时订阅相关的主题； 对于订阅多个主题，使用逗号分隔主题列表。如
-	* 	`wss://stream.coinexchain.com?subscribe=txs,blockinfo,slash`
-*	如果链接已建立后，想要订阅一个新的主题，使用下列格式发送请求
+*	链接已建立后，通过发送下列信息至`trade-server`，订阅一个新的主题，使用下列格式发送请求
 	* `{"op":"subscribe", "args":[<subscriptionTopic>, ...]}`
 通过发送订阅主题数组，一次可订阅多个主题。
 
@@ -46,6 +34,10 @@ trader-server 是用来订阅实时数据的，一旦链接成功，会获取到
 当订阅的某个topic需要携带参数时，	可以使用`:`号分隔topic名称与它的参数；
 
 *	如：`kline:etc/cet:1m` ; 该topic的意思为：订阅 etc/cet的1分钟K线数据.
+
+> [golang 客户端示例](https://github.com/coinexchain/trade-server/blob/master/examples/websocket_examples.go)
+
+> [响应数据示例](https://github.com/coinexchain/trade-server/blob/master/docs/websocket-data-examples.md)
 
 ## 响应格式
 
