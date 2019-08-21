@@ -198,7 +198,7 @@ curl -X GET "http://localhost:8000/market/deals?market=abc/cet&time=1566288724&c
 - 查询bancorlite-trade
 
 ```bash
-curl -X "http://localhost:8000/bancorlite/trades?account=coinex1za0s76cwrkn5lgzmdkznkqplx28avrsvv0qx0q&time=1566269120&count=2&sid=0"  -H "accept: application/json"
+curl -X GET "http://localhost:8000/bancorlite/trades?account=coinex1za0s76cwrkn5lgzmdkznkqplx28avrsvv0qx0q&time=1566269120&count=2&sid=0"  -H "accept: application/json"
 {
   "data": [
     {
@@ -273,8 +273,8 @@ curl -X GET "http://localhost:8000/comment/comments?token=cet&time=1566268004&co
       "sender": "coinex1cr6ven9f6rqu2ekageepakgpkyxs9rlfe6tmad",
       "token": "cet",
       "donation": 2,
-      "title": "adsf",
-      "content": "dff",
+      "title": "I love cet.",
+      "content": "CET to da moon!!!",
       "content_type": 3,
       "references": null
     }
