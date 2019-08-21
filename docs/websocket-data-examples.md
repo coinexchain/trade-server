@@ -14,7 +14,7 @@
 
 `txs:<address>`
 
-订阅示例： `txs:coinex1q7nm8r8v2wzhrq8wxel9qpc832vnhmf5kvxuxs`
+订阅示例： `txs:coinex16ur229a4xkj9e0xu06nqge9c23y70g7sl5vj98`
 
 应答：
 
@@ -38,15 +38,13 @@
 
 `ticker:<trading-pair>`
 
-示例： `ticker:eth1/cet`
+示例： `ticker:sdu1/cet`
 
 应答：
 
 ```
 {"type":"ticker","payload":{"tickers":[{"market":"sdu1/cet","new":"4.799999999600122541","old":"4.799999999600122541"}]}}
 ```
-
-示例：`order:coinex16ur229a4xkj9e0xu06nqge9c23y70g7sl5vj98`
 
 ## 订阅 交易对的成交(deal)信息
 
@@ -104,7 +102,6 @@
 应答：
 ```
 {"type":"kline", "payload":"{"open":"5.199999998894717703","close":"4.899999999013645027","high":"5.300000000000000000","low":"4.899999991850623725","total":"507280335742","unix_time":1566220136,"time_span":16,"market":"sdu1/cet"}"}
-{"type":"ticker","payload":{"tickers":[{"market":"sdu1/cet","new":"4.899999999013645027","old":"4.899999999013645027"}]}}
 ```
 
 ## 订阅bancor 信息
