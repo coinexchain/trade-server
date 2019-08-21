@@ -84,7 +84,73 @@ http://localhost:8000/market/candle-sticks?market=abc/cet&timespan=16&time=15662
 ```
 - 查询用户的orders信息
 ```bash
-http://localhost:8000/market/user-orders?account=coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38&time=1566289684&count=1&sid=0
+curl -X GET "http://localhost:8000/market/user-orders?account=coinex18t4sp5kv07czmv2ar9ds04z3xx946kkkcwnfpx&time=1566371118&count=3&sid=0" -H "accept: application/json"
+{
+  "create_order_info": {
+    "data": [
+      {
+        "order_id": "coinex18t4sp5kv07czmv2ar9ds04z3xx946kkkcwnfpx-5",
+        "sender": "coinex18t4sp5kv07czmv2ar9ds04z3xx946kkkcwnfpx",
+        "trading_pair": "abc/cet",
+        "order_type": 2,
+        "price": "1.000000000000000000",
+        "quantity": 300000000,
+        "side": 1,
+        "time_in_force": 3,
+        "feature_fee": 0,
+        "height": 10,
+        "frozen_fee": 1000000,
+        "freeze": 300000000
+      }
+    ],
+    "timesid": [
+      1566371090,
+      6
+    ]
+  },
+  "fill_order_info": {
+    "data": [
+      {
+        "order_id": "coinex18t4sp5kv07czmv2ar9ds04z3xx946kkkcwnfpx-5",
+        "trading_pair": "abc/cet",
+        "height": 12,
+        "side": 1,
+        "price": "1.000000000000000000",
+        "left_stock": 0,
+        "freeze": 30000000,
+        "deal_stock": 300000000,
+        "deal_money": 270000000,
+        "curr_stock": 300000000,
+        "curr_money": 270000000
+      }
+    ],
+    "timesid": [
+      1566371090,
+      8
+    ]
+  },
+  "cancel_order_info": {
+    "data": [
+      {
+        "order_id": "coinex18t4sp5kv07czmv2ar9ds04z3xx946kkkcwnfpx-5",
+        "trading_pair": "abc/cet",
+        "height": 12,
+        "side": 1,
+        "price": "1.000000000000000000",
+        "del_reason": "The order was fully filled",
+        "used_commission": 1000000,
+        "left_stock": 0,
+        "remain_amount": 30000000,
+        "deal_stock": 300000000,
+        "deal_money": 270000000
+      }
+    ],
+    "timesid": [
+      1566371090,
+      12
+    ]
+  }
+}
 ```
 
 - 查询market-deal
