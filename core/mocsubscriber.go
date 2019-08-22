@@ -2,10 +2,11 @@ package core
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
+	"fmt"
 	"strings"
 	"testing"
-	"fmt"
+
+	"github.com/stretchr/testify/require"
 )
 
 type PlainSubscriber struct {
@@ -288,4 +289,3 @@ func (sm *MocSubscribeManager) PushTx(subscriber Subscriber, info []byte) {
 func (sm *MocSubscribeManager) PushComment(subscriber Subscriber, info []byte) {
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
-

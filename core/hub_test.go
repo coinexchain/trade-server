@@ -556,4 +556,3 @@ func Test1(t *testing.T) {
 	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":48,"market":"abc/cet"}`
 	require.Equal(t, correct, toStr(data))
 }
-

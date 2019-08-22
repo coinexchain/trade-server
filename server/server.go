@@ -61,7 +61,7 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	}
 	consumer, err := NewConsumer(strings.Split(addrs, ","), DexTopic, &hub)
 	if err != nil {
-		log.WithError(err).Fatalf("create consumer error")
+		log.WithError(err).Fatal("create consumer error")
 	}
 
 	return &TradeSever{
@@ -72,7 +72,7 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 }
 
 func (ts *TradeSever) Start() {
-	log.WithField("addr", ts.httpSvr.Addr).Infof("Server start...")
+	log.WithField("addr", ts.httpSvr.Addr).Info("Server start...")
 
 	// start consumer
 	go ts.consumer.Consume()

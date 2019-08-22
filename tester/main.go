@@ -3,12 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/coinexchain/trade-server/core"
+	dbm "github.com/tendermint/tm-db"
 	"log"
 	"os"
 	"strings"
 	"time"
-	dbm "github.com/tendermint/tm-db"
-	"github.com/coinexchain/trade-server/core"
 )
 
 func toStr(payload [][]byte) string {
@@ -35,7 +35,7 @@ func main() {
 	defer file.Close()
 
 	db := dbm.NewMemDB()
-	subMan := core.GetSubscribeManager("coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly","coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c")
+	subMan := core.GetSubscribeManager("coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly", "coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c")
 	hub := core.NewHub(db, subMan)
 
 	scanner := bufio.NewScanner(file)
