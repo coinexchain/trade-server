@@ -831,5 +831,14 @@ func Test1(t *testing.T) {
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
+
+	unixTime = T("2019-07-25T08:39:10Z").Unix()
+	data = hub.QueryCandleStick("abc/cet", Hour, unixTime, 0, 20)
+	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":32,"market":"abc/cet"}`
+	require.Equal(t, correct, toStr(data))
+
+	data = hub.QueryCandleStick("abc/cet", Day, unixTime, 0, 20)
+	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":48,"market":"abc/cet"}`
+	require.Equal(t, correct, toStr(data))
 }
 
