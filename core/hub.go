@@ -341,7 +341,7 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 	var v NotificationTx
 	err := json.Unmarshal(bz, &v)
 	if err != nil {
-		hub.Log("Error in Unmarshal NotificationTx")
+		hub.Log(fmt.Sprintf("Error in Unmarshal NotificationTx: %s", string(bz)))
 		return
 	}
 	snBytes := make([]byte, 8)
