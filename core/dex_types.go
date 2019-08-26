@@ -246,9 +246,9 @@ type Depth struct {
 	Payload DepthDetails `json:"payload"`
 }
 
-func encodeDepth(market string, depth map[*PricePoint]bool, buy bool) []byte {
+func encodeDepth(market string, depth map[string]*PricePoint, buy bool) []byte {
 	values := make([]*PricePoint, 0, len(depth))
-	for p := range depth {
+	for _, p := range depth {
 		values = append(values, p)
 	}
 	msg := Depth{

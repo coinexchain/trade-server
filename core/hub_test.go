@@ -493,6 +493,7 @@ func Test1(t *testing.T) {
 
 	hub.ConsumeMessage("commit", nil)
 	correct = `
+0: [{"market":"abc/cet","new":"0.100000000000000000","old":"0.100000000000000000"}]
 8: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}}
 9: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}}
 `

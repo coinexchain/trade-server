@@ -193,7 +193,11 @@ func (manager *CandleStickManager) GetRecord(Market string) *CandleStickRecord {
 // Manager for the depth information of one side of the order book: sell or buy
 type DepthManager struct {
 	ppMap   *treemap.Map //map[string]*PricePoint
-	Updated map[*PricePoint]bool
+	Updated map[string]*PricePoint
+}
+
+func (dm *DepthManager) Size() int {
+	return dm.ppMap.Size()
 }
 
 func (dm *DepthManager) DumpPricePoints() []*PricePoint {
@@ -211,7 +215,7 @@ func (dm *DepthManager) DumpPricePoints() []*PricePoint {
 func DefaultDepthManager() *DepthManager {
 	return &DepthManager{
 		ppMap:   treemap.NewWithStringComparator(),
-		Updated: make(map[*PricePoint]bool),
+		Updated: make(map[string]*PricePoint),
 	}
 }
 
@@ -231,13 +235,13 @@ func (dm *DepthManager) DeltaChange(price sdk.Dec, amount sdk.Int) {
 	} else {
 		dm.ppMap.Put(s, pp)
 	}
-	dm.Updated[pp] = true
+	dm.Updated[s] = pp
 }
 
 // returns the changed PricePoints of last block. Clear dm.Updated for the next block
-func (dm *DepthManager) EndBlock() map[*PricePoint]bool {
+func (dm *DepthManager) EndBlock() map[string]*PricePoint {
 	ret := dm.Updated
-	dm.Updated = make(map[*PricePoint]bool)
+	dm.Updated = make(map[string]*PricePoint)
 	return ret
 }
 
@@ -271,19 +275,14 @@ func (dm *DepthManager) GetHighest(n int) []*PricePoint {
 
 //=====================================
 
-type priceWithUpdate struct {
-	Price   sdk.Dec `json:"price"`
-	Updated bool    `json:"updated"`
-}
-
 const MinuteNumInDay = 24 * 60
 
 type TickerManager struct {
-	PriceList    [MinuteNumInDay]priceWithUpdate `json:"price_list"`
-	NewestPrice  sdk.Dec                         `json:"new_price"`
-	NewestMinute int                             `json:"new_minute"`
-	Market       string                          `json:"market"`
-	Initialized  bool                            `json:"initialized"`
+	PriceList    [MinuteNumInDay]sdk.Dec `json:"price_list"`
+	NewestPrice  sdk.Dec                 `json:"new_price"`
+	NewestMinute int                     `json:"new_minute"`
+	Market       string                  `json:"market"`
+	Initialized  bool                    `json:"initialized"`
 }
 
 func DefaultTickerManager(Market string) *TickerManager {
@@ -301,17 +300,13 @@ func (tm *TickerManager) UpdateNewestPrice(currPrice sdk.Dec, currMinute int) {
 	if !tm.Initialized {
 		tm.Initialized = true
 		for i := 0; i < MinuteNumInDay; i++ {
-			tm.PriceList[i].Price = currPrice
+			tm.PriceList[i] = currPrice
 		}
 		tm.NewestPrice = currPrice
 		tm.NewestMinute = currMinute
 		return
 	}
-	if tm.NewestPrice == currPrice {
-		return
-	}
-	tm.PriceList[tm.NewestMinute].Price = tm.NewestPrice
-	tm.PriceList[tm.NewestMinute].Updated = true
+	tm.PriceList[tm.NewestMinute] = tm.NewestPrice
 	for {
 		tm.NewestMinute++
 		if tm.NewestMinute >= MinuteNumInDay {
@@ -320,23 +315,29 @@ func (tm *TickerManager) UpdateNewestPrice(currPrice sdk.Dec, currMinute int) {
 		if tm.NewestMinute == currMinute {
 			break
 		}
-		tm.PriceList[tm.NewestMinute].Price = tm.NewestPrice
-		tm.PriceList[tm.NewestMinute].Updated = false
+		tm.PriceList[tm.NewestMinute] = tm.NewestPrice
 	}
 	tm.NewestPrice = currPrice
 }
 
 // Return a Ticker if NewPrice or OldPriceOneDayAgo is different from its previous minute
 func (tm *TickerManager) GetTicker(currMinute int) *Ticker {
+	if !tm.Initialized {
+		return nil
+	}
 	if currMinute >= MinuteNumInDay || currMinute < 0 {
 		panic("Minute too large")
 	}
-	if tm.NewestMinute != currMinute && !tm.PriceList[currMinute].Updated {
-		return nil
+	lastMinute := currMinute - 1
+	if lastMinute < 0 {
+		lastMinute = MinuteNumInDay - 1
 	}
-	return &Ticker{
-		NewPrice:          tm.NewestPrice,
-		OldPriceOneDayAgo: tm.PriceList[currMinute].Price,
-		Market:            tm.Market,
+	if tm.NewestMinute == currMinute || !tm.PriceList[currMinute].Equal(tm.PriceList[lastMinute]) {
+		return &Ticker{
+			NewPrice:          tm.NewestPrice,
+			OldPriceOneDayAgo: tm.PriceList[currMinute],
+			Market:            tm.Market,
+		}
 	}
+	return nil
 }
