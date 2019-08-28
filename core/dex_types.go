@@ -246,6 +246,13 @@ type Depth struct {
 	Payload DepthDetails `json:"payload"`
 }
 
+type LockedSendMsg struct {
+	FromAddress string    `json:"from_address"`
+	ToAddress   string    `json:"to_address"`
+	Amount      sdk.Coins `json:"amount"`
+	UnlockTime  int64     `json:"unlock_time"`
+}
+
 func encodeDepth(market string, depth map[*PricePoint]bool, buy bool) []byte {
 	values := make([]*PricePoint, 0, len(depth))
 	for p := range depth {

@@ -135,7 +135,7 @@ func checkTopicValid(topic string) bool {
 		KlineKey, DepthKey, DealKey, BancorKey,
 		BancorTradeKey, CommentKey, OrderKey,
 		IncomeKey, UnbondingKey, RedelegationKey,
-		UnlockKey, TxKey:
+		UnlockKey, TxKey, LockedKey:
 		return true
 	default:
 		return false
@@ -254,12 +254,20 @@ func (w *WebsocketManager) GetTxSubscribeInfo() map[string][]Subscriber {
 	return w.getNoDetailSubscribe(TxKey)
 }
 
+func (w *WebsocketManager) GetLockedSendMsg() map[string][]Subscriber {
+	return w.getNoDetailSubscribe(LockedKey)
+}
+
 // Push msgs----------------------------
 func sendEncodeMsg(subscriber Subscriber, typeKey string, info []byte) {
 	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":\"%s\"}", typeKey, string(info)))
 	if err := subscriber.WriteMsg(msg); err != nil {
 		log.Errorf(err.Error())
 	}
+}
+
+func (w *WebsocketManager) PushLockedSendMsg(subscriber Subscriber, info []byte) {
+	sendEncodeMsg(subscriber, LockedKey, info)
 }
 
 func (w *WebsocketManager) PushSlash(subscriber Subscriber, info []byte) {

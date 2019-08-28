@@ -16,6 +16,7 @@ const (
 	RedelegationKey = "redelegation"
 	UnlockKey       = "unlock"
 	TxKey           = "txs"
+	LockedKey       = "send_lock_coins"
 )
 
 const (

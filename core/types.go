@@ -78,7 +78,9 @@ type SubscribeManager interface {
 	GetRedelegationSubscribeInfo() map[string][]Subscriber
 	GetUnlockSubscribeInfo() map[string][]Subscriber
 	GetTxSubscribeInfo() map[string][]Subscriber
+	GetLockedSendMsg() map[string][]Subscriber
 
+	PushLockedSendMsg(subscriber Subscriber, info []byte)
 	PushSlash(subscriber Subscriber, info []byte)
 	PushHeight(subscriber Subscriber, info []byte)
 	PushTicker(subscriber Subscriber, t []*Ticker)
@@ -112,6 +114,7 @@ type Querier interface {
 
 	QueryOrder(account string, time int64, sid int64, count int) (data [][]byte, tags []byte, timesid []int64)
 
+	QueryLocked(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
 	QueryDeal(market string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
 	QueryBancorInfo(market string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
 	QueryBancorTrade(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)

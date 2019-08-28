@@ -64,6 +64,7 @@ func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager, proxy bool
 	router.HandleFunc("/bancorlite/trades", QueryBancorTradesRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/expiry/redelegations", QueryRedelegationsRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/expiry/unbondings", QueryUnbondingsRequestHandlerFn(hub)).Methods("GET")
+	router.HandleFunc("/expiry/locked", QueryLockedRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/expiry/unlocks", QueryUnlocksRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/tx/incomes", QueryIncomesRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/tx/txs", QueryTxsRequestHandlerFn(hub)).Methods("GET")
@@ -472,6 +473,38 @@ func QueryUnlocksRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		}
 
 		postQueryKVStoreResponse(w, unLocks, timesid)
+	}
+}
+
+func QueryLockedRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest,
+				sdk.AppendMsgToErr("could not parse query parameters", err.Error()))
+			return
+		}
+
+		account := r.FormValue(queryKeyAccount)
+		time, sid, count, err := parseQueryKVStoreParams(r)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		data, timesid := hub.QueryComment(account, time, sid, count)
+
+		var msg core.LockedSendMsg
+		msgs := make([]core.LockedSendMsg, 0)
+		for _, v := range data {
+			if err = json.Unmarshal(v, &msg); err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			msgs = append(msgs, msg)
+		}
+
+		postQueryKVStoreResponse(w, msgs, timesid)
 	}
 }
 

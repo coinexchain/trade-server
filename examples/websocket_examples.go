@@ -42,6 +42,7 @@ func main() {
 		Args: []string{
 			// "blockinfo",
 			"slash",
+			"send_lock_coins:coinex1rafnyd9j9gc9cwu5q5uflefpdn62awyl7rvh8t",
 			// "depth:abc/cet",
 			// "bancor-trade:coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly",
 			// "unlock:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",

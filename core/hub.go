@@ -31,6 +31,7 @@ const (
 	UnbondingByte    = byte(0x32)
 	UnlockByte       = byte(0x34)
 	OffsetByte       = byte(0xF0)
+	LockedByte       = byte(0x36)
 )
 
 func limitCount(count int) int {
@@ -88,6 +89,10 @@ func getEndKeyFromBytes(firstByte byte, bz []byte, time int64, sid int64) []byte
 func (hub *Hub) getCandleStickKey(market string, timespan byte) []byte {
 	bz := append([]byte(market), []byte{0, timespan}...)
 	return hub.getKeyFromBytes(CandleStickByte, bz, 0)
+}
+
+func (hub *Hub) getLockedKey(addr string) []byte {
+	return hub.getKeyFromBytes(LockedByte, []byte(addr), 0)
 }
 
 func getCandleStickEndKey(market string, timespan byte, endTime int64, sid int64) []byte {
@@ -238,6 +243,8 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 		hub.handleMsgBancorInfoForKafka(bz)
 	case "commit":
 		hub.commit()
+	case "send_lock_coins":
+		hub.handleLockedCoinsMsg(bz)
 	default:
 		hub.Log(fmt.Sprintf("Unknown Message Type:%s", msgType))
 	}
@@ -335,6 +342,23 @@ func (hub *Hub) handleNotificationSlash(bz []byte) {
 		return
 	}
 	hub.slashSlice = append(hub.slashSlice, &v)
+}
+
+func (hub *Hub) handleLockedCoinsMsg(bz []byte) {
+	var v LockedSendMsg
+	err := json.Unmarshal(bz, &v)
+	if err != nil {
+		hub.Log("Err in Unmarshal LockedSendMsg")
+	}
+	key := hub.getLockedKey(v.ToAddress)
+	hub.batch.Set(key, bz)
+	hub.sid++
+	infos := hub.subMan.GetLockedSendMsg()
+	if conns, ok := infos[v.ToAddress]; ok {
+		for _, c := range conns {
+			hub.subMan.PushLockedSendMsg(c, bz)
+		}
+	}
 }
 
 func (hub *Hub) handleNotificationTx(bz []byte) {
@@ -894,6 +918,11 @@ func (hub *Hub) QueryIncome(account string, time int64, sid int64, count int) (d
 
 func (hub *Hub) QueryTx(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
 	data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count)
+	return
+}
+
+func (hub *Hub) QueryLocked(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+	data, _, timesid = hub.query(false, LockedByte, []byte(account), time, sid, count)
 	return
 }
 

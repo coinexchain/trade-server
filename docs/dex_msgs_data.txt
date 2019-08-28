@@ -8901,6 +8901,7 @@ notify_tx#{"signers":["coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c"],"transfer
 notify_unlock#{"address":"coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw","unlocked":[{"denom":"cet","amount":"1000000"}],"locked_coins":null,"frozen_coins":[{"denom":"abc","amount":"796912961248"},{"denom":"cet","amount":"1896049635319"}],"coins":[{"denom":"abc","amount":"24999230553270264"},{"denom":"cet","amount":"24971271794985539"}],"height":669}
 commit#{}
 height_info#{"height":242,"timestamp":"2019-08-21T08:00:58.079652Z","last_block_hash":"83C3DF69B994C67BFDD6D8BC8F27FAA88BBBB0B110AF5E2AE6DEA2FC23A42515"}
+send_lock_coins#{"from_address":"coinex1avmxlmztzxap20hawpc85h3uzj3277ja88wec2","to_address":"coinex1rafnyd9j9gc9cwu5q5uflefpdn62awyl7rvh8t","amount":[{"denom":"cet","amount":"1000000"}],"unlock_time":1567080885}
 commit#{}
 height_info#{"height":243,"timestamp":"2019-08-21T08:01:00.220209Z","last_block_hash":"8A5218622C7E88643CF6AA44B121E587ABEC8D2A8A1679B40137D37A8266641C"}
 commit#{}

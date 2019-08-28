@@ -1,0 +1,601 @@
+[INFO] 2019-08-20 17:28:21 client.go:127 Initializing new client
+[INFO] 2019-08-20 17:28:21 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 17:28:21 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 17:28:21 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 17:28:21 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-20 17:28:21 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-20 17:28:21 client.go:174 Successfully initialized new client
+[INFO] 2019-08-20 17:28:21 server.go:75 Server start... (:8000)
+[INFO] 2019-08-20 17:28:21 consumer.go:44 Partition size:1
+[INFO] 2019-08-20 17:28:21 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 17:28:21 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-20 17:28:21 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-20 17:28:21 consumer.go:64 PartitionConsumer 0 start from 253922
+[INFO] 2019-08-20 17:31:11 consumer.go:781 consumer/broker/0 disconnecting due to error processing FetchRequest: read tcp 192.168.17.55:53584->192.168.17.55:9092: i/o timeout
+[INFO] 2019-08-20 17:31:11 broker.go:253 Closed connection to broker 192.168.17.55:9092
+[INFO] 2019-08-20 17:31:11 consumer.go:324 kafka: error while consuming coinex-dex/0: read tcp 192.168.17.55:53584->192.168.17.55:9092: i/o timeout
+[INFO] 2019-08-20 17:31:13 consumer.go:347 consumer/coinex-dex/0 finding new broker
+[INFO] 2019-08-20 17:31:13 client.go:772 client/metadata fetching metadata for [coinex-dex] from broker localhost:9092
+[INFO] 2019-08-20 17:31:13 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 17:31:13 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-20 17:31:13 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-20 17:38:44 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 17:38:49 consumer.go:823 consumer/broker/0 abandoned subscription to coinex-dex/0 because consuming was taking too long
+[INFO] 2019-08-20 17:39:04 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-20 17:39:04 consumer.go:823 consumer/broker/0 abandoned subscription to coinex-dex/0 because consuming was taking too long
+[INFO] 2019-08-20 17:39:04 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-20 18:01:48 client.go:127 Initializing new client
+[INFO] 2019-08-20 18:01:48 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 18:01:48 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 18:01:48 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 18:01:48 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-20 18:01:48 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-20 18:01:48 client.go:174 Successfully initialized new client
+[INFO] 2019-08-20 18:01:48 server.go:75 Server start... (:8000)
+[INFO] 2019-08-20 18:01:48 consumer.go:44 Partition size:1
+[INFO] 2019-08-20 18:01:48 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 18:01:48 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-20 18:01:48 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-20 18:01:48 consumer.go:64 PartitionConsumer 0 start from 293968
+[INFO] 2019-08-20 18:11:48 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 18:21:48 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 18:31:48 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 19:09:48 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 19:09:48 client.go:813 client/metadata got error from broker -1 while fetching metadata: EOF
+[INFO] 2019-08-20 19:09:48 broker.go:253 Closed connection to broker localhost:9092
+[INFO] 2019-08-20 19:09:48 client.go:775 client/metadata fetching metadata for all topics from broker 192.168.17.55:9092
+[INFO] 2019-08-20 21:03:16 client.go:127 Initializing new client
+[INFO] 2019-08-20 21:03:16 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 21:03:16 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 21:03:16 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 21:03:16 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-20 21:03:16 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-20 21:03:16 client.go:174 Successfully initialized new client
+[INFO] 2019-08-20 21:03:16 server.go:75 Server start... (:8000)
+[INFO] 2019-08-20 21:03:16 consumer.go:44 Partition size:1
+[INFO] 2019-08-20 21:03:16 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 21:03:16 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-20 21:03:16 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-20 21:03:16 consumer.go:64 PartitionConsumer 0 start from 304292
+[INFO] 2019-08-20 21:06:55 client.go:127 Initializing new client
+[INFO] 2019-08-20 21:06:55 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 21:06:55 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 21:06:55 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 21:06:55 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-20 21:06:55 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-20 21:06:55 client.go:174 Successfully initialized new client
+[INFO] 2019-08-20 21:06:55 server.go:75 Server start... (:8000)
+[INFO] 2019-08-20 21:06:55 consumer.go:44 Partition size:1
+[INFO] 2019-08-20 21:06:55 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 21:06:55 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-20 21:06:55 consumer.go:64 PartitionConsumer 0 start from 307427
+[INFO] 2019-08-20 21:06:55 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-20 21:16:55 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 21:26:55 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 21:36:55 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 21:46:55 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 21:56:55 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 22:06:55 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 22:14:27 client.go:127 Initializing new client
+[INFO] 2019-08-20 22:14:27 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 22:14:27 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 22:14:27 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 22:14:27 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-20 22:14:27 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-20 22:14:27 client.go:174 Successfully initialized new client
+[INFO] 2019-08-20 22:14:27 server.go:75 Server start... (:8000)
+[INFO] 2019-08-20 22:14:27 consumer.go:44 Partition size:1
+[INFO] 2019-08-20 22:14:27 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 22:14:27 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-20 22:14:27 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-20 22:14:27 consumer.go:64 PartitionConsumer 0 start from 308936
+[INFO] 2019-08-20 22:15:02 client.go:127 Initializing new client
+[INFO] 2019-08-20 22:15:02 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 22:15:02 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 22:15:02 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 22:15:02 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-20 22:15:02 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-20 22:15:02 client.go:174 Successfully initialized new client
+[INFO] 2019-08-20 22:15:02 server.go:75 Server start... (:8000)
+[INFO] 2019-08-20 22:15:02 consumer.go:44 Partition size:1
+[INFO] 2019-08-20 22:15:02 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 22:15:02 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-20 22:15:02 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-20 22:15:02 consumer.go:64 PartitionConsumer 0 start from 308946
+[INFO] 2019-08-20 22:18:07 client.go:127 Initializing new client
+[INFO] 2019-08-20 22:18:07 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 22:18:07 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 22:18:07 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-20 22:18:07 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-20 22:18:07 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-20 22:18:07 client.go:174 Successfully initialized new client
+[INFO] 2019-08-20 22:18:07 server.go:75 Server start... (:8000)
+[INFO] 2019-08-20 22:18:07 consumer.go:44 Partition size:1
+[INFO] 2019-08-20 22:18:07 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-20 22:18:07 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-20 22:18:07 consumer.go:64 PartitionConsumer 0 start from 309060
+[INFO] 2019-08-20 22:18:07 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-21 13:52:04 client.go:127 Initializing new client
+[INFO] 2019-08-21 13:52:04 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 13:52:04 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 13:52:04 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-21 13:52:04 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-21 13:52:04 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-21 13:52:04 client.go:174 Successfully initialized new client
+[INFO] 2019-08-21 13:52:04 server.go:75 Server start... (:8000)
+[INFO] 2019-08-21 13:52:04 consumer.go:44 Partition size:1
+[INFO] 2019-08-21 13:52:04 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 13:52:04 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-21 13:52:04 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-21 13:52:04 consumer.go:64 PartitionConsumer 0 start from 309237
+[INFO] 2019-08-21 13:54:00 client.go:127 Initializing new client
+[INFO] 2019-08-21 13:54:00 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 13:54:00 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 13:54:00 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-21 13:54:00 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-21 13:54:00 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-21 13:54:00 client.go:174 Successfully initialized new client
+[INFO] 2019-08-21 13:54:00 server.go:75 Server start... (:8000)
+[INFO] 2019-08-21 13:54:00 consumer.go:44 Partition size:1
+[INFO] 2019-08-21 13:54:00 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 13:54:00 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-21 13:54:00 consumer.go:64 PartitionConsumer 0 start from 309676
+[INFO] 2019-08-21 13:54:00 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-21 14:04:00 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-21 14:14:00 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-21 16:34:28 client.go:127 Initializing new client
+[INFO] 2019-08-21 16:34:28 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 16:34:28 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 16:34:28 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-21 16:34:28 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-21 16:34:28 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-21 16:34:28 client.go:174 Successfully initialized new client
+[INFO] 2019-08-21 16:34:28 server.go:75 Server start... (:8000)
+[INFO] 2019-08-21 16:34:28 consumer.go:44 Partition size:1
+[INFO] 2019-08-21 16:34:28 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 16:34:28 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-21 16:34:28 consumer.go:64 PartitionConsumer 0 start from 309676
+[INFO] 2019-08-21 16:34:28 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-21 16:34:34 consumer.go:68 PartitionConsumer 0 close in 309679
+[INFO] 2019-08-21 16:34:34 client.go:227 Closing Client
+[INFO] 2019-08-21 16:34:34 consumer.go:96 Consumer close
+[INFO] 2019-08-21 16:34:34 broker.go:253 Closed connection to broker localhost:9092
+[INFO] 2019-08-21 16:34:34 server.go:102 Server stop...
+[INFO] 2019-08-21 16:34:49 client.go:127 Initializing new client
+[INFO] 2019-08-21 16:34:49 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 16:34:49 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 16:34:49 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-21 16:34:49 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-21 16:34:49 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-21 16:34:49 client.go:174 Successfully initialized new client
+[INFO] 2019-08-21 16:34:49 server.go:75 Server start... (:8000)
+[INFO] 2019-08-21 16:34:49 consumer.go:44 Partition size:1
+[INFO] 2019-08-21 16:34:49 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 16:34:49 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-21 16:34:49 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-21 16:34:49 consumer.go:64 PartitionConsumer 0 start from 309680
+[ERROR] 2019-08-21 16:35:21 hub.go:203 Unknown Message Type:slash
+[ERROR] 2019-08-21 16:35:21 hub.go:203 Unknown Message Type:slash
+[ERROR] 2019-08-21 16:35:21 hub.go:203 Error in Unmarshal NotificationTx
+[ERROR] 2019-08-21 16:36:29 hub.go:203 Unknown Message Type:slash
+[ERROR] 2019-08-21 16:36:29 hub.go:203 Unknown Message Type:slash
+[ERROR] 2019-08-21 16:36:29 hub.go:203 Error in Unmarshal NotificationTx
+[ERROR] 2019-08-21 16:36:49 hub.go:203 Unknown Message Type:slash
+[ERROR] 2019-08-21 16:36:49 hub.go:203 Unknown Message Type:slash
+[ERROR] 2019-08-21 16:36:49 hub.go:203 Error in Unmarshal NotificationTx
+[INFO] 2019-08-21 16:40:27 consumer.go:823 consumer/broker/0 abandoned subscription to coinex-dex/0 because consuming was taking too long
+[INFO] 2019-08-21 16:48:18 client.go:127 Initializing new client
+[INFO] 2019-08-21 16:48:18 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 16:48:18 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 16:48:18 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-21 16:48:18 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-21 16:48:18 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-21 16:48:18 client.go:174 Successfully initialized new client
+[INFO] 2019-08-21 16:48:18 server.go:75 Server start... (:8000)
+[INFO] 2019-08-21 16:48:18 consumer.go:44 Partition size:1
+[INFO] 2019-08-21 16:48:18 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 16:48:18 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-21 16:48:18 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-21 16:48:18 consumer.go:64 PartitionConsumer 0 start from 341274
+[ERROR] 2019-08-21 16:48:18 hub.go:203 Unknown Message Type:slash
+[ERROR] 2019-08-21 16:48:18 hub.go:203 Unknown Message Type:slash
+[ERROR] 2019-08-21 16:48:18 hub.go:203 Error in Unmarshal NotificationTx
+[ERROR] 2019-08-21 16:48:19 hub.go:203 Unknown Message Type:slash
+[ERROR] 2019-08-21 16:48:19 hub.go:203 Unknown Message Type:slash
+[ERROR] 2019-08-21 16:48:19 hub.go:203 Error in Unmarshal NotificationTx
+[ERROR] 2019-08-21 16:48:20 hub.go:203 Unknown Message Type:slash
+[ERROR] 2019-08-21 16:48:20 hub.go:203 Unknown Message Type:slash
+[ERROR] 2019-08-21 16:48:20 hub.go:203 Error in Unmarshal NotificationTx
+[INFO] 2019-08-21 16:48:36 consumer.go:68 PartitionConsumer 0 close in 363103
+[INFO] 2019-08-21 16:48:36 client.go:227 Closing Client
+[INFO] 2019-08-21 16:48:36 consumer.go:96 Consumer close
+[INFO] 2019-08-21 16:48:36 broker.go:253 Closed connection to broker localhost:9092
+[INFO] 2019-08-21 16:48:36 server.go:102 Server stop...
+[INFO] 2019-08-21 16:49:43 client.go:127 Initializing new client
+[INFO] 2019-08-21 16:49:43 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 16:49:43 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 16:49:43 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092
+[INFO] 2019-08-21 16:49:43 broker.go:214 Connected to broker at localhost:9092 (unregistered)
+[INFO] 2019-08-21 16:49:43 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092
+[INFO] 2019-08-21 16:49:43 client.go:174 Successfully initialized new client
+[INFO] 2019-08-21 16:49:43 server.go:75 Server start... (:8000)
+[INFO] 2019-08-21 16:49:43 consumer.go:44 Partition size:1
+[INFO] 2019-08-21 16:49:43 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific.
+[INFO] 2019-08-21 16:49:43 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0)
+[INFO] 2019-08-21 16:49:43 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0
+[INFO] 2019-08-21 16:49:43 consumer.go:64 PartitionConsumer 0 start from 363104
+[INFO] 2019-08-21 16:51:11 client.go:127 Initializing new client 
+[INFO] 2019-08-21 16:51:11 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 16:51:11 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 16:51:11 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 16:51:11 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-21 16:51:11 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-21 16:51:11 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-21 16:51:11 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-21 16:51:11 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-21 16:51:11 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 16:51:11 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-21 16:51:11 consumer.go:64 PartitionConsumer start | partition:0 | offset:363112 | 
+[INFO] 2019-08-21 16:51:11 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[ERROR] 2019-08-21 16:51:12 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 16:51:12 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 16:51:12 hub.go:203 Error in Unmarshal NotificationTx 
+[INFO] 2019-08-21 16:51:32 consumer.go:823 consumer/broker/0 abandoned subscription to coinex-dex/0 because consuming was taking too long 
+[INFO] 2019-08-21 16:52:35 client.go:127 Initializing new client 
+[INFO] 2019-08-21 16:52:35 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 16:52:35 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 16:52:35 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 16:52:35 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-21 16:52:35 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-21 16:52:35 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-21 16:52:35 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-21 16:52:35 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-21 16:52:35 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 16:52:35 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-21 16:52:35 consumer.go:64 PartitionConsumer start | partition:0 | offset:376890 | 
+[INFO] 2019-08-21 16:52:35 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[ERROR] 2019-08-21 16:52:35 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 16:52:35 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 16:52:36 hub.go:203 Error in Unmarshal NotificationTx 
+[INFO] 2019-08-21 16:52:49 consumer.go:823 consumer/broker/0 abandoned subscription to coinex-dex/0 because consuming was taking too long 
+[INFO] 2019-08-21 16:53:11 client.go:127 Initializing new client 
+[INFO] 2019-08-21 16:53:11 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 16:53:11 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 16:53:11 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 16:53:11 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-21 16:53:11 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-21 16:53:11 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-21 16:53:11 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-21 16:53:11 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-21 16:53:11 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 16:53:11 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-21 16:53:11 consumer.go:64 PartitionConsumer start | partition:0 | offset:385794 | 
+[INFO] 2019-08-21 16:53:11 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[ERROR] 2019-08-21 16:53:11 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 16:53:11 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 16:53:11 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 16:53:26 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 16:53:26 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 16:53:26 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 16:55:23 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 16:55:23 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 16:55:23 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 16:57:09 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 16:57:09 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:00:03 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 17:00:07 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:00:07 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:00:07 hub.go:203 Error in Unmarshal NotificationTx 
+[INFO] 2019-08-21 17:00:22 client.go:127 Initializing new client 
+[INFO] 2019-08-21 17:00:22 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:00:22 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:00:22 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 17:00:22 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-21 17:00:22 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-21 17:00:22 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-21 17:00:22 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-21 17:00:22 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-21 17:00:22 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:00:22 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-21 17:00:22 consumer.go:64 PartitionConsumer start | partition:0 | offset:425450 | 
+[INFO] 2019-08-21 17:00:22 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[ERROR] 2019-08-21 17:00:52 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:00:52 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:00:52 hub.go:203 Error in Unmarshal NotificationTx 
+[INFO] 2019-08-21 17:10:22 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[ERROR] 2019-08-21 17:18:21 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:18:21 hub.go:203 Unknown Message Type:slash 
+[INFO] 2019-08-21 17:19:45 consumer.go:781 consumer/broker/0 disconnecting due to error processing FetchRequest: write tcp 192.168.17.55:55223->192.168.17.55:9092: i/o timeout 
+[INFO] 2019-08-21 17:20:05 broker.go:253 Closed connection to broker 192.168.17.55:9092 
+[INFO] 2019-08-21 17:20:05 consumer.go:324 kafka: error while consuming coinex-dex/0: write tcp 192.168.17.55:55223->192.168.17.55:9092: i/o timeout 
+[ERROR] 2019-08-21 17:20:05 hub.go:203 Error in Unmarshal NotificationTx 
+[INFO] 2019-08-21 17:20:07 consumer.go:347 consumer/coinex-dex/0 finding new broker 
+[INFO] 2019-08-21 17:20:07 client.go:772 client/metadata fetching metadata for [coinex-dex] from broker localhost:9092 
+[INFO] 2019-08-21 17:20:07 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:20:07 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[INFO] 2019-08-21 17:20:07 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-21 17:20:22 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[ERROR] 2019-08-21 17:21:08 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:21:08 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:27:27 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 17:27:28 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:27:28 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:27:31 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 17:27:50 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:27:50 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:27:50 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 17:29:24 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:29:24 hub.go:203 Unknown Message Type:slash 
+[INFO] 2019-08-21 17:30:39 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 17:32:11 client.go:813 client/metadata got error from broker -1 while fetching metadata: read tcp [::1]:55222->[::1]:9092: read: connection reset by peer 
+[INFO] 2019-08-21 17:32:11 broker.go:253 Closed connection to broker localhost:9092 
+[INFO] 2019-08-21 17:32:11 client.go:775 client/metadata fetching metadata for all topics from broker 192.168.17.55:9092 
+[ERROR] 2019-08-21 17:32:11 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 17:33:24 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:33:24 hub.go:203 Unknown Message Type:slash 
+[INFO] 2019-08-21 17:41:11 client.go:775 client/metadata fetching metadata for all topics from broker 192.168.17.55:9092 
+[ERROR] 2019-08-21 17:41:11 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 17:41:24 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:41:24 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:41:29 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 17:41:49 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:41:49 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:42:38 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 17:42:49 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:42:49 hub.go:203 Unknown Message Type:slash 
+[INFO] 2019-08-21 17:43:17 client.go:127 Initializing new client 
+[INFO] 2019-08-21 17:43:17 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:43:17 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:43:17 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 17:43:17 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-21 17:43:17 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-21 17:43:17 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-21 17:43:17 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-21 17:43:17 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-21 17:43:17 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:43:17 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-21 17:43:17 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[INFO] 2019-08-21 17:43:17 consumer.go:64 PartitionConsumer start | offset:514510 | partition:0 | 
+[ERROR] 2019-08-21 17:43:21 hub.go:203 Error in Unmarshal NotificationTx 
+[INFO] 2019-08-21 17:43:26 client.go:127 Initializing new client 
+[INFO] 2019-08-21 17:43:26 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:43:26 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:43:26 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 17:43:26 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-21 17:43:26 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-21 17:43:26 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-21 17:43:26 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-21 17:43:26 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-21 17:43:26 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:43:26 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-21 17:43:26 consumer.go:64 PartitionConsumer start | partition:0 | offset:514550 | 
+[INFO] 2019-08-21 17:43:26 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[ERROR] 2019-08-21 17:43:41 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:43:41 hub.go:203 Unknown Message Type:slash 
+[INFO] 2019-08-21 17:46:00 client.go:127 Initializing new client 
+[INFO] 2019-08-21 17:46:00 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:46:00 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:46:00 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 17:46:00 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-21 17:46:04 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-21 17:46:04 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-21 17:46:04 client.go:772 client/metadata fetching metadata for [coinex-dex] from broker localhost:9092 
+[INFO] 2019-08-21 17:46:04 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-21 17:46:04 client.go:791 client/metadata found some partitions to be leaderless 
+[INFO] 2019-08-21 17:46:04 client.go:759 client/metadata retrying after 250ms... (3 attempts remaining) 
+[INFO] 2019-08-21 17:46:04 client.go:772 client/metadata fetching metadata for [coinex-dex] from broker localhost:9092 
+[INFO] 2019-08-21 17:46:04 client.go:791 client/metadata found some partitions to be leaderless 
+[INFO] 2019-08-21 17:46:04 client.go:759 client/metadata retrying after 250ms... (2 attempts remaining) 
+[INFO] 2019-08-21 17:46:05 client.go:772 client/metadata fetching metadata for [coinex-dex] from broker localhost:9092 
+[INFO] 2019-08-21 17:46:05 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-21 17:46:05 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 17:46:05 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-21 17:46:05 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[INFO] 2019-08-21 17:46:05 consumer.go:64 PartitionConsumer start | partition:0 | offset:523420 | 
+[ERROR] 2019-08-21 17:46:05 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 17:46:14 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:46:14 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:46:14 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 17:47:24 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:47:24 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:47:24 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 17:47:51 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:47:51 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:48:56 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 17:49:09 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:49:09 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 17:49:26 hub.go:203 Error in Unmarshal NotificationTx 
+[INFO] 2019-08-21 17:56:04 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 19:03:19 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[ERROR] 2019-08-21 19:07:38 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:07:38 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:07:57 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 19:07:58 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:07:58 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:07:58 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 19:08:25 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:08:25 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:08:25 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 19:09:00 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:09:00 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:09:00 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 19:10:48 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:10:48 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:10:48 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 19:11:31 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:11:31 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:11:31 hub.go:203 Error in Unmarshal NotificationTx 
+[INFO] 2019-08-21 19:11:58 client.go:127 Initializing new client 
+[INFO] 2019-08-21 19:11:58 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 19:11:58 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 19:11:58 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 19:11:58 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-21 19:11:58 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-21 19:11:58 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-21 19:11:58 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-21 19:11:58 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-21 19:11:58 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 19:11:58 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-21 19:11:58 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[INFO] 2019-08-21 19:11:58 consumer.go:64 PartitionConsumer start | offset:612572 | partition:0 | 
+[ERROR] 2019-08-21 19:12:11 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:12:11 hub.go:203 Unknown Message Type:slash 
+[ERROR] 2019-08-21 19:12:11 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 19:13:09 hub.go:203 Error in Unmarshal NotificationSlash 
+[ERROR] 2019-08-21 19:13:14 hub.go:203 Error in Unmarshal NotificationSlash 
+[ERROR] 2019-08-21 19:13:14 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 19:15:01 hub.go:203 Error in Unmarshal NotificationSlash 
+[ERROR] 2019-08-21 19:15:15 hub.go:203 Error in Unmarshal NotificationSlash 
+[ERROR] 2019-08-21 19:16:02 hub.go:203 Error in Unmarshal NotificationTx 
+[INFO] 2019-08-21 19:16:08 client.go:127 Initializing new client 
+[INFO] 2019-08-21 19:16:08 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 19:16:08 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 19:16:08 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 19:16:08 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-21 19:16:08 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-21 19:16:08 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-21 19:16:08 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-21 19:16:08 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-21 19:16:08 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 19:16:08 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-21 19:16:08 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[INFO] 2019-08-21 19:16:08 consumer.go:64 PartitionConsumer start | partition:0 | offset:639300 | 
+[INFO] 2019-08-21 19:16:11 client.go:127 Initializing new client 
+[INFO] 2019-08-21 19:16:11 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 19:16:11 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 19:16:11 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 19:16:11 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-21 19:16:11 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-21 19:16:11 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-21 19:16:11 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-21 19:16:11 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-21 19:16:11 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 19:16:11 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-21 19:16:11 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[INFO] 2019-08-21 19:16:11 consumer.go:64 PartitionConsumer start | offset:639300 | partition:0 | 
+[INFO] 2019-08-21 19:17:03 client.go:127 Initializing new client 
+[INFO] 2019-08-21 19:17:03 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 19:17:03 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 19:17:03 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-21 19:17:03 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-21 19:17:03 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-21 19:17:03 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-21 19:17:03 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-21 19:17:03 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-21 19:17:03 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-21 19:17:03 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-21 19:17:03 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[INFO] 2019-08-21 19:17:03 consumer.go:64 PartitionConsumer start | partition:0 | offset:639308 | 
+[ERROR] 2019-08-21 19:17:03 hub.go:203 Error in Unmarshal NotificationSlash 
+[ERROR] 2019-08-21 19:17:03 hub.go:203 Error in Unmarshal NotificationSlash 
+[ERROR] 2019-08-21 19:17:03 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 19:19:43 hub.go:203 Error in Unmarshal NotificationSlash 
+[ERROR] 2019-08-21 19:22:24 hub.go:203 Error in Unmarshal NotificationSlash 
+[ERROR] 2019-08-21 19:22:24 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 19:22:53 hub.go:203 Error in Unmarshal NotificationTx 
+[ERROR] 2019-08-21 19:23:45 hub.go:203 Error in Unmarshal NotificationTx 
+[INFO] 2019-08-21 19:27:03 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:17 client.go:127 Initializing new client 
+[INFO] 2019-08-28 20:19:17 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:17 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:17 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:17 broker.go:168 Failed to connect to broker localhost:9092: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:17 client.go:813 client/metadata got error from broker -1 while fetching metadata: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:17 client.go:824 client/metadata no available broker to send metadata request to 
+[INFO] 2019-08-28 20:19:17 client.go:565 client/brokers resurrecting 1 dead seed brokers 
+[INFO] 2019-08-28 20:19:17 client.go:759 client/metadata retrying after 250ms... (3 attempts remaining) 
+[INFO] 2019-08-28 20:19:17 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:17 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:17 broker.go:168 Failed to connect to broker localhost:9092: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:17 client.go:813 client/metadata got error from broker -1 while fetching metadata: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:17 client.go:824 client/metadata no available broker to send metadata request to 
+[INFO] 2019-08-28 20:19:17 client.go:565 client/brokers resurrecting 1 dead seed brokers 
+[INFO] 2019-08-28 20:19:17 client.go:759 client/metadata retrying after 250ms... (2 attempts remaining) 
+[INFO] 2019-08-28 20:19:17 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:17 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:17 broker.go:168 Failed to connect to broker localhost:9092: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:17 client.go:813 client/metadata got error from broker -1 while fetching metadata: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:17 client.go:824 client/metadata no available broker to send metadata request to 
+[INFO] 2019-08-28 20:19:17 client.go:565 client/brokers resurrecting 1 dead seed brokers 
+[INFO] 2019-08-28 20:19:17 client.go:759 client/metadata retrying after 250ms... (1 attempts remaining) 
+[INFO] 2019-08-28 20:19:18 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:18 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:18 broker.go:168 Failed to connect to broker localhost:9092: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:18 client.go:813 client/metadata got error from broker -1 while fetching metadata: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:18 client.go:824 client/metadata no available broker to send metadata request to 
+[INFO] 2019-08-28 20:19:18 client.go:565 client/brokers resurrecting 1 dead seed brokers 
+[INFO] 2019-08-28 20:19:18 client.go:227 Closing Client 
+[INFO] 2019-08-28 20:19:44 client.go:127 Initializing new client 
+[INFO] 2019-08-28 20:19:44 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:44 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:44 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:44 broker.go:168 Failed to connect to broker localhost:9092: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:44 client.go:813 client/metadata got error from broker -1 while fetching metadata: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:44 client.go:824 client/metadata no available broker to send metadata request to 
+[INFO] 2019-08-28 20:19:44 client.go:565 client/brokers resurrecting 1 dead seed brokers 
+[INFO] 2019-08-28 20:19:44 client.go:759 client/metadata retrying after 250ms... (3 attempts remaining) 
+[INFO] 2019-08-28 20:19:45 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:45 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:45 broker.go:168 Failed to connect to broker localhost:9092: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:45 client.go:813 client/metadata got error from broker -1 while fetching metadata: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:45 client.go:824 client/metadata no available broker to send metadata request to 
+[INFO] 2019-08-28 20:19:45 client.go:565 client/brokers resurrecting 1 dead seed brokers 
+[INFO] 2019-08-28 20:19:45 client.go:759 client/metadata retrying after 250ms... (2 attempts remaining) 
+[INFO] 2019-08-28 20:19:45 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:45 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:45 broker.go:168 Failed to connect to broker localhost:9092: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:45 client.go:813 client/metadata got error from broker -1 while fetching metadata: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:45 client.go:824 client/metadata no available broker to send metadata request to 
+[INFO] 2019-08-28 20:19:45 client.go:565 client/brokers resurrecting 1 dead seed brokers 
+[INFO] 2019-08-28 20:19:45 client.go:759 client/metadata retrying after 250ms... (1 attempts remaining) 
+[INFO] 2019-08-28 20:19:45 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:45 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:45 broker.go:168 Failed to connect to broker localhost:9092: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:45 client.go:813 client/metadata got error from broker -1 while fetching metadata: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:45 client.go:824 client/metadata no available broker to send metadata request to 
+[INFO] 2019-08-28 20:19:45 client.go:565 client/brokers resurrecting 1 dead seed brokers 
+[INFO] 2019-08-28 20:19:45 client.go:227 Closing Client 
+[INFO] 2019-08-28 20:19:54 client.go:127 Initializing new client 
+[INFO] 2019-08-28 20:19:54 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:54 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:54 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:54 broker.go:168 Failed to connect to broker localhost:9092: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:54 client.go:813 client/metadata got error from broker -1 while fetching metadata: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:54 client.go:824 client/metadata no available broker to send metadata request to 
+[INFO] 2019-08-28 20:19:54 client.go:565 client/brokers resurrecting 1 dead seed brokers 
+[INFO] 2019-08-28 20:19:54 client.go:759 client/metadata retrying after 250ms... (3 attempts remaining) 
+[INFO] 2019-08-28 20:19:54 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:54 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:54 broker.go:168 Failed to connect to broker localhost:9092: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:54 client.go:813 client/metadata got error from broker -1 while fetching metadata: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:54 client.go:824 client/metadata no available broker to send metadata request to 
+[INFO] 2019-08-28 20:19:54 client.go:565 client/brokers resurrecting 1 dead seed brokers 
+[INFO] 2019-08-28 20:19:54 client.go:759 client/metadata retrying after 250ms... (2 attempts remaining) 
+[INFO] 2019-08-28 20:19:54 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:54 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:54 broker.go:168 Failed to connect to broker localhost:9092: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:54 client.go:813 client/metadata got error from broker -1 while fetching metadata: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:54 client.go:824 client/metadata no available broker to send metadata request to 
+[INFO] 2019-08-28 20:19:54 client.go:565 client/brokers resurrecting 1 dead seed brokers 
+[INFO] 2019-08-28 20:19:54 client.go:759 client/metadata retrying after 250ms... (1 attempts remaining) 
+[INFO] 2019-08-28 20:19:54 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:19:54 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:19:54 broker.go:168 Failed to connect to broker localhost:9092: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:54 client.go:813 client/metadata got error from broker -1 while fetching metadata: dial tcp 127.0.0.1:9092: connect: connection refused 
+[INFO] 2019-08-28 20:19:54 client.go:824 client/metadata no available broker to send metadata request to 
+[INFO] 2019-08-28 20:19:54 client.go:565 client/brokers resurrecting 1 dead seed brokers 
+[INFO] 2019-08-28 20:19:54 client.go:227 Closing Client 
+[INFO] 2019-08-28 20:20:06 client.go:127 Initializing new client 
+[INFO] 2019-08-28 20:20:06 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:20:06 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:20:06 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:20:06 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-28 20:20:06 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-28 20:20:06 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-28 20:20:06 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-28 20:20:06 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-28 20:20:06 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:20:06 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-28 20:20:06 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[INFO] 2019-08-28 20:20:06 consumer.go:64 PartitionConsumer start | offset:674956 | partition:0 | 
+[ERROR] 2019-08-28 20:21:16 hub.go:208 Error in Unmarshal NotificationTx 
