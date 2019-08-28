@@ -28,6 +28,3 @@ Run : `./trade-server`
 
 `kafka-console-producer --broker-list localhost:9092 --topic coinex-dex  --property parse.key=true --property key.separator=# < ../docs/dex_msgs_data.txt`
 
-
-
-curl -X GET "http://localhost:8000/expiry/locked?account=coinex1rafnyd9j9gc9cwu5q5uflefpdn62awyl7rvh8t&time=1567080885&sid=1000000&count=10" -H "accept: application/json"

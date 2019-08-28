@@ -599,3 +599,22 @@
 [INFO] 2019-08-28 20:20:06 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
 [INFO] 2019-08-28 20:20:06 consumer.go:64 PartitionConsumer start | offset:674956 | partition:0 | 
 [ERROR] 2019-08-28 20:21:16 hub.go:208 Error in Unmarshal NotificationTx 
+[INFO] 2019-08-28 20:30:06 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:32:02 consumer.go:68 PartitionConsumer close | partition:0 | offset:683868 | 
+[INFO] 2019-08-28 20:32:02 client.go:227 Closing Client 
+[INFO] 2019-08-28 20:32:02 consumer.go:96 Consumer close 
+[INFO] 2019-08-28 20:32:02 broker.go:253 Closed connection to broker localhost:9092 
+[INFO] 2019-08-28 20:32:02 server.go:102 Server stop... 
+[INFO] 2019-08-28 20:32:03 client.go:127 Initializing new client 
+[INFO] 2019-08-28 20:32:03 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:32:03 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:32:03 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:32:03 broker.go:214 Connected to broker at localhost:9092 (unregistered) 
+[INFO] 2019-08-28 20:32:03 client.go:534 client/brokers registered new broker #0 at 192.168.17.55:9092 
+[INFO] 2019-08-28 20:32:03 client.go:174 Successfully initialized new client 
+[INFO] 2019-08-28 20:32:03 server.go:75 Server start... | addr::8000 | 
+[INFO] 2019-08-28 20:32:03 consumer.go:44 consumer partitions | size:1 | 
+[INFO] 2019-08-28 20:32:03 config.go:494 ClientID is the default of 'sarama', you should consider setting it to something application-specific. 
+[INFO] 2019-08-28 20:32:03 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
+[INFO] 2019-08-28 20:32:03 consumer.go:64 PartitionConsumer start | partition:0 | offset:683869 | 
+[INFO] 2019-08-28 20:32:03 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 

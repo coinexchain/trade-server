@@ -78,6 +78,7 @@ func (tc *TradeConsumer) Consume() {
 					tc.hub.UpdateOffset(msg.Partition, msg.Offset)
 					tc.hub.ConsumeMessage(string(msg.Key), msg.Value)
 					offset = msg.Offset
+					log.WithFields(log.Fields{"key": string(msg.Key), "value": string(msg.Value)}).Debug("consume message")
 				case <-signals:
 					return
 				}

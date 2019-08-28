@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"path"
 	"runtime"
 	"strings"
 
@@ -65,12 +66,11 @@ func getLogLevel(level string) logrus.Level {
 }
 
 func callerPrettyfier(frame *runtime.Frame) (string, string) {
-	dirs := strings.Split(frame.File, "/")
-	fileName := dirs[len(dirs)-1]
+	_, fileName := path.Split(frame.File)
 	file := fmt.Sprintf("%s:%d", fileName, frame.Line)
 
-	funcPaths := strings.Split(frame.Function, "/")
-	function := funcPaths[len(funcPaths)-1]
+	splitIdx := strings.LastIndex(frame.Function, "/")
+	function := frame.Function[splitIdx+1:]
 
 	return function, file
 }
@@ -86,8 +86,7 @@ func (f *PlainFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	fileName := ""
 	lineNum := 0
 	if entry.HasCaller() {
-		dirs := strings.Split(entry.Caller.File, "/")
-		fileName = dirs[len(dirs)-1]
+		_, fileName = path.Split(entry.Caller.File)
 		lineNum = entry.Caller.Line
 	}
 

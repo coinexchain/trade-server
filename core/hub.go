@@ -287,13 +287,13 @@ func (hub *Hub) beginForCandleSticks() {
 			}
 			info := hub.subMan.GetCandleStickSubscribeInfo()
 			if info == nil {
-				continue
-			}
-			sym = cs.Market
-			targets, ok = info[sym]
-			if !ok {
-				sym = ""
-				continue
+				targets = []Subscriber{}
+			} else {
+				sym = cs.Market
+				targets, ok = info[sym]
+				if !ok {
+					targets = []Subscriber{}
+				}
 			}
 		}
 		if len(sym) == 0 {
@@ -320,6 +320,7 @@ func (hub *Hub) beginForCandleSticks() {
 		if len(bz) == 0 {
 			continue
 		}
+		//fmt.Printf("Here4! %v\n", cs)
 		hub.batch.Set(key, bz)
 		hub.sid++
 	}
@@ -365,7 +366,7 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 	var v NotificationTx
 	err := json.Unmarshal(bz, &v)
 	if err != nil {
-		hub.Log("Error in Unmarshal NotificationTx")
+		hub.Log(fmt.Sprintf("Error in Unmarshal NotificationTx: %s", string(bz)))
 		return
 	}
 	snBytes := make([]byte, 8)
@@ -581,6 +582,10 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 		hub.Log("Error in Unmarshal FillOrderInfo")
 		return
 	}
+	// Add a new market which is seen for the first time
+	if !hub.HasMarket(v.TradingPair) {
+		hub.AddMarket(v.TradingPair)
+	}
 	//Save to KVStore
 	accAndSeq := strings.Split(v.OrderID, "-")
 	if len(accAndSeq) != 2 {
@@ -636,6 +641,10 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 	if err != nil {
 		hub.Log("Error in Unmarshal CancelOrderInfo")
 		return
+	}
+	// Add a new market which is seen for the first time
+	if !hub.HasMarket(v.TradingPair) {
+		hub.AddMarket(v.TradingPair)
 	}
 	//Save to KVStore
 	accAndSeq := strings.Split(v.OrderID, "-")

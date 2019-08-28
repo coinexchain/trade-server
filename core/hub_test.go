@@ -2,297 +2,12 @@ package core
 
 import (
 	"encoding/json"
-	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
 	"strings"
 	"testing"
 )
-
-type PlainSubscriber struct {
-	ID int64
-}
-
-func (s *PlainSubscriber) Detail() interface{} {
-	return nil
-}
-
-func (s *PlainSubscriber) WriteMsg([]byte) error {
-	return nil
-}
-
-type TickerSubscriber struct {
-	PlainSubscriber
-	Markets []string
-}
-
-func (s *TickerSubscriber) Detail() interface{} {
-	return s.Markets
-}
-
-func (s *TickerSubscriber) WriteMsg([]byte) error {
-	return nil
-}
-
-func NewTickerSubscriber(id int64, markets []string) *TickerSubscriber {
-	return &TickerSubscriber{
-		PlainSubscriber: PlainSubscriber{ID: id},
-		Markets:         markets,
-	}
-}
-
-type CandleStickSubscriber struct {
-	PlainSubscriber
-	TimeSpan byte
-}
-
-func (s *CandleStickSubscriber) Detail() interface{} {
-	return s.TimeSpan
-}
-
-func (s *CandleStickSubscriber) WriteMsg([]byte) error {
-	return nil
-}
-
-func NewCandleStickSubscriber(id int64, timespan byte) *CandleStickSubscriber {
-	return &CandleStickSubscriber{
-		PlainSubscriber: PlainSubscriber{ID: id},
-		TimeSpan:        timespan,
-	}
-}
-
-type pushInfo struct {
-	Target  Subscriber
-	Payload string
-}
-
-type mocSubscribeManager struct {
-	SlashSubscribeInfo        []Subscriber
-	HeightSubscribeInfo       []Subscriber
-	TickerSubscribeInfo       []Subscriber
-	CandleStickSubscribeInfo  map[string][]Subscriber
-	DepthSubscribeInfo        map[string][]Subscriber
-	DealSubscribeInfo         map[string][]Subscriber
-	BancorInfoSubscribeInfo   map[string][]Subscriber
-	CommentSubscribeInfo      map[string][]Subscriber
-	OrderSubscribeInfo        map[string][]Subscriber
-	BancorTradeSubscribeInfo  map[string][]Subscriber
-	IncomeSubscribeInfo       map[string][]Subscriber
-	UnbondingSubscribeInfo    map[string][]Subscriber
-	RedelegationSubscribeInfo map[string][]Subscriber
-	UnlockSubscribeInfo       map[string][]Subscriber
-	TxSubscribeInfo           map[string][]Subscriber
-
-	PushList []pushInfo
-}
-
-func (sm *mocSubscribeManager) showResult() {
-	for _, info := range sm.PushList {
-		var id int64
-		switch v := info.Target.(type) {
-		case *PlainSubscriber:
-			id = v.ID
-		case *TickerSubscriber:
-			id = v.ID
-		case *CandleStickSubscriber:
-			id = v.ID
-		}
-		fmt.Printf("%d: %s\n", id, info.Payload)
-	}
-}
-
-func (sm *mocSubscribeManager) clearPushList() {
-	sm.PushList = sm.PushList[:0]
-}
-
-func (sm *mocSubscribeManager) compareResult(t *testing.T, correct string) {
-	out := make([]string, 1, 10)
-	out[0] = "\n"
-	for _, info := range sm.PushList {
-		var id int64
-		switch v := info.Target.(type) {
-		case *PlainSubscriber:
-			id = v.ID
-		case *TickerSubscriber:
-			id = v.ID
-		case *CandleStickSubscriber:
-			id = v.ID
-		}
-		s := fmt.Sprintf("%d: %s\n", id, info.Payload)
-		out = append(out, s)
-	}
-	require.Equal(t, correct, strings.Join(out, ""))
-}
-
-var addr1 string
-var addr2 string
-
-func getSubscribeManager() *mocSubscribeManager {
-	res := &mocSubscribeManager{}
-	res.PushList = make([]pushInfo, 0, 100)
-	res.SlashSubscribeInfo = make([]Subscriber, 2)
-	res.SlashSubscribeInfo[0] = &PlainSubscriber{ID: 0}
-	res.SlashSubscribeInfo[1] = &PlainSubscriber{ID: 1}
-	res.HeightSubscribeInfo = make([]Subscriber, 2)
-	res.HeightSubscribeInfo[0] = &PlainSubscriber{ID: 3}
-	res.HeightSubscribeInfo[1] = &PlainSubscriber{ID: 4}
-	res.TickerSubscribeInfo = make([]Subscriber, 1)
-	res.TickerSubscribeInfo[0] = NewTickerSubscriber(0, []string{"abc/cet", "xyz/cet"})
-	res.CandleStickSubscribeInfo = make(map[string][]Subscriber)
-	res.CandleStickSubscribeInfo["abc/cet"] = make([]Subscriber, 3)
-	res.CandleStickSubscribeInfo["abc/cet"][0] = NewCandleStickSubscriber(6, Minute)
-	res.CandleStickSubscribeInfo["abc/cet"][1] = NewCandleStickSubscriber(7, Hour)
-	res.CandleStickSubscribeInfo["abc/cet"][2] = NewCandleStickSubscriber(5, Day)
-	res.DepthSubscribeInfo = make(map[string][]Subscriber)
-	res.DepthSubscribeInfo["abc/cet"] = make([]Subscriber, 2)
-	res.DepthSubscribeInfo["abc/cet"][0] = &PlainSubscriber{ID: 8}
-	res.DepthSubscribeInfo["abc/cet"][1] = &PlainSubscriber{ID: 9}
-	res.DepthSubscribeInfo["xyz/cet"] = make([]Subscriber, 1)
-	res.DepthSubscribeInfo["xyz/cet"][0] = &PlainSubscriber{ID: 10}
-	res.DealSubscribeInfo = make(map[string][]Subscriber)
-	res.DealSubscribeInfo["xyz/cet"] = make([]Subscriber, 1)
-	res.DealSubscribeInfo["xyz/cet"][0] = &PlainSubscriber{ID: 11}
-	res.BancorInfoSubscribeInfo = make(map[string][]Subscriber)
-	res.BancorInfoSubscribeInfo["xyz/cet"] = make([]Subscriber, 1)
-	res.BancorInfoSubscribeInfo["xyz/cet"][0] = &PlainSubscriber{ID: 12}
-	res.CommentSubscribeInfo = make(map[string][]Subscriber)
-	res.CommentSubscribeInfo["cet"] = make([]Subscriber, 2)
-	res.CommentSubscribeInfo["cet"][0] = &PlainSubscriber{ID: 13}
-	res.CommentSubscribeInfo["cet"][1] = &PlainSubscriber{ID: 14}
-	res.OrderSubscribeInfo = make(map[string][]Subscriber)
-	res.OrderSubscribeInfo[addr1] = make([]Subscriber, 2)
-	res.OrderSubscribeInfo[addr1][0] = &PlainSubscriber{ID: 15}
-	res.OrderSubscribeInfo[addr1][1] = &PlainSubscriber{ID: 16}
-	res.BancorTradeSubscribeInfo = make(map[string][]Subscriber)
-	res.BancorTradeSubscribeInfo[addr2] = make([]Subscriber, 2)
-	res.BancorTradeSubscribeInfo[addr2][0] = &PlainSubscriber{ID: 17}
-	res.BancorTradeSubscribeInfo[addr2][1] = &PlainSubscriber{ID: 18}
-	res.IncomeSubscribeInfo = make(map[string][]Subscriber)
-	res.IncomeSubscribeInfo[addr1] = make([]Subscriber, 1)
-	res.IncomeSubscribeInfo[addr1][0] = &PlainSubscriber{ID: 19}
-	res.IncomeSubscribeInfo[addr2] = make([]Subscriber, 1)
-	res.IncomeSubscribeInfo[addr2][0] = &PlainSubscriber{ID: 20}
-	res.UnbondingSubscribeInfo = make(map[string][]Subscriber)
-	res.UnbondingSubscribeInfo[addr1] = make([]Subscriber, 1)
-	res.UnbondingSubscribeInfo[addr1][0] = &PlainSubscriber{ID: 21}
-	res.RedelegationSubscribeInfo = make(map[string][]Subscriber)
-	res.RedelegationSubscribeInfo[addr2] = make([]Subscriber, 1)
-	res.RedelegationSubscribeInfo[addr2][0] = &PlainSubscriber{ID: 22}
-	res.UnlockSubscribeInfo = make(map[string][]Subscriber)
-	res.UnlockSubscribeInfo[addr2] = make([]Subscriber, 2)
-	res.UnlockSubscribeInfo[addr2][0] = &PlainSubscriber{ID: 23}
-	res.UnlockSubscribeInfo[addr2][1] = &PlainSubscriber{ID: 24}
-	res.TxSubscribeInfo = make(map[string][]Subscriber)
-	res.TxSubscribeInfo[addr1] = make([]Subscriber, 1)
-	res.TxSubscribeInfo[addr1][0] = &PlainSubscriber{ID: 25}
-	return res
-}
-
-func (sm *mocSubscribeManager) ClearPushInfoList() {
-	sm.PushList = sm.PushList[:0]
-}
-
-func (sm *mocSubscribeManager) GetSlashSubscribeInfo() []Subscriber {
-	return sm.SlashSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetHeightSubscribeInfo() []Subscriber {
-	return sm.HeightSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetTickerSubscribeInfo() []Subscriber {
-	return sm.TickerSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetCandleStickSubscribeInfo() map[string][]Subscriber {
-	return sm.CandleStickSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetDepthSubscribeInfo() map[string][]Subscriber {
-	return sm.DepthSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetDealSubscribeInfo() map[string][]Subscriber {
-	return sm.DealSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetBancorInfoSubscribeInfo() map[string][]Subscriber {
-	return sm.BancorInfoSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetCommentSubscribeInfo() map[string][]Subscriber {
-	return sm.CommentSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetOrderSubscribeInfo() map[string][]Subscriber {
-	return sm.OrderSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetBancorTradeSubscribeInfo() map[string][]Subscriber {
-	return sm.BancorTradeSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetIncomeSubscribeInfo() map[string][]Subscriber {
-	return sm.IncomeSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetUnbondingSubscribeInfo() map[string][]Subscriber {
-	return sm.UnbondingSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetRedelegationSubscribeInfo() map[string][]Subscriber {
-	return sm.RedelegationSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetUnlockSubscribeInfo() map[string][]Subscriber {
-	return sm.UnlockSubscribeInfo
-}
-func (sm *mocSubscribeManager) GetTxSubscribeInfo() map[string][]Subscriber {
-	return sm.TxSubscribeInfo
-}
-func (sm *mocSubscribeManager) PushSlash(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushHeight(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushTicker(subscriber Subscriber, t []*Ticker) {
-	info, _ := json.Marshal(t)
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushDepthSell(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushDepthBuy(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushCandleStick(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushDeal(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushCreateOrder(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushFillOrder(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushCancelOrder(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushBancorInfo(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushBancorTrade(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushIncome(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushUnbonding(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushRedelegation(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushUnlock(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushTx(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
-func (sm *mocSubscribeManager) PushComment(subscriber Subscriber, info []byte) {
-	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
-}
 
 func simpleAddr(s string) (sdk.AccAddress, error) {
 	return sdk.AccAddressFromHex("01234567890123456789012345678901234" + s)
@@ -309,11 +24,11 @@ func toStr(payload [][]byte) string {
 func Test1(t *testing.T) {
 	acc1, _ := simpleAddr("00001")
 	acc2, _ := simpleAddr("00002")
-	addr1 = acc1.String()
-	addr2 = acc2.String()
+	addr1 := acc1.String()
+	addr2 := acc2.String()
 
 	db := dbm.NewMemDB()
-	subMan := getSubscribeManager()
+	subMan := GetSubscribeManager(addr1, addr2)
 	hub := NewHub(db, subMan)
 
 	newHeightInfo := &NewHeightInfo{
@@ -778,6 +493,7 @@ func Test1(t *testing.T) {
 
 	hub.ConsumeMessage("commit", nil)
 	correct = `
+0: [{"market":"abc/cet","new":"0.100000000000000000","old":"0.100000000000000000"}]
 8: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}}
 9: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}}
 `
@@ -831,5 +547,13 @@ func Test1(t *testing.T) {
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
-}
 
+	unixTime = T("2019-07-25T08:39:10Z").Unix()
+	data = hub.QueryCandleStick("abc/cet", Hour, unixTime, 0, 20)
+	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":32,"market":"abc/cet"}`
+	require.Equal(t, correct, toStr(data))
+
+	data = hub.QueryCandleStick("abc/cet", Day, unixTime, 0, 20)
+	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":48,"market":"abc/cet"}`
+	require.Equal(t, correct, toStr(data))
+}
