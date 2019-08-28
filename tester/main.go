@@ -1,3 +1,5 @@
+// +build tester
+
 package main
 
 import (
