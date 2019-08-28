@@ -254,7 +254,7 @@ func (w *WebsocketManager) GetTxSubscribeInfo() map[string][]Subscriber {
 	return w.getNoDetailSubscribe(TxKey)
 }
 
-func (w *WebsocketManager) GetLockedSendMsg() map[string][]Subscriber {
+func (w *WebsocketManager) GetLockedSubscribeInfo() map[string][]Subscriber {
 	return w.getNoDetailSubscribe(LockedKey)
 }
 

@@ -82,6 +82,7 @@ type MocSubscribeManager struct {
 	RedelegationSubscribeInfo map[string][]Subscriber
 	UnlockSubscribeInfo       map[string][]Subscriber
 	TxSubscribeInfo           map[string][]Subscriber
+	LockedSubcribeInfo        map[string][]Subscriber
 
 	PushList []pushInfo
 }
@@ -204,6 +205,9 @@ func (sm *MocSubscribeManager) GetCandleStickSubscribeInfo() map[string][]Subscr
 func (sm *MocSubscribeManager) GetDepthSubscribeInfo() map[string][]Subscriber {
 	return sm.DepthSubscribeInfo
 }
+func (sm *MocSubscribeManager) GetLockedSubscribeInfo() map[string][]Subscriber {
+	return sm.LockedSubcribeInfo
+}
 func (sm *MocSubscribeManager) GetDealSubscribeInfo() map[string][]Subscriber {
 	return sm.DealSubscribeInfo
 }
@@ -233,6 +237,9 @@ func (sm *MocSubscribeManager) GetUnlockSubscribeInfo() map[string][]Subscriber 
 }
 func (sm *MocSubscribeManager) GetTxSubscribeInfo() map[string][]Subscriber {
 	return sm.TxSubscribeInfo
+}
+func (sm *MocSubscribeManager) PushLockedSendMsg(subscriber Subscriber, info []byte) {
+	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushSlash(subscriber Subscriber, info []byte) {
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})

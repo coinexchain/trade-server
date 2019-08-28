@@ -78,7 +78,7 @@ type SubscribeManager interface {
 	GetRedelegationSubscribeInfo() map[string][]Subscriber
 	GetUnlockSubscribeInfo() map[string][]Subscriber
 	GetTxSubscribeInfo() map[string][]Subscriber
-	GetLockedSendMsg() map[string][]Subscriber
+	GetLockedSubscribeInfo() map[string][]Subscriber
 
 	PushLockedSendMsg(subscriber Subscriber, info []byte)
 	PushSlash(subscriber Subscriber, info []byte)

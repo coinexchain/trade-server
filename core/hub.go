@@ -354,7 +354,7 @@ func (hub *Hub) handleLockedCoinsMsg(bz []byte) {
 	key := hub.getLockedKey(v.ToAddress)
 	hub.batch.Set(key, bz)
 	hub.sid++
-	infos := hub.subMan.GetLockedSendMsg()
+	infos := hub.subMan.GetLockedSubscribeInfo()
 	if conns, ok := infos[v.ToAddress]; ok {
 		for _, c := range conns {
 			hub.subMan.PushLockedSendMsg(c, bz)

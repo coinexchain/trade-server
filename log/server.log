@@ -618,3 +618,8 @@
 [INFO] 2019-08-28 20:32:03 broker.go:212 Connected to broker at 192.168.17.55:9092 (registered as #0) 
 [INFO] 2019-08-28 20:32:03 consumer.go:64 PartitionConsumer start | partition:0 | offset:683869 | 
 [INFO] 2019-08-28 20:32:03 consumer.go:798 consumer/broker/0 added subscription to coinex-dex/0 
+[INFO] 2019-08-28 20:42:03 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 20:52:03 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 21:02:03 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 21:12:03 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
+[INFO] 2019-08-28 21:30:41 client.go:775 client/metadata fetching metadata for all topics from broker localhost:9092 
