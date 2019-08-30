@@ -15,7 +15,7 @@ tags:
 schemes:
   - https
   - http
-host: localhost:1317
+host: localhost:8000
 securityDefinitions:
   kms:
     type: basic
