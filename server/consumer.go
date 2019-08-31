@@ -55,7 +55,7 @@ func (tc *TradeConsumer) Consume() {
 		}
 		pc, err := tc.ConsumePartition(tc.topic, partition, offset)
 		if err != nil {
-			log.Errorf("Failed to start consumer for partition %d: %s", partition, err)
+			log.WithError(err).Errorf("Failed to start consumer for partition %d", partition)
 			continue
 		}
 		wg.Add(1)
