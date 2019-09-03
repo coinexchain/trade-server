@@ -104,7 +104,7 @@ func TestCandleStickRecord(t *testing.T) {
 			LowPrice:       sdk.NewDec(10),
 			TotalDeal:      sdk.NewInt(4),
 			EndingUnixTime: lastTimeOld.Unix(),
-			TimeSpan:       Minute,
+			TimeSpan:       getSpanStrFromSpan(Minute),
 			Market:         market1,
 		},
 	}, csSlice)
@@ -131,7 +131,7 @@ func TestCandleStickRecord(t *testing.T) {
 			LowPrice:       sdk.NewDec(10),
 			TotalDeal:      sdk.NewInt(6),
 			EndingUnixTime: lastTimeOld.Unix(),
-			TimeSpan:       Minute,
+			TimeSpan:       getSpanStrFromSpan(Minute),
 			Market:         market1,
 		},
 	}, csSlice)
@@ -150,7 +150,7 @@ func TestCandleStickRecord(t *testing.T) {
 			LowPrice:       sdk.NewDec(80),
 			TotalDeal:      sdk.NewInt(10),
 			EndingUnixTime: lastTimeOld.Unix(),
-			TimeSpan:       Minute,
+			TimeSpan:       getSpanStrFromSpan(Minute),
 			Market:         market1,
 		},
 		{
@@ -160,7 +160,7 @@ func TestCandleStickRecord(t *testing.T) {
 			LowPrice:       sdk.NewDec(10),
 			TotalDeal:      sdk.NewInt(20),
 			EndingUnixTime: lastTimeOld.Unix(),
-			TimeSpan:       Hour,
+			TimeSpan:       getSpanStrFromSpan(Hour),
 			Market:         market1,
 		},
 	}, csSlice)

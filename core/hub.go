@@ -300,7 +300,7 @@ func (hub *Hub) beginForCandleSticks() {
 			continue
 		}
 		// Update tickers' prices
-		if cs.TimeSpan == Minute {
+		if cs.TimeSpan == MinuteStr {
 			triman.tkm.UpdateNewestPrice(cs.ClosePrice, currMinute)
 		}
 		bz := formatCandleStick(&cs)
@@ -309,14 +309,14 @@ func (hub *Hub) beginForCandleSticks() {
 		}
 		// Push candle sticks to subscribers
 		for _, target := range targets {
-			timespan, ok := target.Detail().(byte)
+			timespan, ok := target.Detail().(string)
 			if !ok || timespan != cs.TimeSpan {
 				continue
 			}
 			hub.subMan.PushCandleStick(target, bz)
 		}
 		// Save candle sticks to KVStore
-		key := hub.getCandleStickKey(cs.Market, cs.TimeSpan)
+		key := hub.getCandleStickKey(cs.Market, getSpanFromSpanStr(cs.TimeSpan))
 		if len(bz) == 0 {
 			continue
 		}

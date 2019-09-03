@@ -11,6 +11,9 @@ const (
 	Minute             = byte(0x10)
 	Hour               = byte(0x20)
 	Day                = byte(0x30)
+	MinuteStr          = "1min"
+	HourStr            = "1hour"
+	DayStr             = "1day"
 )
 
 type CandleStick struct {
@@ -20,7 +23,7 @@ type CandleStick struct {
 	LowPrice       sdk.Dec `json:"low"`
 	TotalDeal      sdk.Int `json:"total"`
 	EndingUnixTime int64   `json:"unix_time"`
-	TimeSpan       byte    `json:"time_span"`
+	TimeSpan       string  `json:"time_span"`
 	Market         string  `json:"market"`
 }
 

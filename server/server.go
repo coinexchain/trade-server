@@ -13,6 +13,11 @@ import (
 	dbm "github.com/tendermint/tm-db"
 )
 
+type askInfo struct {
+	amount int
+	price  int
+}
+
 const (
 	ReadTimeout  = 10
 	WriteTimeout = 10

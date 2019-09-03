@@ -43,7 +43,7 @@ func NewTickerSubscriber(id int64, markets []string) *TickerSubscriber {
 
 type CandleStickSubscriber struct {
 	PlainSubscriber
-	TimeSpan byte
+	TimeSpan string
 }
 
 func (s *CandleStickSubscriber) Detail() interface{} {
@@ -54,7 +54,7 @@ func (s *CandleStickSubscriber) WriteMsg([]byte) error {
 	return nil
 }
 
-func NewCandleStickSubscriber(id int64, timespan byte) *CandleStickSubscriber {
+func NewCandleStickSubscriber(id int64, timespan string) *CandleStickSubscriber {
 	return &CandleStickSubscriber{
 		PlainSubscriber: PlainSubscriber{ID: id},
 		TimeSpan:        timespan,
@@ -138,9 +138,9 @@ func GetSubscribeManager(addr1, addr2 string) *MocSubscribeManager {
 	res.TickerSubscribeInfo[0] = NewTickerSubscriber(0, []string{"abc/cet", "xyz/cet"})
 	res.CandleStickSubscribeInfo = make(map[string][]Subscriber)
 	res.CandleStickSubscribeInfo["abc/cet"] = make([]Subscriber, 3)
-	res.CandleStickSubscribeInfo["abc/cet"][0] = NewCandleStickSubscriber(6, Minute)
-	res.CandleStickSubscribeInfo["abc/cet"][1] = NewCandleStickSubscriber(7, Hour)
-	res.CandleStickSubscribeInfo["abc/cet"][2] = NewCandleStickSubscriber(5, Day)
+	res.CandleStickSubscribeInfo["abc/cet"][0] = NewCandleStickSubscriber(6, MinuteStr)
+	res.CandleStickSubscribeInfo["abc/cet"][1] = NewCandleStickSubscriber(7, HourStr)
+	res.CandleStickSubscribeInfo["abc/cet"][2] = NewCandleStickSubscriber(5, DayStr)
 	res.DepthSubscribeInfo = make(map[string][]Subscriber)
 	res.DepthSubscribeInfo["abc/cet"] = make([]Subscriber, 2)
 	res.DepthSubscribeInfo["abc/cet"][0] = &PlainSubscriber{ID: 8}

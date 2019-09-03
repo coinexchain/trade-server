@@ -3,7 +3,6 @@ package core
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -32,13 +31,13 @@ func (i ImplSubscriber) WriteMsg(v []byte) error {
 
 type Conn struct {
 	*websocket.Conn
-	topicWithParams map[string][]string // topic --> params
+	topicWithParams map[string]map[string]struct{} // topic --> params
 }
 
 func NewConn(c *websocket.Conn) *Conn {
 	return &Conn{
 		Conn:            c,
-		topicWithParams: make(map[string][]string),
+		topicWithParams: make(map[string]map[string]struct{}),
 	}
 }
 
@@ -84,7 +83,7 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, c *Conn) e
 	w.Lock()
 	defer w.Unlock()
 	values := strings.Split(subscriptionTopic, SeparateArgu)
-	if len(values) < MinArguNum+1 || len(values) > MaxArguNum+1 {
+	if len(values) < 1 || len(values) > MaxArguNum+1 {
 		return fmt.Errorf("Expect range of parameters [%d, %d], actual : %d ", MinArguNum, MaxArguNum, len(values)-1)
 	}
 
@@ -95,14 +94,18 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, c *Conn) e
 		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
 	}
 
-	if len(params) != MinArguNum {
-		c.topicWithParams[topic] = append(c.topicWithParams[topic], params...)
+	if len(params) != 0 {
+		if len(c.topicWithParams[topic]) == 0 {
+			c.topicWithParams[topic] = make(map[string]struct{})
+		}
+		if len(params) == 1 {
+			c.topicWithParams[topic][params[0]] = struct{}{}
+		} else {
+			c.topicWithParams[topic][strings.Join(params, SeparateArgu)] = struct{}{}
+		}
 	}
 	if len(w.topicAndConns[topic]) == 0 {
 		w.topicAndConns[topic] = make(map[*Conn]struct{})
-	}
-	if len(w.connWithTopics[c]) == 0 {
-		w.connWithTopics[c] = make(map[string]struct{})
 	}
 	w.topicAndConns[topic][c] = struct{}{}
 	w.connWithTopics[c][topic] = struct{}{}
@@ -187,14 +190,11 @@ func (w *WebsocketManager) GetCandleStickSubscribeInfo() map[string][]Subscriber
 	res := make(map[string][]Subscriber)
 	for conn := range conns {
 		params := conn.topicWithParams[KlineKey]
-		for i := 0; i < len(params); i += 2 {
-			level, err := strconv.Atoi(params[i+1])
-			if err != nil {
-				return nil
-			}
-			res[params[i]] = append(res[params[i]], ImplSubscriber{
+		for p := range params {
+			vals := strings.Split(p, SeparateArgu)
+			res[vals[0]] = append(res[vals[0]], ImplSubscriber{
 				Conn:  conn.Conn,
-				value: byte(level),
+				value: vals[1],
 			})
 		}
 	}
@@ -208,8 +208,7 @@ func (w *WebsocketManager) getNoDetailSubscribe(topic string) map[string][]Subsc
 	conns := w.topicAndConns[topic]
 	res := make(map[string][]Subscriber)
 	for conn := range conns {
-		params := conn.topicWithParams[topic]
-		for _, param := range params {
+		for param := range conn.topicWithParams[topic] {
 			res[param] = append(res[param], ImplSubscriber{
 				Conn: conn.Conn,
 			})
@@ -260,7 +259,7 @@ func (w *WebsocketManager) GetLockedSubscribeInfo() map[string][]Subscriber {
 
 // Push msgs----------------------------
 func sendEncodeMsg(subscriber Subscriber, typeKey string, info []byte) {
-	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":\"%s\"}", typeKey, string(info)))
+	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", typeKey, string(info)))
 	if err := subscriber.WriteMsg(msg); err != nil {
 		log.Errorf(err.Error())
 	}
@@ -278,26 +277,18 @@ func (w *WebsocketManager) PushHeight(subscriber Subscriber, info []byte) {
 	sendEncodeMsg(subscriber, BlockInfoKey, info)
 }
 func (w *WebsocketManager) PushTicker(subscriber Subscriber, t []*Ticker) {
-	msg := broadTickerMsg{Type: TickerKey, Payload: tickerData{Tickers: t}}
-	bz, err := json.Marshal(msg)
+	payload, err := json.Marshal(t)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	if err := subscriber.WriteMsg(bz); err != nil {
-		log.Error(err)
-		return
-	}
+	sendEncodeMsg(subscriber, TickerKey, payload)
 }
 func (w *WebsocketManager) PushDepthSell(subscriber Subscriber, delta []byte) {
-	if err := subscriber.WriteMsg(delta); err != nil {
-		log.Error(err)
-	}
+	sendEncodeMsg(subscriber, DepthKey, delta)
 }
 func (w *WebsocketManager) PushDepthBuy(subscriber Subscriber, delta []byte) {
-	if err := subscriber.WriteMsg(delta); err != nil {
-		log.Error(err)
-	}
+	sendEncodeMsg(subscriber, DepthKey, delta)
 }
 func (w *WebsocketManager) PushCandleStick(subscriber Subscriber, info []byte) {
 	sendEncodeMsg(subscriber, KlineKey, info)

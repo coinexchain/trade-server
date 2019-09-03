@@ -6,6 +6,7 @@ main
 data/
 log/
 trade-server
+log/
 
 # Binaries for programs and plugins
 *.exe

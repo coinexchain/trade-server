@@ -97,6 +97,32 @@ func NewCandleStickRecord(market string) *CandleStickRecord {
 	return res
 }
 
+func getSpanStrFromSpan(span byte) string {
+	switch span {
+	case Minute:
+		return MinuteStr
+	case Hour:
+		return HourStr
+	case Day:
+		return DayStr
+	default:
+		return ""
+	}
+}
+
+func getSpanFromSpanStr(spanStr string) byte {
+	switch spanStr {
+	case MinuteStr:
+		return Minute
+	case HourStr:
+		return Hour
+	case DayStr:
+		return Day
+	default:
+		return 0
+	}
+}
+
 func (csr *CandleStickRecord) newCandleStick(cs baseCandleStick, t int64, span byte) CandleStick {
 	return CandleStick{
 		OpenPrice:      cs.OpenPrice,
@@ -105,7 +131,7 @@ func (csr *CandleStickRecord) newCandleStick(cs baseCandleStick, t int64, span b
 		LowPrice:       cs.LowPrice,
 		TotalDeal:      cs.TotalDeal,
 		EndingUnixTime: t,
-		TimeSpan:       span,
+		TimeSpan:       getSpanStrFromSpan(span),
 		Market:         csr.Market,
 	}
 }

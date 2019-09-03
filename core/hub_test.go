@@ -167,10 +167,10 @@ func Test1(t *testing.T) {
 	correct = `
 0: {"validator":"Val1","power":"30%","reason":"double_sign","jailed":true}
 1: {"validator":"Val1","power":"30%","reason":"double_sign","jailed":true}
-8: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"300"}]}}
-8: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"300"}],"asks":null}}
-9: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"300"}]}}
-9: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"300"}],"asks":null}}
+8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"300"}]}
+8: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"300"}],"asks":null}
+9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"300"}]}
+9: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"300"}],"asks":null}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -308,10 +308,10 @@ func Test1(t *testing.T) {
 
 	hub.ConsumeMessage("commit", nil)
 	correct = `
-8: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"200"}]}}
-8: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":null}}
-9: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"200"}]}}
-9: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":null}}
+8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"200"}]}
+8: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":null}
+9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"200"}]}
+9: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":null}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -326,7 +326,7 @@ func Test1(t *testing.T) {
 	correct = `
 3: {"height":1002,"timestamp":"2019-07-15T08:29:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 4: {"height":1002,"timestamp":"2019-07-15T08:29:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
-6: {"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"100","unix_time":1563178750,"time_span":16,"market":"abc/cet"}
+6: {"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"100","unix_time":1563178750,"time_span":"1min","market":"abc/cet"}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -389,7 +389,7 @@ func Test1(t *testing.T) {
 	require.Equal(t, correct, string(bytes))
 
 	//subMan.showResult()
-	correct = `{"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"100","unix_time":1563178750,"time_span":16,"market":"abc/cet"}`
+	correct = `{"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"100","unix_time":1563178750,"time_span":"1min","market":"abc/cet"}`
 	unixTime := T("2019-07-15T08:39:10Z").Unix()
 	data := hub.QueryCandleStick("abc/cet", Minute, unixTime, 0, 20)
 	require.Equal(t, correct, toStr(data))
@@ -474,7 +474,7 @@ func Test1(t *testing.T) {
 	correct = `
 3: {"height":1002,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 4: {"height":1002,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
-6: {"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"100","unix_time":1563178750,"time_span":16,"market":"abc/cet"}
+6: {"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"100","unix_time":1563178750,"time_span":"1min","market":"abc/cet"}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -504,8 +504,8 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	correct = `
 0: [{"market":"abc/cet","new":"0.100000000000000000","old":"0.100000000000000000"}]
-8: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}}
-9: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}}
+8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}
+9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -520,9 +520,9 @@ func Test1(t *testing.T) {
 	correct = `
 3: {"height":1003,"timestamp":"2019-07-16T00:01:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 4: {"height":1003,"timestamp":"2019-07-16T00:01:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
-6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563179470,"time_span":16,"market":"abc/cet"}
-7: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":32,"market":"abc/cet"}
-5: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":48,"market":"abc/cet"}
+6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563179470,"time_span":"1min","market":"abc/cet"}
+7: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1hour","market":"abc/cet"}
+5: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1day","market":"abc/cet"}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -552,18 +552,18 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	correct = `
 0: [{"market":"abc/cet","new":"0.125000000000000000","old":"0.100000000000000000"}]
-8: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"110.000000000000000000","a":"-200"}]}}
-9: {"type":"depth","payload":{"trading_pair":"abc/cet","bids":null,"asks":[{"p":"110.000000000000000000","a":"-200"}]}}
+8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"110.000000000000000000","a":"-200"}]}
+9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"110.000000000000000000","a":"-200"}]}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
 
 	unixTime = T("2019-07-25T08:39:10Z").Unix()
 	data = hub.QueryCandleStick("abc/cet", Hour, unixTime, 0, 20)
-	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":32,"market":"abc/cet"}`
+	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1hour","market":"abc/cet"}`
 	require.Equal(t, correct, toStr(data))
 
 	data = hub.QueryCandleStick("abc/cet", Day, unixTime, 0, 20)
-	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":48,"market":"abc/cet"}`
+	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1day","market":"abc/cet"}`
 	require.Equal(t, correct, toStr(data))
 }

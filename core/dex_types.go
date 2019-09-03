@@ -241,11 +241,6 @@ type DepthDetails struct {
 	Asks        []*PricePoint `json:"asks"`
 }
 
-type Depth struct {
-	Type    string       `json:"type"`
-	Payload DepthDetails `json:"payload"`
-}
-
 type LockedSendMsg struct {
 	FromAddress string    `json:"from_address"`
 	ToAddress   string    `json:"to_address"`
@@ -258,17 +253,15 @@ func encodeDepth(market string, depth map[string]*PricePoint, buy bool) []byte {
 	for _, p := range depth {
 		values = append(values, p)
 	}
-	msg := Depth{
-		Type:    DepthKey,
-		Payload: DepthDetails{TradingPair: market},
-	}
+
+	detail := DepthDetails{TradingPair: market}
 	if buy {
-		msg.Payload.Bids = values
+		detail.Bids = values
 	} else {
-		msg.Payload.Asks = values
+		detail.Asks = values
 	}
 
-	bz, err := json.Marshal(msg)
+	bz, err := json.Marshal(detail)
 	if err != nil {
 		log.Error(err)
 	}
