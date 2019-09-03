@@ -870,9 +870,9 @@ func (hub *Hub) QueryDepth(market string, count int) (sell []*PricePoint, buy []
 	return
 }
 
-func (hub *Hub) QueryCandleStick(market string, timespan byte, time int64, sid int64, count int) [][]byte {
+func (hub *Hub) QueryCandleStick(market string, timespan byte, time int64, sid int64, count int) []json.RawMessage {
 	count = limitCount(count)
-	data := make([][]byte, 0, count)
+	data := make([]json.RawMessage, 0, count)
 	end := getCandleStickEndKey(market, timespan, time, sid)
 	start := getCandleStickStartKey(market, timespan)
 	hub.dbMutex.RLock()
@@ -882,7 +882,7 @@ func (hub *Hub) QueryCandleStick(market string, timespan byte, time int64, sid i
 		hub.dbMutex.RUnlock()
 	}()
 	for ; iter.Valid(); iter.Next() {
-		data = append(data, iter.Value())
+		data = append(data, json.RawMessage(iter.Value()))
 		if count--; count == 0 {
 			break
 		}
@@ -891,67 +891,67 @@ func (hub *Hub) QueryCandleStick(market string, timespan byte, time int64, sid i
 }
 
 //=========
-func (hub *Hub) QueryOrder(account string, time int64, sid int64, count int) (data [][]byte, tags []byte, timesid []int64) {
+func (hub *Hub) QueryOrder(account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
 	return hub.query(false, OrderByte, []byte(account), time, sid, count)
 }
 
-func (hub *Hub) QueryDeal(market string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+func (hub *Hub) QueryDeal(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(false, DealByte, []byte(market), time, sid, count)
 	return
 }
 
-func (hub *Hub) QueryBancorInfo(market string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+func (hub *Hub) QueryBancorInfo(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(false, BancorInfoByte, []byte(market), time, sid, count)
 	return
 }
 
-func (hub *Hub) QueryBancorTrade(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+func (hub *Hub) QueryBancorTrade(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(false, BancorTradeByte, []byte(account), time, sid, count)
 	return
 }
 
-func (hub *Hub) QueryRedelegation(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+func (hub *Hub) QueryRedelegation(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(false, RedelegationByte, []byte(account), time, sid, count)
 	return
 }
-func (hub *Hub) QueryUnbonding(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+func (hub *Hub) QueryUnbonding(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(false, UnbondingByte, []byte(account), time, sid, count)
 	return
 }
-func (hub *Hub) QueryUnlock(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+func (hub *Hub) QueryUnlock(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(false, UnlockByte, []byte(account), time, sid, count)
 	return
 }
 
-func (hub *Hub) QueryIncome(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+func (hub *Hub) QueryIncome(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count)
 	return
 }
 
-func (hub *Hub) QueryTx(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+func (hub *Hub) QueryTx(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count)
 	return
 }
 
-func (hub *Hub) QueryLocked(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+func (hub *Hub) QueryLocked(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(false, LockedByte, []byte(account), time, sid, count)
 	return
 }
 
-func (hub *Hub) QueryComment(token string, time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+func (hub *Hub) QueryComment(token string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(false, CommentByte, []byte(token), time, sid, count)
 	return
 }
 
-func (hub *Hub) QuerySlash(time int64, sid int64, count int) (data [][]byte, timesid []int64) {
+func (hub *Hub) QuerySlash(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(false, SlashByte, []byte{}, time, sid, count)
 	return
 }
 
 func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64, sid int64,
-	count int) (data [][]byte, tags []byte, timesid []int64) {
+	count int) (data []json.RawMessage, tags []byte, timesid []int64) {
 	count = limitCount(count)
-	data = make([][]byte, 0, count)
+	data = make([]json.RawMessage, 0, count)
 	tags = make([]byte, 0, count)
 	timesid = make([]int64, 0, 2*count)
 	start := getStartKeyFromBytes(firstByte, bz)
@@ -972,9 +972,9 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64,
 		timesid = append(timesid, []int64{int64(time), int64(sid)}...)
 		if fetchTxDetail {
 			key := append([]byte{DetailByte}, iter.Value()...)
-			data = append(data, hub.db.Get(key))
+			data = append(data, json.RawMessage(hub.db.Get(key)))
 		} else {
-			data = append(data, iter.Value())
+			data = append(data, json.RawMessage(iter.Value()))
 		}
 		if count--; count == 0 {
 			break

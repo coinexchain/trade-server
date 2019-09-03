@@ -13,7 +13,7 @@ func simpleAddr(s string) (sdk.AccAddress, error) {
 	return sdk.AccAddressFromHex("01234567890123456789012345678901234" + s)
 }
 
-func toStr(payload [][]byte) string {
+func toStr(payload []json.RawMessage) string {
 	out := make([]string, len(payload))
 	for i := 0; i < len(out); i++ {
 		out[i] = string(payload[i])

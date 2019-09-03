@@ -2,6 +2,7 @@ package core
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"encoding/json"
 )
 
 const (
@@ -113,19 +114,19 @@ type Querier interface {
 	QueryTickers(marketList []string) []*Ticker
 	QueryBlockTime(height int64, count int) []int64
 	QueryDepth(market string, count int) (sell []*PricePoint, buy []*PricePoint)
-	QueryCandleStick(market string, timespan byte, time int64, sid int64, count int) [][]byte
+	QueryCandleStick(market string, timespan byte, time int64, sid int64, count int) []json.RawMessage
 
-	QueryOrder(account string, time int64, sid int64, count int) (data [][]byte, tags []byte, timesid []int64)
+	QueryOrder(account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64)
 
-	QueryLocked(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
-	QueryDeal(market string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
-	QueryBancorInfo(market string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
-	QueryBancorTrade(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
-	QueryRedelegation(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
-	QueryUnbonding(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
-	QueryUnlock(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
-	QueryIncome(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
-	QueryTx(account string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
-	QueryComment(token string, time int64, sid int64, count int) (data [][]byte, timesid []int64)
-	QuerySlash(time int64, sid int64, count int) (data [][]byte, timesid []int64)
+	QueryLocked(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryDeal(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryBancorInfo(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryBancorTrade(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryRedelegation(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryUnbonding(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryUnlock(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryIncome(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryTx(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryComment(token string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QuerySlash(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 }
