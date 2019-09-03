@@ -23,7 +23,7 @@ func (s *PlainSubscriber) WriteMsg([]byte) error {
 
 type TickerSubscriber struct {
 	PlainSubscriber
-	Markets []string
+	Markets map[string]struct{}
 }
 
 func (s *TickerSubscriber) Detail() interface{} {
@@ -34,7 +34,7 @@ func (s *TickerSubscriber) WriteMsg([]byte) error {
 	return nil
 }
 
-func NewTickerSubscriber(id int64, markets []string) *TickerSubscriber {
+func NewTickerSubscriber(id int64, markets map[string]struct{}) *TickerSubscriber {
 	return &TickerSubscriber{
 		PlainSubscriber: PlainSubscriber{ID: id},
 		Markets:         markets,
@@ -135,7 +135,10 @@ func GetSubscribeManager(addr1, addr2 string) *MocSubscribeManager {
 	res.HeightSubscribeInfo[0] = &PlainSubscriber{ID: 3}
 	res.HeightSubscribeInfo[1] = &PlainSubscriber{ID: 4}
 	res.TickerSubscribeInfo = make([]Subscriber, 1)
-	res.TickerSubscribeInfo[0] = NewTickerSubscriber(0, []string{"abc/cet", "xyz/cet"})
+	m := make(map[string]struct{})
+	m["abc/cet"] = struct{}{}
+	m["xyz/cet"] = struct{}{}
+	res.TickerSubscribeInfo[0] = NewTickerSubscriber(0, m)
 	res.CandleStickSubscribeInfo = make(map[string][]Subscriber)
 	res.CandleStickSubscribeInfo["abc/cet"] = make([]Subscriber, 3)
 	res.CandleStickSubscribeInfo["abc/cet"][0] = NewCandleStickSubscriber(6, MinuteStr)
