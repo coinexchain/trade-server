@@ -95,7 +95,7 @@ func QueryLockedRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 			return
 		}
 
-		data, timesid := hub.QueryComment(account, time, sid, count)
+		data, timesid := hub.QueryLocked(account, time, sid, count)
 
 		var msg core.LockedSendMsg
 		msgs := make([]core.LockedSendMsg, 0)
