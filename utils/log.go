@@ -29,7 +29,7 @@ func InitLog(svrConfig *toml.Tree) error {
 			return err
 		}
 	}
-	file, err := os.OpenFile(logDir+"/"+FileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	file, err := os.OpenFile(logDir+"/"+FileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Print(err)
 		return err

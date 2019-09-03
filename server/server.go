@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -13,11 +15,6 @@ import (
 	dbm "github.com/tendermint/tm-db"
 )
 
-type askInfo struct {
-	amount int
-	price  int
-}
-
 const (
 	ReadTimeout  = 10
 	WriteTimeout = 10
@@ -25,6 +22,11 @@ const (
 
 	DexTopic = "coinex-dex"
 	DbName   = "dex-trade"
+	DumpFile = "hub"
+)
+
+var (
+	dataDir string
 )
 
 type TradeSever struct {
@@ -38,12 +40,13 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	wsManager := core.NewWebSocketManager()
 
 	// hub
-	dataDir := svrConfig.GetDefault("data-dir", "data").(string)
+	dataDir = svrConfig.GetDefault("data-dir", "data").(string)
 	db, err := newLevelDB(DbName, dataDir)
 	if err != nil {
 		log.WithError(err).Fatal("open db fail")
 	}
 	hub := core.NewHub(db, wsManager)
+	restoreHub(&hub)
 
 	// http server
 	proxy := svrConfig.GetDefault("proxy", false).(bool)
@@ -103,6 +106,7 @@ func (ts *TradeSever) Stop() {
 
 	// stop hub
 	ts.hub.Close()
+	saveHub(ts.hub)
 
 	log.Info("Server stop...")
 }
@@ -114,4 +118,34 @@ func newLevelDB(name string, dir string) (db dbm.DB, err error) {
 		}
 	}()
 	return dbm.NewDB(name, dbm.GoLevelDBBackend, dir), err
+}
+
+func saveHub(hub *core.Hub) {
+	hub4j := &core.HubForJSON{}
+	hub.Dump(hub4j)
+	bz, err := json.Marshal(hub4j)
+	if err != nil {
+		log.WithError(err).Error("hub json marshal fail")
+		return
+	}
+	dumpFileName := dataDir + "/" + DumpFile
+	if err = ioutil.WriteFile(dumpFileName, bz, 0644); err != nil {
+		log.WithError(err).Errorf("save to file fail %s", dumpFileName)
+		return
+	}
+}
+
+func restoreHub(hub *core.Hub) {
+	dumpFileName := dataDir + "/" + DumpFile
+	bz, err := ioutil.ReadFile(dumpFileName)
+	if err != nil {
+		log.WithError(err).Errorf("read from file fail %s", dumpFileName)
+		return
+	}
+	hub4jo := &core.HubForJSON{}
+	if err = json.Unmarshal(bz, hub4jo); err != nil {
+		log.WithError(err).Error("hub json unmarshal fail")
+		return
+	}
+	hub.Load(hub4jo)
 }
