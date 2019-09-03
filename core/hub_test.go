@@ -175,6 +175,16 @@ func Test1(t *testing.T) {
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
 
+	hub4j := &HubForJSON{}
+	hub.Dump(hub4j)
+	bz, err := json.Marshal(hub4j)
+	require.Equal(t, nil, err)
+	hub = NewHub(db, subMan)
+	hub4jo := &HubForJSON{}
+	err = json.Unmarshal(bz, hub4jo)
+	require.Equal(t, nil, err)
+	hub.Load(hub4jo)
+
 	sellDepth, buyDepth := hub.QueryDepth("abc/cet", 20)
 	correct = `[{"p":"100.000000000000000000","a":"300"}]`
 	bytes, _ = json.Marshal(sellDepth)
