@@ -760,9 +760,9 @@ func (hub *Hub) commitForTicker() {
 		}
 	}
 	for _, subscriber := range hub.subMan.GetTickerSubscribeInfo() {
-		marketList := subscriber.Detail().([]string)
+		marketList := subscriber.Detail().(map[string]struct{})
 		tickerList := make([]*Ticker, 0, len(marketList))
-		for _, market := range marketList {
+		for market := range marketList {
 			if ticker, ok := tkMap[market]; ok {
 				tickerList = append(tickerList, ticker)
 			}
