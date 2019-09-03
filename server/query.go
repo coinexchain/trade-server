@@ -54,6 +54,7 @@ func QueryTickersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		marketStr := vars.Get(queryKeyMarketList)
 
 		Tickers := hub.QueryTickers(strings.Split(marketStr, ","))
+
 		postQueryResponse(w, Tickers)
 	}
 }
@@ -74,6 +75,7 @@ func QueryDepthsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		}
 
 		sell, buy := hub.QueryDepth(market, count)
+
 		postQueryResponse(w, NewDepthResponse(sell, buy))
 
 	}
@@ -97,17 +99,7 @@ func QueryLockedRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryLocked(account, time, sid, count)
 
-		var msg core.LockedSendMsg
-		msgs := make([]core.LockedSendMsg, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &msg); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			msgs = append(msgs, msg)
-		}
-
-		postQueryKVStoreResponse(w, msgs, timesid)
+		postQueryKVStoreResponse(w, data, timesid)
 	}
 }
 
@@ -135,17 +127,7 @@ func QueryCandleSticksRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data := hub.QueryCandleStick(market, timespan, time, sid, count)
 
-		var stick core.CandleStick
-		sticks := make([]core.CandleStick, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &stick); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			sticks = append(sticks, stick)
-		}
-
-		postQueryResponse(w, sticks)
+		postQueryResponse(w, data)
 	}
 }
 
@@ -166,48 +148,33 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		}
 
 		data, tags, timesid := hub.QueryOrder(account, time, sid, count)
-		createOrders := make([]core.CreateOrderInfo, 0)
-		fillOrders := make([]core.FillOrderInfo, 0)
-		cancelOrders := make([]core.CancelOrderInfo, 0)
+		createOrders := make([]json.RawMessage, 0)
+		fillOrders := make([]json.RawMessage, 0)
+		cancelOrders := make([]json.RawMessage, 0)
 		createTimeSid := make([]int64, 0)
 		fillTimeSid := make([]int64, 0)
 		cancelTimeSid := make([]int64, 0)
 		for i, tag := range tags {
 			if tag == core.CreateOrderEndByte {
-				var order core.CreateOrderInfo
-				if err = json.Unmarshal(data[i], &order); err != nil {
-					rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-					return
-				}
-				createOrders = append(createOrders, order)
+				createOrders = append(createOrders, data[i])
 				createTimeSid = append(createTimeSid, timesid[i*2])
 				createTimeSid = append(createTimeSid, timesid[i*2+1])
 			}
 			if tag == core.FillOrderEndByte {
-				var order core.FillOrderInfo
-				if err = json.Unmarshal(data[i], &order); err != nil {
-					rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-					return
-				}
-				fillOrders = append(fillOrders, order)
+				fillOrders = append(fillOrders, data[i])
 				fillTimeSid = append(fillTimeSid, timesid[i*2])
 				fillTimeSid = append(fillTimeSid, timesid[i*2+1])
 			}
 			if tag == core.CancelOrderEndByte {
-				var order core.CancelOrderInfo
-				if err = json.Unmarshal(data[i], &order); err != nil {
-					rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-					return
-				}
-				cancelOrders = append(cancelOrders, order)
+				cancelOrders = append(cancelOrders, data[i])
 				cancelTimeSid = append(cancelTimeSid, timesid[i*2])
 				cancelTimeSid = append(cancelTimeSid, timesid[i*2+1])
 			}
 		}
 		orders := core.OrderInfo{
-			CreateOrderInfo: core.CreateOrderResponse{Data: createOrders, Timesid: createTimeSid},
-			FillOrderInfo:   core.FillOrderResponse{Data: fillOrders, Timesid: fillTimeSid},
-			CancelOrderInfo: core.CancelOrderResponse{Data: cancelOrders, Timesid: cancelTimeSid},
+			CreateOrderInfo: core.OrderResponse{Data: createOrders, Timesid: createTimeSid},
+			FillOrderInfo:   core.OrderResponse{Data: fillOrders, Timesid: fillTimeSid},
+			CancelOrderInfo: core.OrderResponse{Data: cancelOrders, Timesid: cancelTimeSid},
 		}
 
 		postQueryResponse(w, orders)
@@ -232,17 +199,7 @@ func QueryDealsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryDeal(market, time, sid, count)
 
-		var deal core.FillOrderInfo
-		deals := make([]core.FillOrderInfo, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &deal); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			deals = append(deals, deal)
-		}
-
-		postQueryKVStoreResponse(w, deals, timesid)
+		postQueryKVStoreResponse(w, data, timesid)
 	}
 }
 
@@ -264,17 +221,7 @@ func QueryBancorInfosRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryBancorInfo(market, time, sid, count)
 
-		var info core.MsgBancorInfoForKafka
-		infos := make([]core.MsgBancorInfoForKafka, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &info); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			infos = append(infos, info)
-		}
-
-		postQueryKVStoreResponse(w, infos, timesid)
+		postQueryKVStoreResponse(w, data, timesid)
 	}
 }
 
@@ -296,17 +243,7 @@ func QueryBancorTradesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryBancorTrade(account, time, sid, count)
 
-		var trade core.MsgBancorTradeInfoForKafka
-		trades := make([]core.MsgBancorTradeInfoForKafka, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &trade); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			trades = append(trades, trade)
-		}
-
-		postQueryKVStoreResponse(w, trades, timesid)
+		postQueryKVStoreResponse(w, data, timesid)
 	}
 }
 
@@ -328,17 +265,7 @@ func QueryRedelegationsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryRedelegation(account, time, sid, count)
 
-		var redelegation core.NotificationBeginRedelegation
-		redelegations := make([]core.NotificationBeginRedelegation, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &redelegation); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			redelegations = append(redelegations, redelegation)
-		}
-
-		postQueryKVStoreResponse(w, redelegations, timesid)
+		postQueryKVStoreResponse(w, data, timesid)
 	}
 }
 
@@ -360,17 +287,7 @@ func QueryUnbondingsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryUnbonding(account, time, sid, count)
 
-		var unbonding core.NotificationBeginUnbonding
-		unbondings := make([]core.NotificationBeginUnbonding, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &unbonding); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			unbondings = append(unbondings, unbonding)
-		}
-
-		postQueryKVStoreResponse(w, unbondings, timesid)
+		postQueryKVStoreResponse(w, data, timesid)
 	}
 }
 
@@ -392,17 +309,7 @@ func QueryUnlocksRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryUnlock(account, time, sid, count)
 
-		var unLock core.NotificationUnlock
-		unLocks := make([]core.NotificationUnlock, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &unLock); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			unLocks = append(unLocks, unLock)
-		}
-
-		postQueryKVStoreResponse(w, unLocks, timesid)
+		postQueryKVStoreResponse(w, data, timesid)
 	}
 }
 
@@ -424,17 +331,7 @@ func QueryIncomesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryIncome(account, time, sid, count)
 
-		var tx core.NotificationTx
-		txs := make([]core.NotificationTx, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &tx); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			txs = append(txs, tx)
-		}
-
-		postQueryKVStoreResponse(w, txs, timesid)
+		postQueryKVStoreResponse(w, data, timesid)
 	}
 }
 
@@ -456,17 +353,7 @@ func QueryTxsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryTx(account, time, sid, count)
 
-		var tx core.NotificationTx
-		txs := make([]core.NotificationTx, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &tx); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			txs = append(txs, tx)
-		}
-
-		postQueryKVStoreResponse(w, txs, timesid)
+		postQueryKVStoreResponse(w, data, timesid)
 	}
 }
 
@@ -488,17 +375,7 @@ func QueryCommentsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QueryComment(token, time, sid, count)
 
-		var comment core.TokenComment
-		comments := make([]core.TokenComment, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &comment); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			comments = append(comments, comment)
-		}
-
-		postQueryKVStoreResponse(w, comments, timesid)
+		postQueryKVStoreResponse(w, data, timesid)
 	}
 }
 
@@ -519,17 +396,7 @@ func QuerySlashingsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 		data, timesid := hub.QuerySlash(time, sid, count)
 
-		var slashing core.NotificationSlash
-		slashings := make([]core.NotificationSlash, 0)
-		for _, v := range data {
-			if err = json.Unmarshal(v, &slashing); err != nil {
-				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			slashings = append(slashings, slashing)
-		}
-
-		postQueryKVStoreResponse(w, slashings, timesid)
+		postQueryKVStoreResponse(w, data, timesid)
 	}
 }
 func postQueryResponse(w http.ResponseWriter, data interface{}) {
