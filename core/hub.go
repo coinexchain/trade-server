@@ -582,6 +582,9 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 		hub.Log("Error in Unmarshal FillOrderInfo")
 		return
 	}
+	if v.DealStock == 0 {
+		return
+	}
 	// Add a new market which is seen for the first time
 	if !hub.HasMarket(v.TradingPair) {
 		hub.AddMarket(v.TradingPair)
