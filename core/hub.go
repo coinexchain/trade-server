@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -892,64 +893,120 @@ func (hub *Hub) QueryCandleStick(market string, timespan byte, time int64, sid i
 
 //=========
 func (hub *Hub) QueryOrder(account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
-	return hub.query(false, OrderByte, []byte(account), time, sid, count)
+	return hub.query(false, OrderByte, []byte(account), time, sid, count, nil)
 }
 
 func (hub *Hub) QueryDeal(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
-	data, _, timesid = hub.query(false, DealByte, []byte(market), time, sid, count)
+	data, _, timesid = hub.query(false, DealByte, []byte(market), time, sid, count, nil)
 	return
 }
 
 func (hub *Hub) QueryBancorInfo(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
-	data, _, timesid = hub.query(false, BancorInfoByte, []byte(market), time, sid, count)
+	data, _, timesid = hub.query(false, BancorInfoByte, []byte(market), time, sid, count, nil)
 	return
 }
 
 func (hub *Hub) QueryBancorTrade(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
-	data, _, timesid = hub.query(false, BancorTradeByte, []byte(account), time, sid, count)
+	data, _, timesid = hub.query(false, BancorTradeByte, []byte(account), time, sid, count, nil)
 	return
 }
 
 func (hub *Hub) QueryRedelegation(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
-	data, _, timesid = hub.query(false, RedelegationByte, []byte(account), time, sid, count)
+	data, _, timesid = hub.query(false, RedelegationByte, []byte(account), time, sid, count, nil)
 	return
 }
 func (hub *Hub) QueryUnbonding(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
-	data, _, timesid = hub.query(false, UnbondingByte, []byte(account), time, sid, count)
+	data, _, timesid = hub.query(false, UnbondingByte, []byte(account), time, sid, count, nil)
 	return
 }
 func (hub *Hub) QueryUnlock(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
-	data, _, timesid = hub.query(false, UnlockByte, []byte(account), time, sid, count)
+	data, _, timesid = hub.query(false, UnlockByte, []byte(account), time, sid, count, nil)
 	return
 }
 
 func (hub *Hub) QueryIncome(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
-	data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count)
+	data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count, nil)
 	return
 }
 
 func (hub *Hub) QueryTx(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
-	data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count)
+	data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count, nil)
 	return
 }
 
 func (hub *Hub) QueryLocked(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
-	data, _, timesid = hub.query(false, LockedByte, []byte(account), time, sid, count)
+	data, _, timesid = hub.query(false, LockedByte, []byte(account), time, sid, count, nil)
 	return
 }
 
 func (hub *Hub) QueryComment(token string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
-	data, _, timesid = hub.query(false, CommentByte, []byte(token), time, sid, count)
+	data, _, timesid = hub.query(false, CommentByte, []byte(token), time, sid, count, nil)
 	return
 }
 
 func (hub *Hub) QuerySlash(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
-	data, _, timesid = hub.query(false, SlashByte, []byte{}, time, sid, count)
+	data, _, timesid = hub.query(false, SlashByte, []byte{}, time, sid, count, nil)
 	return
 }
 
+// --------------
+
+func (hub *Hub) QueryOrderAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
+	return hub.query(false, OrderByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+		s1 := fmt.Sprintf("/%s\",\"height\":", token)
+		s2 := fmt.Sprintf("\"trading_pair\":\"%s/", token)
+		if tag == CreateOrderEndByte {
+			s1 = fmt.Sprintf("/%s\",\"order_type\":", token)
+		}
+		return strings.Index(string(entry), s1) > 0 || strings.Index(string(entry), s2) > 0
+	})
+}
+
+func (hub *Hub) QueryLockedAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+	data, _, timesid = hub.query(false, LockedByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+		s := fmt.Sprintf("\"denom\":\"%s\",\"amount\":", token)
+		return strings.Index(string(entry), s) > 0
+	})
+	return
+}
+
+func (hub *Hub) QueryBancorTradeAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+	data, _, timesid = hub.query(false, BancorTradeByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+		s1 := fmt.Sprintf("\"money\":\"%s\"", token)
+		s2 := fmt.Sprintf("\"stock\":\"%s\"", token)
+		return strings.Index(string(entry), s1) > 0 || strings.Index(string(entry), s2) > 0
+	})
+	return
+}
+
+func (hub *Hub) QueryUnlockAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+	data, _, timesid = hub.query(false, UnlockByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+		s := fmt.Sprintf("\"unlocked\":[{\"denom\":\"%s\",\"amount\":", token)
+		return strings.Index(string(entry), s) > 0
+	})
+	return
+}
+
+func (hub *Hub) QueryIncomeAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+	r := regexp.MustCompile(fmt.Sprintf("\"amount\":\"[0-9]+%s", token))
+	data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+		return r.MatchString(string(entry))
+	})
+	return
+}
+
+func (hub *Hub) QueryTxAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+	r := regexp.MustCompile(fmt.Sprintf("\"amount\":\"[0-9]+%s", token))
+	data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+		return r.MatchString(string(entry))
+	})
+	return
+}
+
+type filterFunc func(tag byte, entry []byte) bool
+
 func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64, sid int64,
-	count int) (data []json.RawMessage, tags []byte, timesid []int64) {
+	count int, filter filterFunc) (data []json.RawMessage, tags []byte, timesid []int64) {
 	count = limitCount(count)
 	data = make([]json.RawMessage, 0, count)
 	tags = make([]byte, 0, count)
@@ -965,17 +1022,21 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64,
 	for ; iter.Valid(); iter.Next() {
 		iKey := iter.Key()
 		idx := len(iKey) - 1
-		tags = append(tags, iKey[idx])
+		tag := iKey[idx]
 		sid := binary.BigEndian.Uint64(iKey[idx-8 : idx])
 		idx -= 8
 		time := binary.BigEndian.Uint64(iKey[idx-8 : idx])
-		timesid = append(timesid, []int64{int64(time), int64(sid)}...)
+		entry := json.RawMessage(iter.Value())
 		if fetchTxDetail {
 			key := append([]byte{DetailByte}, iter.Value()...)
-			data = append(data, json.RawMessage(hub.db.Get(key)))
-		} else {
-			data = append(data, json.RawMessage(iter.Value()))
+			entry = json.RawMessage(hub.db.Get(key))
 		}
+		if filter != nil && filter(tag, entry) {
+			continue
+		}
+		data = append(data, entry)
+		tags = append(tags, tag)
+		timesid = append(timesid, []int64{int64(time), int64(sid)}...)
 		if count--; count == 0 {
 			break
 		}

@@ -1,8 +1,8 @@
 package core
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"encoding/json"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -129,4 +129,11 @@ type Querier interface {
 	QueryTx(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryComment(token string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QuerySlash(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+
+	QueryOrderAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64)
+	QueryLockedAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryBancorTradeAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryUnlockAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryIncomeAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryTxAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 }
