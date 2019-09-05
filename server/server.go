@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -26,7 +27,11 @@ const (
 )
 
 var (
-	dataDir string
+	dataDir        string
+	certDir        string
+	serverCertName = "server.crt"
+	serverKeyName  = "server.key"
+	httpsToggle    bool
 )
 
 type TradeSever struct {
@@ -47,6 +52,18 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	}
 	hub := core.NewHub(db, wsManager)
 	restoreHub(&hub)
+
+	//https toggle
+	httpsToggle = svrConfig.GetDefault("https-toggle", false).(bool)
+	if httpsToggle {
+		certDir = svrConfig.GetDefault("cert-dir", "cert").(string)
+		if _, err := os.Stat(certDir); err != nil && os.IsNotExist(err) {
+			if err = os.Mkdir(certDir, 0755); err != nil {
+				fmt.Print(err)
+				log.WithError(err).Fatal("certificate path not exist")
+			}
+		}
+	}
 
 	// http server
 	proxy := svrConfig.GetDefault("proxy", false).(bool)
@@ -87,8 +104,16 @@ func (ts *TradeSever) Start() {
 
 	// start http server
 	go func() {
-		if err := ts.httpSvr.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.WithError(err).Fatal("http server listen and serve error")
+		if httpsToggle {
+			certPath := certDir+"/"+serverCertName
+			keyPath := certDir+"/"+serverKeyName
+			if err := ts.httpSvr.ListenAndServeTLS(certPath, keyPath); err != nil && err != http.ErrServerClosed {
+				log.WithError(err).Fatal("https server listen and serve error")
+			}
+		} else {
+			if err := ts.httpSvr.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.WithError(err).Fatal("http server listen and serve error")
+			}
 		}
 	}()
 }

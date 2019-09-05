@@ -11,6 +11,10 @@ kafka-addrs = "localhost:9092"
 # level DB
 data-dir = "data"
 
+# https
+cert-dir = "cert"
+https-toggle = false
+
 # log
 log-dir = "log"
 # log level: debug | info | warn | error

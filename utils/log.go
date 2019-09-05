@@ -34,7 +34,6 @@ func InitLog(svrConfig *toml.Tree) error {
 		fmt.Print(err)
 		return err
 	}
-
 	if format == JSONFormat {
 		logrus.SetFormatter(&logrus.JSONFormatter{CallerPrettyfier: callerPrettyfier})
 	} else {
