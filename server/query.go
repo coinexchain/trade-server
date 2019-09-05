@@ -97,7 +97,8 @@ func QueryLockedRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 			return
 		}
 
-		data, timesid := hub.QueryLocked(account, time, sid, count)
+		token := r.FormValue(queryKeyToken)
+		data, timesid := hub.QueryLockedAboutToken(token, account, time, sid, count)
 
 		postQueryKVStoreResponse(w, data, timesid)
 	}
@@ -147,7 +148,9 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 			return
 		}
 
-		data, tags, timesid := hub.QueryOrder(account, time, sid, count)
+		token := r.FormValue(queryKeyToken)
+		data, tags, timesid := hub.QueryOrderAboutToken(token, account, time, sid, count)
+
 		createOrders := make([]json.RawMessage, 0)
 		fillOrders := make([]json.RawMessage, 0)
 		cancelOrders := make([]json.RawMessage, 0)
@@ -241,7 +244,8 @@ func QueryBancorTradesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 			return
 		}
 
-		data, timesid := hub.QueryBancorTrade(account, time, sid, count)
+		token := r.FormValue(queryKeyToken)
+		data, timesid := hub.QueryBancorTradeAboutToken(token, account, time, sid, count)
 
 		postQueryKVStoreResponse(w, data, timesid)
 	}
@@ -307,7 +311,8 @@ func QueryUnlocksRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 			return
 		}
 
-		data, timesid := hub.QueryUnlock(account, time, sid, count)
+		token := r.FormValue(queryKeyToken)
+		data, timesid := hub.QueryUnlockAboutToken(token, account, time, sid, count)
 
 		postQueryKVStoreResponse(w, data, timesid)
 	}
@@ -329,7 +334,8 @@ func QueryIncomesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 			return
 		}
 
-		data, timesid := hub.QueryIncome(account, time, sid, count)
+		token := r.FormValue(queryKeyToken)
+		data, timesid := hub.QueryIncomeAboutToken(token, account, time, sid, count)
 
 		postQueryKVStoreResponse(w, data, timesid)
 	}
@@ -351,7 +357,8 @@ func QueryTxsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 			return
 		}
 
-		data, timesid := hub.QueryTx(account, time, sid, count)
+		token := r.FormValue(queryKeyToken)
+		data, timesid := hub.QueryTxAboutToken(token, account, time, sid, count)
 
 		postQueryKVStoreResponse(w, data, timesid)
 	}
