@@ -1029,7 +1029,7 @@ func (hub *Hub) QueryTxAboutToken(token, account string, time int64, sid int64, 
 		return r.MatchString(string(entry))
 	})
 	return
-	
+
 }
 
 type filterFunc func(tag byte, entry []byte) bool

@@ -198,6 +198,11 @@ paths:
           required: true
           type: integer
           format: int32
+        - in: query
+          name: token
+          description: Symbol
+          required: false
+          type: string
       responses:
         200:
           description: OK
@@ -340,6 +345,11 @@ paths:
           required: true
           type: integer
           format: int32
+        - in: query
+          name: token
+          description: Symbol
+          required: false
+          type: string
       responses:
         200:
           description: OK
@@ -493,6 +503,11 @@ paths:
           required: true
           type: integer
           format: int32
+        - in: query
+          name: token
+          description: Symbol
+          required: false
+          type: string
       responses:
         200:
           description: OK
@@ -544,6 +559,11 @@ paths:
           required: true
           type: integer
           format: int32
+        - in: query
+          name: token
+          description: Symbol
+          required: false
+          type: string
       responses:
         200:
           description: OK
@@ -595,6 +615,11 @@ paths:
           required: true
           type: integer
           format: int32
+        - in: query
+          name: token
+          description: Symbol
+          required: false
+          type: string
       responses:
         200:
           description: OK
@@ -702,6 +727,62 @@ paths:
                 type: array
                 items:
                   $ref: '#/definitions/Slash'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
+        500:
+          description: Server internal error
+  /tx/lockeds:
+    get:
+      tags:
+        - Tx
+      summary: Query lock tx
+      description: Query lock transfer info
+      operationId: querylocked
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: account
+          description: Bech32 address
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+        - in: query
+          name: token
+          description: Symbol
+          required: false
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              unlock:
+                type: array
+                items:
+                  $ref: '#/definitions/Locked'
               timesid:
                 type: array
                 items:
@@ -1219,4 +1300,17 @@ definitions:
       jailed:
         type: boolean
         example: false
-          
+  Locked:
+    type: object
+    properties:
+      from_address:
+        $ref: '#/definitions/Address'
+      to_Address:
+        $ref: '#/definitions/Address'
+      amount:
+        $ref: '#/definitions/Coin'
+      unlock_time:
+        type: integer
+        format: int64
+        example: 1565740800
+        description: The unix timestamp when tokens can transfer again
