@@ -13,20 +13,22 @@ import (
 )
 
 var (
+	newFlag *flag.FlagSet
 	help    bool
 	cfgFile string
 )
 
 func init() {
-	flag.BoolVar(&help, "h", false, "display this help")
-	flag.StringVar(&cfgFile, "c", "config.toml", "config file")
-	flag.Usage = usage
+	newFlag = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	newFlag.BoolVar(&help, "h", false, "display this help")
+	newFlag.StringVar(&cfgFile, "c", "config.toml", "config file")
+	newFlag.Usage = usage
 }
 
 func main() {
-	flag.Parse()
+	_ = newFlag.Parse(os.Args[1:])
 	if help {
-		flag.Usage()
+		newFlag.Usage()
 		return
 	}
 
@@ -75,5 +77,5 @@ func waitForSignal() {
 
 func usage() {
 	_, _ = fmt.Println("Options:")
-	flag.PrintDefaults()
+	newFlag.PrintDefaults()
 }
