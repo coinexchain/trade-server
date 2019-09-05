@@ -98,7 +98,7 @@ func QueryLockedRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		}
 
 		token := r.FormValue(queryKeyToken)
-		data, timesid := hub.QueryLockedAboutToken(token, account, time, sid, count)
+		data, timesid := hub.QueryLockedAboutToken(strings.ToLower(token), account, time, sid, count)
 
 		postQueryKVStoreResponse(w, data, timesid)
 	}
@@ -149,7 +149,7 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		}
 
 		token := r.FormValue(queryKeyToken)
-		data, tags, timesid := hub.QueryOrderAboutToken(token, account, time, sid, count)
+		data, tags, timesid := hub.QueryOrderAboutToken(strings.ToLower(token), account, time, sid, count)
 
 		createOrders := make([]json.RawMessage, 0)
 		fillOrders := make([]json.RawMessage, 0)
@@ -245,7 +245,7 @@ func QueryBancorTradesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		}
 
 		token := r.FormValue(queryKeyToken)
-		data, timesid := hub.QueryBancorTradeAboutToken(token, account, time, sid, count)
+		data, timesid := hub.QueryBancorTradeAboutToken(strings.ToLower(token), account, time, sid, count)
 
 		postQueryKVStoreResponse(w, data, timesid)
 	}
@@ -312,7 +312,7 @@ func QueryUnlocksRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		}
 
 		token := r.FormValue(queryKeyToken)
-		data, timesid := hub.QueryUnlockAboutToken(token, account, time, sid, count)
+		data, timesid := hub.QueryUnlockAboutToken(strings.ToLower(token), account, time, sid, count)
 
 		postQueryKVStoreResponse(w, data, timesid)
 	}
@@ -335,7 +335,7 @@ func QueryIncomesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		}
 
 		token := r.FormValue(queryKeyToken)
-		data, timesid := hub.QueryIncomeAboutToken(token, account, time, sid, count)
+		data, timesid := hub.QueryIncomeAboutToken(strings.ToLower(token), account, time, sid, count)
 
 		postQueryKVStoreResponse(w, data, timesid)
 	}
@@ -358,7 +358,7 @@ func QueryTxsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		}
 
 		token := r.FormValue(queryKeyToken)
-		data, timesid := hub.QueryTxAboutToken(token, account, time, sid, count)
+		data, timesid := hub.QueryTxAboutToken(strings.ToLower(token), account, time, sid, count)
 
 		postQueryKVStoreResponse(w, data, timesid)
 	}
