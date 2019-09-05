@@ -512,7 +512,7 @@ func parseQueryKVStoreParams(r *http.Request) (time int64, sid int64, count int,
 		return time, sid, count, ErrNilParams(queryKeySid)
 	}
 
-	sid, err = strconv.ParseInt(timeStr, 10, 64)
+	sid, err = strconv.ParseInt(sidStr, 10, 64)
 	if err != nil {
 		return time, sid, count, err
 	} else if sid < 0 {

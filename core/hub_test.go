@@ -7,7 +7,6 @@ import (
 	dbm "github.com/tendermint/tm-db"
 	"strings"
 	"testing"
-	//	"fmt"
 )
 
 func simpleAddr(s string) (sdk.AccAddress, error) {
@@ -426,6 +425,20 @@ func Test1(t *testing.T) {
 	data, tags, _ = hub.QueryOrderAboutToken("xyz", addr1, unixTime, 0, 20)
 	require.Equal(t, 0, len(data))
 	require.Equal(t, 0, len(tags))
+
+	data, tags, timesid = hub.QueryOrder(addr1, 1563178750, 10, 20)
+	correct = `{"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-2","sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","trading_pair":"abc/cet","order_type":2,"price":"100.000000000000000000","quantity":300,"side":1,"time_in_force":3,"feature_fee":1,"height":1001,"frozen_fee":1,"freeze":10}
+{"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","trading_pair":"abc/cet","order_type":2,"price":"100.000000000000000000","quantity":300,"side":2,"time_in_force":3,"feature_fee":1,"height":1001,"frozen_fee":1,"freeze":10}`
+	require.Equal(t, correct, toStr(data))
+	require.Equal(t, "cc", string(tags))
+	bytes, _ = json.Marshal(timesid)
+	require.Equal(t, "[1563178030,8,1563178030,7]", string(bytes))
+
+	data, tags, timesid = hub.QueryOrderAboutToken("cet", addr1, 1563178750, 10, 20)
+	require.Equal(t, correct, toStr(data))
+	require.Equal(t, "cc", string(tags))
+	bytes, _ = json.Marshal(timesid)
+	require.Equal(t, "[1563178030,8,1563178030,7]", string(bytes))
 
 	data, timesid = hub.QueryLocked(addr1, unixTime, 0, 20)
 	correct = `{"from_address":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","to_address":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","amount":[{"denom":"xyz","amount":"15888"}],"unlock_time":1563179350}`
