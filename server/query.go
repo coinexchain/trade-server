@@ -406,6 +406,7 @@ func QuerySlashingsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		postQueryKVStoreResponse(w, data, timesid)
 	}
 }
+
 func postQueryResponse(w http.ResponseWriter, data interface{}) {
 	var (
 		baseData []byte

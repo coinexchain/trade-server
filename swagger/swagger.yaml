@@ -735,10 +735,10 @@ paths:
                   description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
-  /tx/lockeds:
+  /expiry/lockeds:
     get:
       tags:
-        - Tx
+        - Expiry
       summary: Query lock tx
       description: Query lock transfer info
       operationId: querylocked
