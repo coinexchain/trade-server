@@ -164,7 +164,7 @@ func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub)
 	depth = getCount(depth)
 
 	var err error
-	type queryFunc func(string, int64, int64, int) ([][]byte, []int64)
+	type queryFunc func(string, int64, int64, int) ([]json.RawMessage, []int64)
 	queryAndPushFunc := func(param string, qf queryFunc) {
 		data, _ := qf(param, hub.currBlockTime.Unix(), hub.sid, depth)
 		for _, v := range data {
