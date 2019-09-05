@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -22,11 +23,12 @@ var upgrader = websocket.Upgrader{
 }
 
 type OpCommand struct {
-	Op   string   `json:"op"`
-	Args []string `json:"args"`
+	Op    string   `json:"op"`
+	Args  []string `json:"args"`
+	Depth int      `json:"depth"`
 }
 
-func ServeWsHandleFn(wsManager *core.WebsocketManager) http.HandlerFunc {
+func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -43,30 +45,38 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager) http.HandlerFunc {
 					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 						log.WithError(err).Error("unexpected close error")
 					}
-					// TODO. will handle the error
-					_ = wsManager.CloseConn(wsConn)
+					err = wsManager.CloseConn(wsConn)
+					if err != nil {
+						log.WithError(err).Error("close websocket failed")
+					}
 					break
 				}
 
-				// TODO. will handler the error
 				var command OpCommand
 				if err := json.Unmarshal(message, &command); err != nil {
-					log.WithError(err).Error("unmarshal fail")
+					log.WithError(err).Error("unmarshal message failed")
 					continue
 				}
 
-				// TODO. will handler the error
 				switch command.Op {
 				case Subscribe:
 					for _, subTopic := range command.Args {
-						_ = wsManager.AddSubscribeConn(subTopic, wsConn)
+						err = wsManager.AddSubscribeConn(subTopic, command.Depth, wsConn, hub)
+						if err != nil {
+							log.WithError(err).Error(fmt.Sprintf("Subscribe topic (%s) failed ", subTopic))
+						}
 					}
 				case Unsubscribe:
 					for _, subTopic := range command.Args {
-						_ = wsManager.RemoveSubscribeConn(subTopic, wsConn)
+						err = wsManager.RemoveSubscribeConn(subTopic, wsConn)
+						if err != nil {
+							log.WithError(err).Error(fmt.Sprintf("Unsubscribe topic (%s) failed ", subTopic))
+						}
 					}
 				case Ping:
-					_ = wsConn.PongHandler()(`{"type": "pong"}`)
+					if err = wsConn.PongHandler()(`{"type": "pong"}`); err != nil {
+						log.WithError(err).Error(fmt.Sprintf("pong message failed"))
+					}
 				}
 
 			}

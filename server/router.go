@@ -36,7 +36,7 @@ func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager, proxy bool
 	router.HandleFunc("/slash/slashings", QuerySlashingsRequestHandlerFn(hub)).Methods("GET")
 
 	// websocket
-	router.HandleFunc("/ws", ServeWsHandleFn(wsManager))
+	router.HandleFunc("/ws", ServeWsHandleFn(wsManager, hub))
 
 	return router, nil
 }

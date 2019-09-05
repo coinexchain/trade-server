@@ -17,7 +17,7 @@ const (
 )
 
 type ImplSubscriber struct {
-	*websocket.Conn
+	*Conn
 	value interface{}
 }
 
@@ -79,7 +79,7 @@ func (w *WebsocketManager) CloseConn(c *Conn) error {
 	return c.Close()
 }
 
-func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, c *Conn) error {
+func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, depth int, c *Conn, hub *Hub) error {
 	w.Lock()
 	defer w.Unlock()
 	values := strings.Split(subscriptionTopic, SeparateArgu)
@@ -92,6 +92,10 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, c *Conn) e
 	if !checkTopicValid(topic) {
 		log.Errorf("The subscribed topic [%s] is illegal ", topic)
 		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
+	}
+
+	if err := PushFullInformation(subscriptionTopic, depth, c, hub); err != nil {
+		return err
 	}
 
 	if len(params) != 0 {
@@ -109,6 +113,7 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, c *Conn) e
 	}
 	w.topicAndConns[topic][c] = struct{}{}
 	w.connWithTopics[c][topic] = struct{}{}
+
 	return nil
 }
 
@@ -142,8 +147,112 @@ func checkTopicValid(topic string) bool {
 		return true
 	default:
 		return false
-
 	}
+}
+
+func getCount(depth int) int {
+	depth = limitCount(depth)
+	if depth == 0 {
+		depth = 10
+	}
+	return depth
+}
+
+func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub) error {
+	values := strings.Split(subscriptionTopic, SeparateArgu)
+	topic, params := values[0], values[1:]
+	depth = getCount(depth)
+
+	var err error
+	type queryFunc func(string, int64, int64, int) ([][]byte, []int64)
+	queryAndPushFunc := func(param string, qf queryFunc) {
+		data, _ := qf(param, hub.currBlockTime.Unix(), hub.sid, depth)
+		for _, v := range data {
+			err = c.WriteMessage(websocket.TextMessage, v)
+			if err != nil {
+				break
+			}
+		}
+	}
+
+	switch topic {
+	case SlashKey:
+		err = querySlashAndPush(hub, c, depth)
+	case KlineKey:
+		err = queryKlineAndpush(hub, c, params, depth)
+	case DepthKey:
+		err = queryDepthAndPush(hub, c, params[0], depth)
+	case OrderKey:
+		queryOrderAndPush(hub, c, params[0], depth)
+	case TxKey:
+		queryAndPushFunc(params[0], hub.QueryTx)
+	case LockedKey:
+		queryAndPushFunc(params[0], hub.QueryLocked)
+	case UnlockKey:
+		queryAndPushFunc(params[0], hub.QueryUnlock)
+	case IncomeKey:
+		queryAndPushFunc(params[0], hub.QueryIncome)
+	case DealKey:
+		queryAndPushFunc(params[0], hub.QueryDeal)
+	case BancorKey:
+		queryAndPushFunc(params[0], hub.QueryBancorInfo)
+	case BancorTradeKey:
+		queryAndPushFunc(params[0], hub.QueryBancorTrade)
+	case RedelegationKey:
+		queryAndPushFunc(params[0], hub.QueryRedelegation)
+	case UnbondingKey:
+		queryAndPushFunc(params[0], hub.QueryUnbonding)
+	case CommentKey:
+		queryAndPushFunc(params[0], hub.QueryComment)
+	}
+	return err
+}
+
+func queryOrderAndPush(hub *Hub, c *Conn, account string, depth int) error {
+	data, _, _ := hub.QueryOrder(account, hub.currBlockTime.Unix(), hub.sid, depth)
+	for i := range data {
+		err := c.WriteMessage(websocket.TextMessage, data[i])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func queryDepthAndPush(hub *Hub, c *Conn, market string, depth int) error {
+	sell, buy := hub.QueryDepth(market, depth)
+	depRes := DepthDetails{
+		TradingPair: market,
+		Bids:        buy,
+		Asks:        sell,
+	}
+	bz, err := json.Marshal(depRes)
+	if err != nil {
+		return err
+	}
+	return c.WriteMessage(websocket.TextMessage, bz)
+}
+
+func queryKlineAndpush(hub *Hub, c *Conn, params []string, depth int) error {
+	candleBz := hub.QueryCandleStick(params[0], getSpanFromSpanStr(params[1]), hub.currBlockTime.Unix(), hub.sid, depth)
+	for _, v := range candleBz {
+		err := c.WriteMessage(websocket.TextMessage, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func querySlashAndPush(hub *Hub, c *Conn, depth int) error {
+	data, _ := hub.QuerySlash(hub.currBlockTime.Unix(), hub.sid, depth)
+	for _, v := range data {
+		err := c.WriteMessage(websocket.TextMessage, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (w *WebsocketManager) GetSlashSubscribeInfo() []Subscriber {
@@ -152,7 +261,7 @@ func (w *WebsocketManager) GetSlashSubscribeInfo() []Subscriber {
 	conns := w.topicAndConns[SlashKey]
 	res := make([]Subscriber, 0, len(conns))
 	for conn := range conns {
-		res = append(res, ImplSubscriber{Conn: conn.Conn})
+		res = append(res, ImplSubscriber{Conn: conn})
 	}
 	return res
 }
@@ -163,7 +272,7 @@ func (w *WebsocketManager) GetHeightSubscribeInfo() []Subscriber {
 	conns := w.topicAndConns[BlockInfoKey]
 	res := make([]Subscriber, 0, len(conns))
 	for conn := range conns {
-		res = append(res, ImplSubscriber{Conn: conn.Conn})
+		res = append(res, ImplSubscriber{Conn: conn})
 	}
 	return res
 }
@@ -175,7 +284,7 @@ func (w *WebsocketManager) GetTickerSubscribeInfo() []Subscriber {
 	res := make([]Subscriber, 0, len(conns))
 	for conn := range conns {
 		res = append(res, ImplSubscriber{
-			Conn:  conn.Conn,
+			Conn:  conn,
 			value: conn.topicWithParams[TickerKey],
 		})
 	}
@@ -193,7 +302,7 @@ func (w *WebsocketManager) GetCandleStickSubscribeInfo() map[string][]Subscriber
 		for p := range params {
 			vals := strings.Split(p, SeparateArgu)
 			res[vals[0]] = append(res[vals[0]], ImplSubscriber{
-				Conn:  conn.Conn,
+				Conn:  conn,
 				value: vals[1],
 			})
 		}
@@ -210,7 +319,7 @@ func (w *WebsocketManager) getNoDetailSubscribe(topic string) map[string][]Subsc
 	for conn := range conns {
 		for param := range conn.topicWithParams[topic] {
 			res[param] = append(res[param], ImplSubscriber{
-				Conn: conn.Conn,
+				Conn: conn,
 			})
 		}
 	}
@@ -258,23 +367,27 @@ func (w *WebsocketManager) GetLockedSubscribeInfo() map[string][]Subscriber {
 }
 
 // Push msgs----------------------------
-func sendEncodeMsg(subscriber Subscriber, typeKey string, info []byte) {
+func (w *WebsocketManager) sendEncodeMsg(subscriber Subscriber, typeKey string, info []byte) {
 	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", typeKey, string(info)))
 	if err := subscriber.WriteMsg(msg); err != nil {
 		log.Errorf(err.Error())
+		s := subscriber.(ImplSubscriber)
+		if err = w.CloseConn(s.Conn); err != nil {
+			log.Error(err)
+		}
 	}
 }
 
 func (w *WebsocketManager) PushLockedSendMsg(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, LockedKey, info)
+	w.sendEncodeMsg(subscriber, LockedKey, info)
 }
 
 func (w *WebsocketManager) PushSlash(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, SlashKey, info)
+	w.sendEncodeMsg(subscriber, SlashKey, info)
 }
 
 func (w *WebsocketManager) PushHeight(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, BlockInfoKey, info)
+	w.sendEncodeMsg(subscriber, BlockInfoKey, info)
 }
 func (w *WebsocketManager) PushTicker(subscriber Subscriber, t []*Ticker) {
 	payload, err := json.Marshal(t)
@@ -282,50 +395,50 @@ func (w *WebsocketManager) PushTicker(subscriber Subscriber, t []*Ticker) {
 		log.Error(err)
 		return
 	}
-	sendEncodeMsg(subscriber, TickerKey, payload)
+	w.sendEncodeMsg(subscriber, TickerKey, payload)
 }
 func (w *WebsocketManager) PushDepthSell(subscriber Subscriber, delta []byte) {
-	sendEncodeMsg(subscriber, DepthKey, delta)
+	w.sendEncodeMsg(subscriber, DepthKey, delta)
 }
 func (w *WebsocketManager) PushDepthBuy(subscriber Subscriber, delta []byte) {
-	sendEncodeMsg(subscriber, DepthKey, delta)
+	w.sendEncodeMsg(subscriber, DepthKey, delta)
 }
 func (w *WebsocketManager) PushCandleStick(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, KlineKey, info)
+	w.sendEncodeMsg(subscriber, KlineKey, info)
 }
 func (w *WebsocketManager) PushDeal(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, DealKey, info)
+	w.sendEncodeMsg(subscriber, DealKey, info)
 }
 func (w *WebsocketManager) PushCreateOrder(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, OrderKey, info)
+	w.sendEncodeMsg(subscriber, OrderKey, info)
 }
 func (w *WebsocketManager) PushFillOrder(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, OrderKey, info)
+	w.sendEncodeMsg(subscriber, OrderKey, info)
 }
 func (w *WebsocketManager) PushCancelOrder(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, OrderKey, info)
+	w.sendEncodeMsg(subscriber, OrderKey, info)
 }
 func (w *WebsocketManager) PushBancorInfo(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, BancorKey, info)
+	w.sendEncodeMsg(subscriber, BancorKey, info)
 }
 func (w *WebsocketManager) PushBancorTrade(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, BancorTradeKey, info)
+	w.sendEncodeMsg(subscriber, BancorTradeKey, info)
 }
 func (w *WebsocketManager) PushIncome(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, IncomeKey, info)
+	w.sendEncodeMsg(subscriber, IncomeKey, info)
 }
 func (w *WebsocketManager) PushUnbonding(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, UnbondingKey, info)
+	w.sendEncodeMsg(subscriber, UnbondingKey, info)
 }
 func (w *WebsocketManager) PushRedelegation(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, RedelegationKey, info)
+	w.sendEncodeMsg(subscriber, RedelegationKey, info)
 }
 func (w *WebsocketManager) PushUnlock(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, UnlockKey, info)
+	w.sendEncodeMsg(subscriber, UnlockKey, info)
 }
 func (w *WebsocketManager) PushTx(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, TxKey, info)
+	w.sendEncodeMsg(subscriber, TxKey, info)
 }
 func (w *WebsocketManager) PushComment(subscriber Subscriber, info []byte) {
-	sendEncodeMsg(subscriber, CommentKey, info)
+	w.sendEncodeMsg(subscriber, CommentKey, info)
 }

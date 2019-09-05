@@ -34,15 +34,6 @@ type Ticker struct {
 	OldPriceOneDayAgo sdk.Dec `json:"old"`
 }
 
-type tickerData struct {
-	Tickers []*Ticker `json:"tickers"`
-}
-
-type broadTickerMsg struct {
-	Type    string     `json:"type"`
-	Payload tickerData `json:"payload"`
-}
-
 type PricePoint struct {
 	Price  sdk.Dec `json:"p"`
 	Amount sdk.Int `json:"a"`
