@@ -186,6 +186,9 @@ func GetSubscribeManager(addr1, addr2 string) *MocSubscribeManager {
 	res.TxSubscribeInfo = make(map[string][]Subscriber)
 	res.TxSubscribeInfo[addr1] = make([]Subscriber, 1)
 	res.TxSubscribeInfo[addr1][0] = &PlainSubscriber{ID: 25}
+	res.LockedSubcribeInfo = make(map[string][]Subscriber)
+	res.LockedSubcribeInfo[addr1] = make([]Subscriber, 1)
+	res.LockedSubcribeInfo[addr1][0] = &PlainSubscriber{ID: 26}
 	return res
 }
 

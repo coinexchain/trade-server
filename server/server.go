@@ -105,8 +105,8 @@ func (ts *TradeSever) Start() {
 	// start http server
 	go func() {
 		if httpsToggle {
-			certPath := certDir+"/"+serverCertName
-			keyPath := certDir+"/"+serverKeyName
+			certPath := certDir + "/" + serverCertName
+			keyPath := certDir + "/" + serverKeyName
 			if err := ts.httpSvr.ListenAndServeTLS(certPath, keyPath); err != nil && err != http.ErrServerClosed {
 				log.WithError(err).Fatal("https server listen and serve error")
 			}

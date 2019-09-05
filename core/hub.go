@@ -999,8 +999,13 @@ func (hub *Hub) QueryUnlockAboutToken(token, account string, time int64, sid int
 		return
 	}
 	data, _, timesid = hub.query(false, UnlockByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-		s := fmt.Sprintf("\"unlocked\":[{\"denom\":\"%s\",\"amount\":", token)
-		return strings.Index(string(entry), s) > 0
+		entryStr := string(entry)
+		ending := strings.Index(entryStr, "\"locked_coins\":")
+		if ending < 0 {
+			return false
+		}
+		s := fmt.Sprintf("\"denom\":\"%s\",\"amount\":", token)
+		return strings.Index(entryStr[:ending], s) > 0
 	})
 	return
 
@@ -1013,7 +1018,9 @@ func (hub *Hub) QueryIncomeAboutToken(token, account string, time int64, sid int
 	}
 	r := regexp.MustCompile(fmt.Sprintf("\"amount\":\"[0-9]+%s", token))
 	data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-		return r.MatchString(string(entry))
+		entryStr := string(entry)
+		ending := strings.Index(entryStr, "\"serial_number\":")
+		return r.MatchString(entryStr[:ending])
 	})
 	return
 
@@ -1026,10 +1033,11 @@ func (hub *Hub) QueryTxAboutToken(token, account string, time int64, sid int64, 
 	}
 	r := regexp.MustCompile(fmt.Sprintf("\"amount\":\"[0-9]+%s", token))
 	data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-		return r.MatchString(string(entry))
+		entryStr := string(entry)
+		ending := strings.Index(entryStr, "\"serial_number\":")
+		return r.MatchString(entryStr[:ending])
 	})
 	return
-
 }
 
 type filterFunc func(tag byte, entry []byte) bool
@@ -1060,7 +1068,7 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64,
 			key := append([]byte{DetailByte}, iter.Value()...)
 			entry = json.RawMessage(hub.db.Get(key))
 		}
-		if filter != nil && filter(tag, entry) {
+		if filter != nil && !filter(tag, entry) {
 			continue
 		}
 		data = append(data, entry)
