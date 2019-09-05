@@ -954,56 +954,55 @@ func (hub *Hub) QuerySlash(time int64, sid int64, count int) (data []json.RawMes
 func (hub *Hub) QueryOrderAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
 	if token == "" {
 		return hub.query(false, OrderByte, []byte(account), time, sid, count, nil)
-	} else {
-		return hub.query(false, OrderByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-			s1 := fmt.Sprintf("/%s\",\"height\":", token)
-			s2 := fmt.Sprintf("\"trading_pair\":\"%s/", token)
-			if tag == CreateOrderEndByte {
-				s1 = fmt.Sprintf("/%s\",\"order_type\":", token)
-			}
-			return strings.Index(string(entry), s1) > 0 || strings.Index(string(entry), s2) > 0
-		})
 	}
+	return hub.query(false, OrderByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+		s1 := fmt.Sprintf("/%s\",\"height\":", token)
+		s2 := fmt.Sprintf("\"trading_pair\":\"%s/", token)
+		if tag == CreateOrderEndByte {
+			s1 = fmt.Sprintf("/%s\",\"order_type\":", token)
+		}
+		return strings.Index(string(entry), s1) > 0 || strings.Index(string(entry), s2) > 0
+	})
+
 }
 
 func (hub *Hub) QueryLockedAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	if token == "" {
 		data, _, timesid = hub.query(false, LockedByte, []byte(account), time, sid, count, nil)
 		return
-	} else {
-		data, _, timesid = hub.query(false, LockedByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-			s := fmt.Sprintf("\"denom\":\"%s\",\"amount\":", token)
-			return strings.Index(string(entry), s) > 0
-		})
-		return
 	}
+	data, _, timesid = hub.query(false, LockedByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+		s := fmt.Sprintf("\"denom\":\"%s\",\"amount\":", token)
+		return strings.Index(string(entry), s) > 0
+	})
+	return
+
 }
 
 func (hub *Hub) QueryBancorTradeAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	if token == "" {
 		data, _, timesid = hub.query(false, BancorTradeByte, []byte(account), time, sid, count, nil)
 		return
-	} else {
-		data, _, timesid = hub.query(false, BancorTradeByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-			s1 := fmt.Sprintf("\"money\":\"%s\"", token)
-			s2 := fmt.Sprintf("\"stock\":\"%s\"", token)
-			return strings.Index(string(entry), s1) > 0 || strings.Index(string(entry), s2) > 0
-		})
-		return
 	}
+	data, _, timesid = hub.query(false, BancorTradeByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+		s1 := fmt.Sprintf("\"money\":\"%s\"", token)
+		s2 := fmt.Sprintf("\"stock\":\"%s\"", token)
+		return strings.Index(string(entry), s1) > 0 || strings.Index(string(entry), s2) > 0
+	})
+	return
+
 }
 
 func (hub *Hub) QueryUnlockAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	if token == "" {
 		data, _, timesid = hub.query(false, UnlockByte, []byte(account), time, sid, count, nil)
 		return
-	} else {
-		data, _, timesid = hub.query(false, UnlockByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-			s := fmt.Sprintf("\"unlocked\":[{\"denom\":\"%s\",\"amount\":", token)
-			return strings.Index(string(entry), s) > 0
-		})
-		return
 	}
+	data, _, timesid = hub.query(false, UnlockByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+		s := fmt.Sprintf("\"unlocked\":[{\"denom\":\"%s\",\"amount\":", token)
+		return strings.Index(string(entry), s) > 0
+	})
+	return
 
 }
 
@@ -1011,13 +1010,12 @@ func (hub *Hub) QueryIncomeAboutToken(token, account string, time int64, sid int
 	if token == "" {
 		data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count, nil)
 		return
-	} else {
-		r := regexp.MustCompile(fmt.Sprintf("\"amount\":\"[0-9]+%s", token))
-		data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-			return r.MatchString(string(entry))
-		})
-		return
 	}
+	r := regexp.MustCompile(fmt.Sprintf("\"amount\":\"[0-9]+%s", token))
+	data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+		return r.MatchString(string(entry))
+	})
+	return
 
 }
 
@@ -1025,14 +1023,13 @@ func (hub *Hub) QueryTxAboutToken(token, account string, time int64, sid int64, 
 	if token == "" {
 		data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count, nil)
 		return
-	} else {
-		r := regexp.MustCompile(fmt.Sprintf("\"amount\":\"[0-9]+%s", token))
-		data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-			return r.MatchString(string(entry))
-		})
-		return
 	}
-
+	r := regexp.MustCompile(fmt.Sprintf("\"amount\":\"[0-9]+%s", token))
+	data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+		return r.MatchString(string(entry))
+	})
+	return
+	
 }
 
 type filterFunc func(tag byte, entry []byte) bool
