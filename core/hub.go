@@ -317,7 +317,7 @@ func (hub *Hub) beginForCandleSticks() {
 			hub.subMan.PushCandleStick(target, bz)
 		}
 		// Save candle sticks to KVStore
-		key := hub.getCandleStickKey(cs.Market, getSpanFromSpanStr(cs.TimeSpan))
+		key := hub.getCandleStickKey(cs.Market, GetSpanFromSpanStr(cs.TimeSpan))
 		if len(bz) == 0 {
 			continue
 		}

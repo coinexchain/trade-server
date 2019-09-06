@@ -234,7 +234,7 @@ func queryDepthAndPush(hub *Hub, c *Conn, market string, depth int) error {
 }
 
 func queryKlineAndpush(hub *Hub, c *Conn, params []string, depth int) error {
-	candleBz := hub.QueryCandleStick(params[0], getSpanFromSpanStr(params[1]), hub.currBlockTime.Unix(), hub.sid, depth)
+	candleBz := hub.QueryCandleStick(params[0], GetSpanFromSpanStr(params[1]), hub.currBlockTime.Unix(), hub.sid, depth)
 	for _, v := range candleBz {
 		err := c.WriteMessage(websocket.TextMessage, v)
 		if err != nil {

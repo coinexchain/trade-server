@@ -474,23 +474,17 @@ func parseQueryCountParams(str string) (count int, err error) {
 }
 
 func parseQueryTimespanParams(str string) (byte, error) {
-	var (
-		timespan int64
-		err      error
-	)
+	var timespan byte
 	if str == "" {
 		return 0, ErrNilParams(queryKeyTimespan)
 	}
 
-	timespan, err = strconv.ParseInt(str, 10, 8)
-	if err != nil {
-		return 0, err
-	}
-	if byte(timespan) != core.Minute && byte(timespan) != core.Hour && byte(timespan) != core.Day {
+	timespan = core.GetSpanFromSpanStr(str)
+	if timespan == 0 {
 		return 0, ErrInvalidTimespan()
 	}
 
-	return byte(timespan), nil
+	return timespan, nil
 }
 
 func parseQueryKVStoreParams(r *http.Request) (time int64, sid int64, count int, err error) {
@@ -544,7 +538,7 @@ func ErrInvalidParams(params string) error {
 	return fmt.Errorf("%s must greater than 0", params)
 }
 func ErrInvalidTimespan() error {
-	return fmt.Errorf("timespan must be Minute:16/Hour:32/Day:48")
+	return fmt.Errorf("timespan must be 1min/1hour/1day")
 }
 
 type DataWrapped struct {

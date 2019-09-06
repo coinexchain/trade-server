@@ -50,8 +50,8 @@ $ curl "http://localhost:8000/market/depths?market=abc/cet&count=1"
 - 查询给定market的K线信息  timespan=16/32/48
 
 ```bash
-$ curl -k "https://localhost:8000/market/candle-sticks?market=abc/cet&timespan=48&time=1567745901&count=1&sid=0"
-$ curl "http://localhost:8000/market/candle-sticks?market=abc/cet&timespan=48&time=1567745901&count=1&sid=0"
+$ curl -k "https://localhost:8000/market/candle-sticks?market=abc/cet&timespan=1day&time=1567745901&count=1&sid=0"
+$ curl "http://localhost:8000/market/candle-sticks?market=abc/cet&timespan=1day&time=1567745901&count=1&sid=0"
 [
   {
     "open": "5.299999999273690910",

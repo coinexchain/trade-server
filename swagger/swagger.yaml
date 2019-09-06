@@ -134,10 +134,9 @@ paths:
           type: string
         - in: query
           name: timespan
-          description: Minute:16/Hour:32/Day:48
+          description: 1min/1hour/1day
           required: true
-          type: integer
-          format: byte
+          type: string
         - in: query
           name: time
           description: Unix timestamp

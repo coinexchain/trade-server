@@ -110,7 +110,7 @@ func getSpanStrFromSpan(span byte) string {
 	}
 }
 
-func getSpanFromSpanStr(spanStr string) byte {
+func GetSpanFromSpanStr(spanStr string) byte {
 	switch spanStr {
 	case MinuteStr:
 		return Minute
