@@ -142,17 +142,23 @@ func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool) []
 	lastTime := csr.LastUpdateTime.Unix()
 	if isNewMinute && lastTime != 0 {
 		cs := csr.newCandleStick(csr.MinuteCS[csr.LastUpdateTime.Minute()], csr.LastUpdateTime.Unix(), Minute)
-		res = append(res, cs)
+		if !(cs.OpenPrice.IsZero() || cs.HighPrice.IsZero() || cs.LowPrice.IsZero() || cs.ClosePrice.IsZero()) {
+			res = append(res, cs)
+		}
 	}
 	if isNewHour && lastTime != 0 {
 		csr.HourCS[csr.LastUpdateTime.Hour()] = merge(csr.MinuteCS[:])
 		cs := csr.newCandleStick(csr.HourCS[csr.LastUpdateTime.Hour()], csr.LastUpdateTime.Unix(), Hour)
-		res = append(res, cs)
+		if !(cs.OpenPrice.IsZero() || cs.HighPrice.IsZero() || cs.LowPrice.IsZero() || cs.ClosePrice.IsZero()) {
+			res = append(res, cs)
+		}
 	}
 	if isNewDay && lastTime != 0 {
 		dayCS := merge(csr.HourCS[:])
 		cs := csr.newCandleStick(dayCS, csr.LastUpdateTime.Unix(), Day)
-		res = append(res, cs)
+		if !(cs.OpenPrice.IsZero() || cs.HighPrice.IsZero() || cs.LowPrice.IsZero() || cs.ClosePrice.IsZero()) {
+			res = append(res, cs)
+		}
 	}
 
 	if isNewDay {

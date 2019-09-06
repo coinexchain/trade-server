@@ -2,11 +2,13 @@ package core
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
-	"strings"
-	"testing"
 )
 
 func simpleAddr(s string) (sdk.AccAddress, error) {
@@ -662,4 +664,42 @@ func Test1(t *testing.T) {
 	data = hub.QueryCandleStick("abc/cet", Day, unixTime, 0, 20)
 	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1day","market":"abc/cet"}`
 	require.Equal(t, correct, toStr(data))
+	fmt.Println(subMan.PushList)
+
+	newHeightInfo = &NewHeightInfo{
+		Height:        1010,
+		TimeStamp:     T("2019-07-15T08:37:10Z"),
+		LastBlockHash: []byte("01234567890123456789"),
+	}
+	bytes, _ = json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+	hub.ConsumeMessage("commit", nil)
+	fmt.Println(subMan.PushList)
+	newHeightInfo = &NewHeightInfo{
+		Height:        1011,
+		TimeStamp:     T("2019-07-15T08:38:10Z"),
+		LastBlockHash: []byte("01234567890123456789"),
+	}
+	bytes, _ = json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+	hub.ConsumeMessage("commit", nil)
+	fmt.Println(subMan.PushList)
+	newHeightInfo = &NewHeightInfo{
+		Height:        1012,
+		TimeStamp:     T("2019-07-15T08:39:10Z"),
+		LastBlockHash: []byte("01234567890123456789"),
+	}
+	bytes, _ = json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+	hub.ConsumeMessage("commit", nil)
+	fmt.Println(subMan.PushList)
+	newHeightInfo = &NewHeightInfo{
+		Height:        1013,
+		TimeStamp:     T("2019-07-15T08:40:10Z"),
+		LastBlockHash: []byte("01234567890123456789"),
+	}
+	bytes, _ = json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+	hub.ConsumeMessage("commit", nil)
+	fmt.Println(subMan.PushList)
 }

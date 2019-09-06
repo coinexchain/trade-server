@@ -321,7 +321,6 @@ func (hub *Hub) beginForCandleSticks() {
 		if len(bz) == 0 {
 			continue
 		}
-		//fmt.Printf("Here4! %v\n", cs)
 		hub.batch.Set(key, bz)
 		hub.sid++
 	}
@@ -619,15 +618,15 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 	//Update candle sticks
 	csRec := hub.csMan.GetRecord(v.TradingPair)
 	if csRec != nil {
-		price := sdk.NewDec(v.DealMoney).QuoInt64(v.DealStock)
-		csRec.Update(hub.currBlockTime, price, v.DealStock)
+		price := sdk.NewDec(v.CurrMoney).QuoInt64(v.CurrStock)
+		csRec.Update(hub.currBlockTime, price, v.CurrStock)
 	}
 	//Update depth info
 	triman, ok := hub.managersMap[v.TradingPair]
 	if !ok {
 		return
 	}
-	negStock := sdk.NewInt(-v.DealStock)
+	negStock := sdk.NewInt(-v.CurrStock)
 	hub.depthMutex.Lock()
 	defer func() {
 		hub.depthMutex.Unlock()
