@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"encoding/json"
 
 	"github.com/coinexchain/trade-server/core"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,7 +37,7 @@ func getRandDealRecList(size int, seed int64, timeStep int32) []dealRec {
 	return recList
 }
 
-func getCandleStick(recList []dealRec, span byte) core.CandleStick {
+func getCandleStick(recList []dealRec, span string) core.CandleStick {
 	low := recList[0].price
 	high := recList[0].price
 	totalDeal := sdk.NewInt(recList[0].amount)
@@ -74,14 +75,14 @@ func (csMan *CandleStickMan) scanForMinutes(recList []dealRec) {
 	for currIdx = 1; currIdx < len(recList); currIdx++ {
 		currTime := time.Unix(recList[currIdx].time, 0)
 		if currTime.Minute() != lastTime.Minute() {
-			cs := getCandleStick(recList[lastIdx:currIdx], core.Minute)
+			cs := getCandleStick(recList[lastIdx:currIdx], core.MinuteStr)
 			csMan.MinuteList = append(csMan.MinuteList, cs)
 			lastIdx = currIdx
 			lastTime = currTime
 		}
 	}
 	if lastIdx != currIdx {
-		cs := getCandleStick(recList[lastIdx:currIdx], core.Minute)
+		cs := getCandleStick(recList[lastIdx:currIdx], core.MinuteStr)
 		csMan.MinuteList = append(csMan.MinuteList, cs)
 	}
 }
@@ -93,14 +94,14 @@ func (csMan *CandleStickMan) scanForHours(recList []dealRec) {
 	for currIdx = 1; currIdx < len(recList); currIdx++ {
 		currTime := time.Unix(recList[currIdx].time, 0)
 		if currTime.Hour() != lastTime.Hour() {
-			cs := getCandleStick(recList[lastIdx:currIdx], core.Hour)
+			cs := getCandleStick(recList[lastIdx:currIdx], core.HourStr)
 			csMan.HourList = append(csMan.HourList, cs)
 			lastIdx = currIdx
 			lastTime = currTime
 		}
 	}
 	if lastIdx != currIdx {
-		cs := getCandleStick(recList[lastIdx:currIdx], core.Hour)
+		cs := getCandleStick(recList[lastIdx:currIdx], core.HourStr)
 		csMan.HourList = append(csMan.HourList, cs)
 	}
 }
@@ -112,14 +113,14 @@ func (csMan *CandleStickMan) scanForDays(recList []dealRec) {
 	for currIdx = 1; currIdx < len(recList); currIdx++ {
 		currTime := time.Unix(recList[currIdx].time, 0)
 		if currTime.Day() != lastTime.Day() {
-			cs := getCandleStick(recList[lastIdx:currIdx], core.Day)
+			cs := getCandleStick(recList[lastIdx:currIdx], core.DayStr)
 			csMan.DayList = append(csMan.DayList, cs)
 			lastIdx = currIdx
 			lastTime = currTime
 		}
 	}
 	if lastIdx != currIdx {
-		cs := getCandleStick(recList[lastIdx:currIdx], core.Day)
+		cs := getCandleStick(recList[lastIdx:currIdx], core.DayStr)
 		csMan.DayList = append(csMan.DayList, cs)
 	}
 }
@@ -149,13 +150,13 @@ func testCandleStick(recList []dealRec) {
 		t = time.Unix(deal.time, 0)
 		csList := impMan.NewBlock(t)
 		for _, cs := range csList {
-			if cs.TimeSpan == core.Minute {
+			if cs.TimeSpan == core.MinuteStr {
 				impMList = append(impMList, cs)
 			}
-			if cs.TimeSpan == core.Hour {
+			if cs.TimeSpan == core.HourStr {
 				impHList = append(impHList, cs)
 			}
-			if cs.TimeSpan == core.Day {
+			if cs.TimeSpan == core.DayStr {
 				impDList = append(impDList, cs)
 			}
 		}
@@ -165,13 +166,13 @@ func testCandleStick(recList []dealRec) {
 	t = time.Unix(t.Unix()+60*60*24, 0)
 	csList := impMan.NewBlock(t)
 	for _, cs := range csList {
-		if cs.TimeSpan == core.Minute {
+		if cs.TimeSpan == core.MinuteStr {
 			impMList = append(impMList, cs)
 		}
-		if cs.TimeSpan == core.Hour {
+		if cs.TimeSpan == core.HourStr {
 			impHList = append(impHList, cs)
 		}
-		if cs.TimeSpan == core.Day {
+		if cs.TimeSpan == core.DayStr {
 			impDList = append(impDList, cs)
 		}
 	}
@@ -426,7 +427,7 @@ func testTicker(priceList []sdk.Dec) {
 	}
 }
 
-func toStr(payload [][]byte) string {
+func toStr(payload []json.RawMessage) string {
 	out := make([]string, len(payload))
 	for i := 0; i < len(out); i++ {
 		out[i] = string(payload[i])
@@ -443,10 +444,6 @@ func T(s string) time.Time {
 }
 
 func simulateKafkaInput() {
-	if len(os.Args) != 2 {
-		fmt.Fprintf(os.Stderr, "usage: %s [inputfile]\n", os.Args[0])
-		os.Exit(2)
-	}
 	file, err := os.Open(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
@@ -477,8 +474,15 @@ func simulateKafkaInput() {
 }
 
 func main() {
-	//simulateKafkaInput()
-
+	if len(os.Args) != 2 && len(os.Args) != 1 {
+		fmt.Fprintf(os.Stderr, "usage: %s [inputfile]\n", os.Args[0])
+		os.Exit(2)
+	}
+	if len(os.Args) == 2 {
+		simulateKafkaInput()
+		return
+	}
+	fmt.Printf("Now run random test\n")
 	//                                  size    seed    timeStep
 	testCandleStick(getRandDealRecList(50000, 0, 40))
 	testCandleStick(getRandDealRecList(90000, 1, 20))
