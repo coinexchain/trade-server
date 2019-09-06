@@ -1,90 +1,76 @@
+# Rest 接口查询示例（https/http）
+类型定义参见swagger/swagger.yaml
+
 - 查询区块时间
 
-```
-curl -X GET "http://localhost:8000/misc/block-times?height=500&count=2"  -H "accept: application/json" 
-[1566283591,1566283589]%
+```bash
+$ curl -k "https://localhost:8000/misc/block-times?height=246&count=2" 
+$ curl "http://localhost:8000/misc/block-times?height=246&count=2"
+[
+  1566374464,
+  1566374462
+]
 ```
 
-- 查询用户签名的tx / 查询用户的income交易
+- 查询给定market的tickers
 
 ```bash
-curl -X GET "http://localhost:8000/tx/txs?account=coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38&time=1566282669&count=2&sid=0"  -H "accept: application/json"
-curl -X GET "http://localhost:8000/tx/incomes?account=coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38&time=1566282669&count=2&sid=0"  -H "accept: application/json"
+$ curl -k "https://localhost:8000/market/tickers?market_list=abc/cet" 
+$ curl "http://localhost:8000/market/tickers?market_list=abc/cet" 
+[
+  {
+    "market": "abc/cet",
+    "new": "5.299999998276284917",
+    "old": "0.000000000000000000"
+  }
+]
+```
+
+- 查询给定market的深度
+
+```bash
+$ curl -k "https://localhost:8000/market/depths?market=abc/cet&count=1" 
+$ curl "http://localhost:8000/market/depths?market=abc/cet&count=1" 
 {
-  "data": [
+  "sell": [
     {
-      "signers": [
-        "coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38"
-      ],
-      "transfers": [
-        {
-          "sender": "coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38",
-          "recipient": "coinex17xpfvakm2amg962yls6f84z3kell8c5lm7j9tl",
-          "amount": "1000000000000cet"
-        },
-        {
-          "sender": "coinex16kfcdc9wgd0zjta7p67dh92twhk4lvujls8lmk",
-          "recipient": "coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38",
-          "amount": "57896044618658097711785492504343953926634992332820282019728792003956564819967abc"
-        }
-      ],
-      "serial_number": 1,
-      "msg_types": [
-        "MsgIssueToken"
-      ],
-      "tx_json": "{\"msg\":[{\"name\":\"ABC Token\",\"symbol\":\"www\",\"total_supply\":\"57896044618658097711785492504343953926634992332820282019728792003956564819967\",\"owner\":\"coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38\",\"mintable\":true,\"burnable\":true,\"addr_forbiddable\":false,\"token_forbiddable\":false,\"url\":\"www.abc.org\",\"description\":\"token abc is a example token\",\"identity\":\"552A83BA62F9B1F8\"}],\"fee\":{\"amount\":[{\"denom\":\"cet\",\"amount\":\"100000000\"}],\"gas\":200000},\"signatures\":[{\"pub_key\":[3,43,37,122,69,38,236,108,104,9,202,92,199,201,181,119,189,162,2,117,251,8,163,125,190,33,2,167,231,212,163,14,132],\"signature\":\"FLfeWm27tf7rtMHjVa228UwAA03fiPplFxsuGxq0IhkolKENVQg1dMtdlsvybfgIfnL2E1ArSsyNoDlTnSHB7w==\"}],\"memo\":\"\"}",
-      "height": 57
-    },
-    {
-      "signers": [
-        "coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38"
-      ],
-      "transfers": [
-        {
-          "sender": "coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38",
-          "recipient": "coinex17xpfvakm2amg962yls6f84z3kell8c5lm7j9tl",
-          "amount": "1000000000000cet"
-        },
-        {
-          "sender": "coinex16kfcdc9wgd0zjta7p67dh92twhk4lvujls8lmk",
-          "recipient": "coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38",
-          "amount": "57896044618658097711785492504343953926634992332820282019728792003956564819967abc"
-        }
-      ],
-      "serial_number": 0,
-      "msg_types": [
-        "MsgIssueToken"
-      ],
-      "tx_json": "{\"msg\":[{\"name\":\"ABC Token\",\"symbol\":\"abc\",\"total_supply\":\"57896044618658097711785492504343953926634992332820282019728792003956564819967\",\"owner\":\"coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38\",\"mintable\":true,\"burnable\":true,\"addr_forbiddable\":false,\"token_forbiddable\":false,\"url\":\"www.abc.org\",\"description\":\"token abc is a example token\",\"identity\":\"552A83BA62F9B1F8\"}],\"fee\":{\"amount\":[{\"denom\":\"cet\",\"amount\":\"100000000\"}],\"gas\":200000},\"signatures\":[{\"pub_key\":[3,43,37,122,69,38,236,108,104,9,202,92,199,201,181,119,189,162,2,117,251,8,163,125,190,33,2,167,231,212,163,14,132],\"signature\":\"fxd69H59RvPFFme8C7nYD671D2DAMap81fR7HEae5QZBnxpVPVCQnb6PB8yPTzugtjb5phWEtZqBPi0350y/aA==\"}],\"memo\":\"\"}",
-      "height": 10
+      "p": "0.015200000000000000",
+      "a": "10000000"
     }
   ],
-  "timesid": [
-    1566282645,
-    5,
-    1566282544,
-    1
+  "buy": [
+    {
+      "p": "0.005200000000000000",
+      "a": "10000000"
+    }
   ]
 }
 ```
 
-- 查询给定market的tickers
+- 查询给定market的K线信息  timespan=16/32/48
+
 ```bash
-curl -X GET "http://localhost:8000/market/tickers?market_list=qqq/cet" -H "accept: application/json"
-[{"market":"qqq/cet","new":"4.899999998738545890","old":"5.299999998200478143"}]% 
+$ curl -k "https://localhost:8000/market/candle-sticks?market=abc/cet&timespan=48&time=1567745901&count=1&sid=0"
+$ curl "http://localhost:8000/market/candle-sticks?market=abc/cet&timespan=48&time=1567745901&count=1&sid=0"
+[
+  {
+    "open": "5.299999999273690910",
+    "close": "5.299999998276284917",
+    "high": "5.300000000000000000",
+    "low": "4.799999997059165898",
+    "total": "849734272994",
+    "unix_time": 1566374439,
+    "time_span": "1day",
+    "market": "abc/cet"
+  }
+]
 ```
-- 查询给定market的深度
-```bash
-curl -X GET "http://localhost:8000/market/depths?market=abc/cet&count=1"
-{“sell”:[{“p”:“0.015200000000000000”,“a”:“10000000”}],“buy”:[{“p”:“0.005200000000000000",“a”:“10000000"}]}
-```
-- 查询给定market的K线信息
-```bash
-http://localhost:8000/market/candle-sticks?market=abc/cet&timespan=16&time=1566289684&count=1&sid=0
-```
+
 - 查询用户的orders信息
+
 ```bash
-curl -X GET "http://localhost:8000/market/user-orders?account=coinex18t4sp5kv07czmv2ar9ds04z3xx946kkkcwnfpx&time=1566371118&count=3&sid=0" -H "accept: application/json"
+$ curl -k  "https://localhost:8000/market/user-orders?account=coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly&time=1567745901&count=3&sid=0"
+$ curl "http://localhost:8000/market/user-orders?account=coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly&time=1567745901&count=3&sid=0"
 {
   "create_order_info": {
     "data": [
@@ -156,41 +142,42 @@ curl -X GET "http://localhost:8000/market/user-orders?account=coinex18t4sp5kv07c
 - 查询market-deal
 
 ```bash
-curl -X GET "http://localhost:8000/market/deals?market=abc/cet&time=1566288724&count=2&sid=0" -H "accept: application/json"
+$ curl -k "https://localhost:8000/market/deals?market=abc/cet&time=1567745901&count=2&sid=0" 
+$ curl "http://localhost:8000/market/deals?market=abc/cet&time=1567745901&count=2&sid=0" 
 {
   "data": [
     {
-      "order_id": "coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38-2415",
+      "order_id": "coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c-5916",
       "trading_pair": "abc/cet",
-      "height": 2836,
-      "side": 1,
-      "price": "4.900000000000000000",
-      "left_stock": 0,
-      "freeze": 2,
-      "deal_stock": 566449077,
-      "deal_money": 2775600476,
-      "curr_stock": 566449077,
-      "curr_money": 2775600476
-    },
-    {
-      "order_id": "coinex15tt4lj3fa93f54mzdl2aamfjv0m42hv8dr0x38-7164",
-      "trading_pair": "abc/cet",
-      "height": 2836,
+      "height": 234,
       "side": 2,
-      "price": "3.200000000000000000",
+      "price": "4.500000000000000000",
       "left_stock": 0,
       "freeze": 0,
-      "deal_stock": 505528118,
-      "deal_money": 2477087777,
-      "curr_stock": 505528118,
-      "curr_money": 2477087777
+      "deal_stock": 522128053,
+      "deal_money": 2767278680,
+      "curr_stock": 522128053,
+      "curr_money": 2767278680
+    },
+    {
+      "order_id": "coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c-5912",
+      "trading_pair": "abc/cet",
+      "height": 234,
+      "side": 2,
+      "price": "1.200000000000000000",
+      "left_stock": 0,
+      "freeze": 0,
+      "deal_stock": 595775796,
+      "deal_money": 3157611718,
+      "curr_stock": 595775796,
+      "curr_money": 3157611718
     }
   ],
   "timesid": [
-    1566288601,
-    33194,
-    1566288601,
-    33192
+    1566374439,
+    105873,
+    1566374439,
+    105871
   ]
 }
 ```
@@ -198,35 +185,36 @@ curl -X GET "http://localhost:8000/market/deals?market=abc/cet&time=1566288724&c
 - 查询bancorlite-trade
 
 ```bash
-curl -X GET "http://localhost:8000/bancorlite/trades?account=coinex1za0s76cwrkn5lgzmdkznkqplx28avrsvv0qx0q&time=1566269120&count=2&sid=0"  -H "accept: application/json"
+$ curl -k "https://localhost:8000/bancorlite/trades?account=coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly&time=1567745901&count=2&sid=0"
+$ curl "http://localhost:8000/bancorlite/trades?account=coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly&time=1567745901&count=2&sid=0"
 {
   "data": [
     {
-      "sender": "coinex1za0s76cwrkn5lgzmdkznkqplx28avrsvv0qx0q",
-      "stock": "qxq",
+      "sender": "coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly",
+      "stock": "abc",
       "money": "cet",
-      "amount": 100,
+      "amount": 60,
       "side": 1,
-      "money_limit": 120,
-      "transaction_price": "0.000000000000000000",
-      "block_height": 9828
+      "money_limit": 100,
+      "transaction_price": "5.300000000000000000",
+      "block_height": 300
     },
     {
-      "sender": "coinex1za0s76cwrkn5lgzmdkznkqplx28avrsvv0qx0q",
-      "stock": "qxq",
+      "sender": "coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly",
+      "stock": "abc",
       "money": "cet",
-      "amount": 100,
+      "amount": 60,
       "side": 1,
-      "money_limit": 120,
-      "transaction_price": "0.000000000000000000",
-      "block_height": 9673
+      "money_limit": 100,
+      "transaction_price": "5.300000000000000000",
+      "block_height": 290
     }
   ],
   "timesid": [
-    1566269113,
-    25,
-    1566268781,
-    16
+    1566374447,
+    105925,
+    1566374447,
+    105923
   ]
 }
 ```
@@ -234,119 +222,26 @@ curl -X GET "http://localhost:8000/bancorlite/trades?account=coinex1za0s76cwrkn5
 - 查询bancorlite-info
 
 ```bash
-curl -X GET "http://localhost:8000/bancorlite/infos?market=cet/qxq&time=1566271305&count=1&sid=0"  -H "accept: application/json"
+$ curl -k "https://localhost:8000/bancorlite/infos?market=abc/cet&time=1567745901&count=1&sid=0"
+$ curl "http://localhost:8000/bancorlite/infos?market=abc/cet&time=1567745901&count=1&sid=0"
 {
   "data": [
     {
-      "sender": "coinex1cr6ven9f6rqu2ekageepakgpkyxs9rlfe6tmad",
-      "stock": "qxq",
+      "sender": "coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c",
+      "stock": "abc",
       "money": "cet",
       "init_price": "1.000000000000000000",
       "max_supply": "10000000000000",
-      "max_price": "5.000000000000000000",
-      "price": "1.000000000200000000",
-      "stock_in_pool": "9999999999500",
-      "money_in_pool": "500",
-      "earliest_cancel_time": 1563954165,
-      "block_height": 0
+      "max_price": "500.000000000000000000",
+      "price": "1.000000005988000000",
+      "stock_in_pool": "9999999999880",
+      "money_in_pool": "120",
+      "earliest_cancel_time": 1917014400
     }
   ],
   "timesid": [
-    1566269113,
-    26
-  ]
-}
-```
-
-- 查询token的股吧信息
-
-```bash
-curl -X GET "http://localhost:8000/comment/comments?token=cet&time=1566268004&count=1&sid=0"  -H "accept: application/json"
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100   208  100   208    0     0  33052      0 --:--:-- --:--:-- --:--:-- 34666
-{
-  "data": [
-    {
-      "id": 0,
-      "height": 9268,
-      "sender": "coinex1cr6ven9f6rqu2ekageepakgpkyxs9rlfe6tmad",
-      "token": "cet",
-      "donation": 2,
-      "title": "I love cet.",
-      "content": "CET to da moon!!!",
-      "content_type": 3,
-      "references": null
-    }
-  ],
-  "timesid": [
-    1566267908,
-    5
-  ]
-}
-```
-
-- 查询delegator的unbonding信息
-
-```bash
-curl -X GET "http://localhost:8000/expiry/unbondings?account=coinex1te36zqyrpygz384nktprzgtctp2hdq3mx0tn7v&time=1597927914&sid=0&count=1" -H "accept: application/json"
-{
-  "data": [
-    {
-      "delegator": "coinex1te36zqyrpygz384nktprzgtctp2hdq3mx0tn7v",
-      "validator": "coinexvaloper15tt4lj3fa93f54mzdl2aamfjv0m42hv8kvvwln",
-      "amount": "5000",
-      "completion_time": "2019-09-10T13:01:18Z"
-    }
-  ],
-  "timesid": [
-    1568120478,
-    0
-  ]
-}
-```
-
-- 查询用户的unlocks信息
-
-```bash
-curl -X GET "http://localhost:8000/expiry/unlocks?account=coinex1fxdvpzaw2qcc7dcxancrvfej3mxvuylhya20x0&time=1566307026&sid=0&count=1"  -H "accept: application/json"
-{
-  "data": [
-    {
-      "address": "coinex1fxdvpzaw2qcc7dcxancrvfej3mxvuylhya20x0",
-      "unlocked": [
-        {
-          "denom": "cet",
-          "amount": "1000"
-        }
-      ],
-      "locked_coins": null,
-      "frozen_coins": [
-        {
-          "denom": "cet",
-          "amount": "3493087654583"
-        },
-        {
-          "denom": "qqq",
-          "amount": "1477629660988"
-        }
-      ],
-      "coins": [
-        {
-          "denom": "cet",
-          "amount": "24962026053402470"
-        },
-        {
-          "denom": "qqq",
-          "amount": "24998549621705490"
-        }
-      ],
-      "height": 10956
-    }
-  ],
-  "timesid": [
-    1566306954,
-    8
+    1566374447,
+    105926
   ]
 }
 ```
@@ -354,25 +249,285 @@ curl -X GET "http://localhost:8000/expiry/unlocks?account=coinex1fxdvpzaw2qcc7dc
 - 查询用户的redelegations信息
 
 ```bash
-curl -X GET "http://localhost:8000/expiry/redelegations?account=coinex1hclkyahl2fmf0qng4ksz9su6zl4d8q3s4h5t7k&time=1597927914&sid=0&count=1" -H "accept: application/json"
+$ curl -k "https://localhost:8000/expiry/redelegations?account=coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg&time=1567745901&sid=0&count=1"
+$ curl "http://localhost:8000/expiry/redelegations?account=coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg&time=1567745901&sid=0&count=1"
 {
   "data": [
     {
-      "delegator": "coinex1hclkyahl2fmf0qng4ksz9su6zl4d8q3s4h5t7k",
-      "src": "coinexvaloper1k4vfyednnrst48we29phjdu09tprdqv5h8cvga",
-      "dst": "coinexvaloper1mxewdqph6qq7vudhjlhq5vcpvp28utnnnedtr2",
-      "amount": "300000000000",
-      "completion_time": "2019-08-21T06:23:00Z"
+      "delegator": "coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg",
+      "src": "coinexvaloper1z6vr3s5nrn5d6fyxl5vmw77ehznme07w9dan6x",
+      "dst": "coinexvaloper16pr4xqlsglwu6urkyt975nxzl65hlt2fw0n58d",
+      "amount": "200000000000",
+      "completion_time": "2019-08-21T16:00:50+08:00"
     }
   ],
   "timesid": [
-    1566368580,
-    0
+    1566374450,
+    105919
   ]
 }
 ```
 
+- 查询delegator的unbonding信息
 
+```bash
+$ curl -k "https://localhost:8000/expiry/unbondings?account=coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw&time=1567745901&sid=0&count=1"
+$ curl "http://localhost:8000/expiry/unbondings?account=coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw&time=1567745901&sid=0&count=1"
+{
+  "data": [
+    {
+      "delegator": "coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
+      "validator": "coinexvaloper1yj66ancalgk7dz3383s6cyvdd0nd93q0sekwpv",
+      "amount": "100000",
+      "completion_time": "2019-08-21T08:00:49.505077Z"
+    }
+  ],
+  "timesid": [
+    1566374449,
+    105927
+  ]
+}
+```
+
+- 查询用户的unlocks信息
+
+```bash
+$ curl -k "https://localhost:8000/expiry/unlocks?account=coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw&time=1567745901&sid=0&count=1" 
+$ curl "http://localhost:8000/expiry/unlocks?account=coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw&time=1567745901&sid=0&count=1" 
+{
+  "data": [
+    {
+      "address": "coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
+      "unlocked": [
+        {
+          "denom": "cet",
+          "amount": "1000000"
+        }
+      ],
+      "locked_coins": null,
+      "frozen_coins": [
+        {
+          "denom": "abc",
+          "amount": "796912961248"
+        },
+        {
+          "denom": "cet",
+          "amount": "1896049635319"
+        }
+      ],
+      "coins": [
+        {
+          "denom": "abc",
+          "amount": "24999230553270264"
+        },
+        {
+          "denom": "cet",
+          "amount": "24971271794985539"
+        }
+      ],
+      "height": 669
+    }
+  ],
+  "timesid": [
+    1566374455,
+    105949
+  ]
+}
+```
+
+- 查询用户签名的tx 
+
+```bash
+$ curl -k "https://localhost:8000/tx/txs?account=coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw&time=1567745901&count=2&sid=0"  
+$ curl "http://localhost:8000/tx/txs?account=coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw&time=1567745901&count=2&sid=0" 
+{
+  "data": [
+    {
+      "signers": [
+        "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge"
+      ],
+      "transfers": [
+        {
+          "sender": "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge",
+          "recipient": "coinex1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8vc4efa",
+          "amount": "100000000cet"
+        },
+        {
+          "sender": "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge",
+          "recipient": "coinex1py9lss4nr0lm6ep4uwk3tclacw42a5nx0ra92r",
+          "amount": "10cet"
+        }
+      ],
+      "serial_number": 1,
+      "msg_types": [
+        "MsgCommentToken"
+      ],
+      "tx_json": "{\"msg\":[{\"sender\":\"coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge\",\"token\":\"cet\",\"donation\":100000000,\"title\":\"RE: I-Love-CET\",\"content\":\"WWVzLS1jZXQtdG8tdGhlLW1vb24=\",\"content_type\":3,\"references\":[{\"id\":0,\"reward_target\":\"coinex1py9lss4nr0lm6ep4uwk3tclacw42a5nx0ra92r\",\"reward_token\":\"cet\",\"reward_amount\":10,\"attitudes\":[50,56]}]}],\"fee\":{\"amount\":[{\"denom\":\"cet\",\"amount\":\"100000000\"}],\"gas\":200000},\"signatures\":[{\"pub_key\":[2,84,68,132,220,55,74,188,138,189,60,200,212,17,85,23,18,33,77,198,3,109,55,255,129,211,61,30,151,237,51,91,12],\"signature\":\"AvQcD0F+wj7ffTjI3fia6qybVvYK7thH/JPBHV2LoI5wU1rrU7LKgMQ7tqJFPuH6ZLpoXTIE4e9ELMmdH7jK/Q==\"}],\"memo\":\"跟贴RE: I-Love-CET由用户node1在cet讨论区发表，附带1_0000_0000个sato.CET的捐赠，内容如下：\"}",
+      "height": 16
+    },
+    {
+      "signers": [
+        "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge"
+      ],
+      "transfers": [
+        {
+          "sender": "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge",
+          "recipient": "coinex1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8vc4efa",
+          "amount": "100000000cet"
+        },
+        {
+          "sender": "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge",
+          "recipient": "coinex1py9lss4nr0lm6ep4uwk3tclacw42a5nx0ra92r",
+          "amount": "10cet"
+        }
+      ],
+      "serial_number": 1,
+      "msg_types": [
+        "MsgCommentToken"
+      ],
+      "tx_json": "{\"msg\":[{\"sender\":\"coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge\",\"token\":\"cet\",\"donation\":100000000,\"title\":\"RE: I-Love-CET\",\"content\":\"WWVzLS1jZXQtdG8tdGhlLW1vb24=\",\"content_type\":3,\"references\":[{\"id\":0,\"reward_target\":\"coinex1py9lss4nr0lm6ep4uwk3tclacw42a5nx0ra92r\",\"reward_token\":\"cet\",\"reward_amount\":10,\"attitudes\":[50,56]}]}],\"fee\":{\"amount\":[{\"denom\":\"cet\",\"amount\":\"100000000\"}],\"gas\":200000},\"signatures\":[{\"pub_key\":[2,84,68,132,220,55,74,188,138,189,60,200,212,17,85,23,18,33,77,198,3,109,55,255,129,211,61,30,151,237,51,91,12],\"signature\":\"AvQcD0F+wj7ffTjI3fia6qybVvYK7thH/JPBHV2LoI5wU1rrU7LKgMQ7tqJFPuH6ZLpoXTIE4e9ELMmdH7jK/Q==\"}],\"memo\":\"跟贴RE: I-Love-CET由用户node1在cet讨论区发表，附带1_0000_0000个sato.CET的捐赠，内容如下：\"}",
+      "height": 16
+    }
+  ],
+  "timesid": [
+    1566374449,
+    105929,
+    1566374449,
+    92659
+  ]
+}
+```
+
+- 查询用户的income交易
+
+```bash
+$ curl -k "https://localhost:8000/tx/incomes?account=coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw&time=1567745901&count=2&sid=0"
+$ curl "http://localhost:8000/tx/incomes?account=coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw&time=1567745901&count=2&sid=0"
+{
+  "data": [
+    {
+      "signers": [
+        "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge"
+      ],
+      "transfers": [
+        {
+          "sender": "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge",
+          "recipient": "coinex1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8vc4efa",
+          "amount": "100000000cet"
+        },
+        {
+          "sender": "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge",
+          "recipient": "coinex1py9lss4nr0lm6ep4uwk3tclacw42a5nx0ra92r",
+          "amount": "10cet"
+        }
+      ],
+      "serial_number": 1,
+      "msg_types": [
+        "MsgCommentToken"
+      ],
+      "tx_json": "{\"msg\":[{\"sender\":\"coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge\",\"token\":\"cet\",\"donation\":100000000,\"title\":\"RE: I-Love-CET\",\"content\":\"WWVzLS1jZXQtdG8tdGhlLW1vb24=\",\"content_type\":3,\"references\":[{\"id\":0,\"reward_target\":\"coinex1py9lss4nr0lm6ep4uwk3tclacw42a5nx0ra92r\",\"reward_token\":\"cet\",\"reward_amount\":10,\"attitudes\":[50,56]}]}],\"fee\":{\"amount\":[{\"denom\":\"cet\",\"amount\":\"100000000\"}],\"gas\":200000},\"signatures\":[{\"pub_key\":[2,84,68,132,220,55,74,188,138,189,60,200,212,17,85,23,18,33,77,198,3,109,55,255,129,211,61,30,151,237,51,91,12],\"signature\":\"AvQcD0F+wj7ffTjI3fia6qybVvYK7thH/JPBHV2LoI5wU1rrU7LKgMQ7tqJFPuH6ZLpoXTIE4e9ELMmdH7jK/Q==\"}],\"memo\":\"跟贴RE: I-Love-CET由用户node1在cet讨论区发表，附带1_0000_0000个sato.CET的捐赠，内容如下：\"}",
+      "height": 16
+    },
+    {
+      "signers": [
+        "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge"
+      ],
+      "transfers": [
+        {
+          "sender": "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge",
+          "recipient": "coinex1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8vc4efa",
+          "amount": "100000000cet"
+        },
+        {
+          "sender": "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge",
+          "recipient": "coinex1py9lss4nr0lm6ep4uwk3tclacw42a5nx0ra92r",
+          "amount": "10cet"
+        }
+      ],
+      "serial_number": 1,
+      "msg_types": [
+        "MsgCommentToken"
+      ],
+      "tx_json": "{\"msg\":[{\"sender\":\"coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge\",\"token\":\"cet\",\"donation\":100000000,\"title\":\"RE: I-Love-CET\",\"content\":\"WWVzLS1jZXQtdG8tdGhlLW1vb24=\",\"content_type\":3,\"references\":[{\"id\":0,\"reward_target\":\"coinex1py9lss4nr0lm6ep4uwk3tclacw42a5nx0ra92r\",\"reward_token\":\"cet\",\"reward_amount\":10,\"attitudes\":[50,56]}]}],\"fee\":{\"amount\":[{\"denom\":\"cet\",\"amount\":\"100000000\"}],\"gas\":200000},\"signatures\":[{\"pub_key\":[2,84,68,132,220,55,74,188,138,189,60,200,212,17,85,23,18,33,77,198,3,109,55,255,129,211,61,30,151,237,51,91,12],\"signature\":\"AvQcD0F+wj7ffTjI3fia6qybVvYK7thH/JPBHV2LoI5wU1rrU7LKgMQ7tqJFPuH6ZLpoXTIE4e9ELMmdH7jK/Q==\"}],\"memo\":\"跟贴RE: I-Love-CET由用户node1在cet讨论区发表，附带1_0000_0000个sato.CET的捐赠，内容如下：\"}",
+      "height": 16
+    }
+  ],
+  "timesid": [
+    1566374449,
+    105930,
+    1566374449,
+    92660
+  ]
+}
+```
+
+- 查询token的股吧信息
+
+```bash
+$ curl -k "https://localhost:8000/comment/comments?token=cet&time=1567745901&count=1&sid=0"
+$ curl "http://localhost:8000/comment/comments?token=cet&time=1567745901&count=1&sid=0"
+{
+  "data": [
+    {
+      "id": 2,
+      "height": 19,
+      "sender": "coinex1a28ertglt4rn9z8lkasq48fh7s7n484dfpflqt",
+      "token": "cet",
+      "donation": 0,
+      "title": "",
+      "content": "No-Content",
+      "content_type": 3,
+      "references": [
+        {
+          "id": 0,
+          "reward_target": "coinex1py9lss4nr0lm6ep4uwk3tclacw42a5nx0ra92r",
+          "reward_token": "cet",
+          "reward_amount": 20,
+          "attitudes": [
+            50,
+            59
+          ]
+        },
+        {
+          "id": 1,
+          "reward_target": "coinex1k8ygwdfuagq0mg6d7zr5pgj92qa8532a3f7xge",
+          "reward_token": "cet",
+          "reward_amount": 10,
+          "attitudes": [
+            50,
+            56
+          ]
+        }
+      ]
+    }
+  ],
+  "timesid": [
+    1566374451,
+    105941
+  ]
+}
+```
+
+- 查询validator的slash信息
+
+```bash
+$ curl -k "https://localhost:8000/slash/slashings?time=1567745901&count=1&sid=0"
+$ curl "http://localhost:8000/slash/slashings?time=1567745901&count=1&sid=0"
+{
+  "data": [
+    {
+      "validator": "coinexvalcons1qwztwxzzndpdc94tujv8fux9phfenqmvx296zw",
+      "power": "1000000",
+      "reason": "double_sign",
+      "jailed": true
+    }
+  ],
+  "timesid": [
+    1566374442,
+    105918
+  ]
+}
+```
 
 
 

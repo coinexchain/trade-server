@@ -20,32 +20,6 @@ securityDefinitions:
   kms:
     type: basic
 paths:
-  /market/tickers:
-    get:
-      tags:
-        - Market
-      summary: Query market tickers
-      description: Query tickers info
-      operationId: queryTickers
-      produces:
-        - application/json
-      parameters:
-        - in: query
-          name: market_list
-          description: Market count limited to 1~100
-          required: true
-          type: array
-          items:
-            type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Tickers"
-        500:
-          description: Server internal error
   /misc/block-times:
     get:
       tags:
@@ -78,6 +52,32 @@ paths:
               format: int64
               example: 1565740800
               description: Unix timestamp
+        500:
+          description: Server internal error
+  /market/tickers:
+    get:
+      tags:
+        - Market
+      summary: Query market tickers
+      description: Query tickers info
+      operationId: queryTickers
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: market_list
+          description: Market count limited to 1~100
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Tickers"
         500:
           description: Server internal error
   /market/depths:
@@ -470,6 +470,62 @@ paths:
                   description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
+  /expiry/lockeds:
+    get:
+      tags:
+        - Expiry
+      summary: Query lock tx
+      description: Query lock transfer info
+      operationId: querylocked
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: account
+          description: Bech32 address
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count
+          required: true
+          type: integer
+          format: int32
+        - in: query
+          name: token
+          description: Symbol
+          required: false
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              unlock:
+                type: array
+                items:
+                  $ref: '#/definitions/Locked'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
+        500:
+          description: Server internal error
   /expiry/unlocks:
     get:
       tags:
@@ -727,62 +783,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/definitions/Slash'
-              timesid:
-                type: array
-                items:
-                  type: integer
-                  format: int64
-                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
-        500:
-          description: Server internal error
-  /expiry/lockeds:
-    get:
-      tags:
-        - Expiry
-      summary: Query lock tx
-      description: Query lock transfer info
-      operationId: querylocked
-      produces:
-        - application/json
-      parameters:
-        - in: query
-          name: account
-          description: Bech32 address
-          required: true
-          type: string
-        - in: query
-          name: time
-          description: Unix timestamp
-          required: true
-          type: integer
-          format: int64
-        - in: query
-          name: sid
-          description: Sequence id
-          required: true
-          type: integer
-          format: int64
-        - in: query
-          name: count
-          description: Querier count
-          required: true
-          type: integer
-          format: int32
-        - in: query
-          name: token
-          description: Symbol
-          required: false
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              unlock:
-                type: array
-                items:
-                  $ref: '#/definitions/Locked'
               timesid:
                 type: array
                 items:
