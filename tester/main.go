@@ -364,11 +364,17 @@ func getRandPriceList(size int, seed int64, step int32, priceRange int32) []sdk.
 }
 
 func findTickers(priceList []sdk.Dec) ([]core.Ticker, []int) {
-	res := make([]core.Ticker, 0, 1000)
 	resPos := make([]int, 0, 1000)
+	res := make([]core.Ticker, 0, 1000)
 	if len(priceList) <= core.MinuteNumInDay {
 		panic("priceList too small!")
 	}
+	//resPos[0] = core.MinuteNumInDay
+	//res[0] = core.Ticker{
+	//	NewPrice:          priceList[core.MinuteNumInDay],
+	//	OldPriceOneDayAgo: priceList[0],
+	//	Market:            "",
+	//}
 	for i := core.MinuteNumInDay + 1; i < len(priceList); i++ {
 		j := i - core.MinuteNumInDay
 		if priceList[j].Equal(priceList[j-1]) && priceList[i].Equal(priceList[i-1]) {
@@ -395,9 +401,7 @@ func testTicker(priceList []sdk.Dec) {
 	impIdxList := make([]int, 0, 1000)
 	for i := core.MinuteNumInDay; i < len(priceList); i++ {
 		j := i % core.MinuteNumInDay
-		if !priceList[i].Equal(priceList[i-1]) {
-			tkMan.UpdateNewestPrice(priceList[i], j)
-		}
+		tkMan.UpdateNewestPrice(priceList[i], j)
 		ticker := tkMan.GetTicker(j)
 		if ticker != nil {
 			impTickers = append(impTickers, *ticker)
@@ -483,6 +487,18 @@ func main() {
 		return
 	}
 	fmt.Printf("Now run random test\n")
+	//                                                  seed  step priceRange
+	testTicker(getRandPriceList(core.MinuteNumInDay*7, 0, 50, 1000))
+	testTicker(getRandPriceList(core.MinuteNumInDay*7, 5, 16, 200))
+	testTicker(getRandPriceList(core.MinuteNumInDay*7, 10, 150, 400))
+	testTicker(getRandPriceList(core.MinuteNumInDay*7, 11, 30, 400))
+	testTicker(getRandPriceList(core.MinuteNumInDay*7, 12, 20, 300))
+	testTicker(getRandPriceList(core.MinuteNumInDay*7, 13, 120, 300))
+	testTicker(getRandPriceList(core.MinuteNumInDay*7, 14, 920, 300))
+	testTicker(getRandPriceList(core.MinuteNumInDay*7, 15, 920, 300))
+	testTicker(getRandPriceList(core.MinuteNumInDay*177, 16, 20, 50))
+	testTicker(getRandPriceList(core.MinuteNumInDay*177, 17, 20, 50))
+
 	//                                  size    seed    timeStep
 	testCandleStick(getRandDealRecList(50000, 0, 40))
 	testCandleStick(getRandDealRecList(90000, 1, 20))
@@ -506,17 +522,5 @@ func main() {
 	testDepth(getRandPricePointsSets(99200, 10, 26, 1100, 120))
 	testDepth(getRandPricePointsSets(99200, 10, 27, 1100, 100))
 	testDepth(getRandPricePointsSets(99200, 10, 28, 1100, 20))
-
-	//                                                  seed  step priceRange
-	testTicker(getRandPriceList(core.MinuteNumInDay*7, 0, 50, 1000))
-	testTicker(getRandPriceList(core.MinuteNumInDay*7, 5, 16, 200))
-	testTicker(getRandPriceList(core.MinuteNumInDay*7, 10, 150, 400))
-	testTicker(getRandPriceList(core.MinuteNumInDay*7, 11, 30, 400))
-	testTicker(getRandPriceList(core.MinuteNumInDay*7, 12, 20, 300))
-	testTicker(getRandPriceList(core.MinuteNumInDay*7, 13, 120, 300))
-	testTicker(getRandPriceList(core.MinuteNumInDay*7, 14, 920, 300))
-	testTicker(getRandPriceList(core.MinuteNumInDay*7, 15, 920, 300))
-	testTicker(getRandPriceList(core.MinuteNumInDay*177, 16, 20, 50))
-	testTicker(getRandPriceList(core.MinuteNumInDay*177, 17, 20, 50))
 
 }

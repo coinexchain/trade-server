@@ -753,6 +753,10 @@ func (hub *Hub) commitForSlash() {
 
 func (hub *Hub) commitForTicker() {
 	tkMap := make(map[string]*Ticker)
+	isNewMinute := hub.currBlockTime.Minute() != hub.lastBlockTime.Minute() || hub.currBlockTime.Unix()-hub.lastBlockTime.Unix() > 60
+	if !isNewMinute {
+		return
+	}
 	currMinute := hub.currBlockTime.Hour() * hub.currBlockTime.Minute()
 	for _, triman := range hub.managersMap {
 		if ticker := triman.tkm.GetTicker(currMinute); ticker != nil {
@@ -772,10 +776,16 @@ func (hub *Hub) commitForTicker() {
 		}
 	}
 
+	//for k, v := range tkMap {
+	//	fmt.Printf(" Here %s %v\n", k, v)
+	//}
 	hub.tickerMapMutex.Lock()
 	for market, ticker := range tkMap {
 		hub.tickerMap[market] = ticker
 	}
+	//for k, v := range hub.tickerMap {
+	//	fmt.Printf("THere %s %v\n", k, v)
+	//}
 	hub.tickerMapMutex.Unlock()
 }
 

@@ -278,14 +278,14 @@ func Test1(t *testing.T) {
 		Freeze:      0,
 		DealStock:   100,
 		DealMoney:   10,
-		CurrStock:   0,
-		CurrMoney:   0,
+		CurrStock:   100,
+		CurrMoney:   10,
 	}
 	bytes, _ = json.Marshal(fillOrderInfo)
 	hub.ConsumeMessage("fill_order_info", bytes)
 	correct = `
-15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":100,"deal_money":10,"curr_stock":0,"curr_money":0}
-16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":100,"deal_money":10,"curr_stock":0,"curr_money":0}
+15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":100,"deal_money":10,"curr_stock":100,"curr_money":10}
+16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":100,"deal_money":10,"curr_stock":100,"curr_money":10}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -387,15 +387,9 @@ func Test1(t *testing.T) {
 
 	hub.ConsumeMessage("commit", nil)
 	correct = `
-0: [{"market":"abc/cet","new":"0.100000000000000000","old":"0.100000000000000000"}]
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
-
-	tickers := hub.QueryTickers([]string{"abc/cet"})
-	bytes, _ = json.Marshal(tickers)
-	correct = `[{"market":"abc/cet","new":"0.100000000000000000","old":"0.100000000000000000"}]`
-	require.Equal(t, correct, string(bytes))
 
 	blockTimes := hub.QueryBlockTime(1100, 100)
 	bytes, _ = json.Marshal(blockTimes)
@@ -410,7 +404,7 @@ func Test1(t *testing.T) {
 
 	data, tags, timesid := hub.QueryOrder(addr1, unixTime, 0, 20)
 	correct = `{"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":1,"price":"100.000000000000000000","del_reason":"Manually cancel the order","used_commission":0,"left_stock":50,"remain_amount":0,"deal_stock":100,"deal_money":10}
-{"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":100,"deal_money":10,"curr_stock":0,"curr_money":0}
+{"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":100,"deal_money":10,"curr_stock":100,"curr_money":10}
 {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-2","sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","trading_pair":"abc/cet","order_type":2,"price":"100.000000000000000000","quantity":300,"side":1,"time_in_force":3,"feature_fee":1,"height":1001,"frozen_fee":1,"freeze":10}
 {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","trading_pair":"abc/cet","order_type":2,"price":"100.000000000000000000","quantity":300,"side":2,"time_in_force":3,"feature_fee":1,"height":1001,"frozen_fee":1,"freeze":10}`
 	require.Equal(t, correct, toStr(data))
@@ -459,7 +453,7 @@ func Test1(t *testing.T) {
 	require.Equal(t, 0, len(timesid))
 
 	data, timesid = hub.QueryDeal("abc/cet", unixTime, 0, 20)
-	correct = `{"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":100,"deal_money":10,"curr_stock":0,"curr_money":0}`
+	correct = `{"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":100,"deal_money":10,"curr_stock":100,"curr_money":10}`
 	require.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
 	require.Equal(t, "[1563178750,12]", string(bytes))
@@ -587,21 +581,20 @@ func Test1(t *testing.T) {
 		Freeze:      0,
 		DealStock:   200,
 		DealMoney:   25,
-		CurrStock:   0,
-		CurrMoney:   0,
+		CurrStock:   200,
+		CurrMoney:   25,
 	}
 	bytes, _ = json.Marshal(fillOrderInfo)
 	hub.ConsumeMessage("fill_order_info", bytes)
 	correct = `
-15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":0,"curr_money":0}
-16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":0,"curr_money":0}
+15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25}
+16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
 
 	hub.ConsumeMessage("commit", nil)
 	correct = `
-0: [{"market":"abc/cet","new":"0.100000000000000000","old":"0.100000000000000000"}]
 8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}
 9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}
 `
@@ -635,14 +628,14 @@ func Test1(t *testing.T) {
 		Freeze:      0,
 		DealStock:   200,
 		DealMoney:   25,
-		CurrStock:   0,
-		CurrMoney:   0,
+		CurrStock:   200,
+		CurrMoney:   25,
 	}
 	bytes, _ = json.Marshal(fillOrderInfo)
 	hub.ConsumeMessage("fill_order_info", bytes)
 	correct = `
-15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"110.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":0,"curr_money":0}
-16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"110.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":0,"curr_money":0}
+15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"110.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25}
+16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"110.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
