@@ -162,7 +162,7 @@ func saveHub(hub *core.Hub) {
 func restoreHub(hub *core.Hub) {
 	dumpFileName := dataDir + "/" + DumpFile
 	if _, err := os.Stat(dumpFileName); err != nil {
-		log.Infof("dump file does not exist: %s", dumpFileName)
+		log.WithError(err).Infof("stat file fail: %s", dumpFileName)
 		return
 	}
 	bz, err := ioutil.ReadFile(dumpFileName)
