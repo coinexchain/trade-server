@@ -148,6 +148,7 @@ func newLevelDB(name string, dir string) (db dbm.DB, err error) {
 func saveHub(hub *core.Hub) {
 	bz := hub.GetDumpData()
 	if bz == nil {
+		log.Error("dump data is empty")
 		return
 	}
 	dumpFileName := dataDir + "/" + DumpFile
@@ -161,6 +162,7 @@ func saveHub(hub *core.Hub) {
 func restoreHub(hub *core.Hub) {
 	dumpFileName := dataDir + "/" + DumpFile
 	if _, err := os.Stat(dumpFileName); err != nil {
+		log.Infof("dump file does not exist: %s", dumpFileName)
 		return
 	}
 	bz, err := ioutil.ReadFile(dumpFileName)
