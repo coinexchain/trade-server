@@ -126,12 +126,12 @@ func (ts *TradeSever) Stop() {
 		log.WithError(err).Fatal("http server shutdown failed")
 	}
 
-	// stop consumer
-	ts.consumer.Close()
-
-	// stop hub
+	// stop hub (before closing consumer)
 	ts.hub.Close()
 	saveHub(ts.hub)
+
+	// stop consumer
+	ts.consumer.Close()
 
 	log.Info("Server stop...")
 }
@@ -146,22 +146,23 @@ func newLevelDB(name string, dir string) (db dbm.DB, err error) {
 }
 
 func saveHub(hub *core.Hub) {
-	hub4j := &core.HubForJSON{}
-	hub.Dump(hub4j)
-	bz, err := json.Marshal(hub4j)
-	if err != nil {
-		log.WithError(err).Error("hub json marshal fail")
+	bz := hub.GetDumpData()
+	if bz == nil {
 		return
 	}
 	dumpFileName := dataDir + "/" + DumpFile
-	if err = ioutil.WriteFile(dumpFileName, bz, 0644); err != nil {
+	if err := ioutil.WriteFile(dumpFileName, bz, 0644); err != nil {
 		log.WithError(err).Errorf("save to file fail %s", dumpFileName)
 		return
 	}
+	log.Info("save hub finish")
 }
 
 func restoreHub(hub *core.Hub) {
 	dumpFileName := dataDir + "/" + DumpFile
+	if _, err := os.Stat(dumpFileName); err != nil {
+		return
+	}
 	bz, err := ioutil.ReadFile(dumpFileName)
 	if err != nil {
 		log.WithError(err).Errorf("read from file fail %s", dumpFileName)
@@ -173,4 +174,5 @@ func restoreHub(hub *core.Hub) {
 		return
 	}
 	hub.Load(hub4jo)
+	log.Info("restore hub finish")
 }

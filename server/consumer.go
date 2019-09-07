@@ -1,8 +1,6 @@
 package server
 
 import (
-	"os"
-	"os/signal"
 	"sync"
 
 	"github.com/Shopify/sarama"
@@ -14,6 +12,7 @@ type TradeConsumer struct {
 	sarama.Consumer
 	topic    string
 	stopChan chan byte
+	quitChan chan byte
 	hub      *core.Hub
 }
 
@@ -30,6 +29,7 @@ func NewConsumer(addrs []string, topic string, hub *core.Hub) (*TradeConsumer, e
 		Consumer: consumer,
 		topic:    topic,
 		stopChan: make(chan byte, 1),
+		quitChan: make(chan byte, 1),
 		hub:      hub,
 	}, nil
 }
@@ -68,9 +68,6 @@ func (tc *TradeConsumer) Consume() {
 				log.WithFields(log.Fields{"partition": partition, "offset": offset}).Info("PartitionConsumer close")
 			}()
 
-			signals := make(chan os.Signal, 1)
-			signal.Notify(signals, os.Interrupt)
-
 			for {
 				select {
 				case msg := <-pc.Messages():
@@ -78,8 +75,8 @@ func (tc *TradeConsumer) Consume() {
 					tc.hub.UpdateOffset(msg.Partition, msg.Offset)
 					tc.hub.ConsumeMessage(string(msg.Key), msg.Value)
 					offset = msg.Offset
-					log.WithFields(log.Fields{"key": string(msg.Key), "value": string(msg.Value)}).Debug("consume message")
-				case <-signals:
+					log.WithFields(log.Fields{"key": string(msg.Key), "value": string(msg.Value), "offset": offset}).Debug("consume message")
+				case <-tc.quitChan:
 					return
 				}
 			}
@@ -90,6 +87,7 @@ func (tc *TradeConsumer) Consume() {
 }
 
 func (tc *TradeConsumer) Close() {
+	close(tc.quitChan)
 	<-tc.stopChan
 	if err := tc.Consumer.Close(); err != nil {
 		log.WithError(err).Fatal("consumer close")

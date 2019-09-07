@@ -175,6 +175,11 @@ type Hub struct {
 
 	// cache for NotificationSlash
 	slashSlice []*NotificationSlash
+
+	dumpAndStop bool
+	dumpBz      []byte
+	stop        bool
+	stopChan    chan byte
 }
 
 func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
@@ -188,6 +193,8 @@ func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
 		lastBlockTime: time.Unix(0, 0),
 		tickerMap:     make(map[string]*Ticker),
 		slashSlice:    make([]*NotificationSlash, 0, 10),
+		dumpAndStop:   false,
+		stop:          false,
 	}
 }
 
@@ -820,6 +827,9 @@ func (hub *Hub) commitForDepth() {
 }
 
 func (hub *Hub) commit() {
+	if hub.stop {
+		return
+	}
 	hub.commitForSlash()
 	hub.commitForTicker()
 	hub.commitForDepth()
@@ -827,6 +837,13 @@ func (hub *Hub) commit() {
 	hub.batch.WriteSync()
 	hub.batch.Close()
 	hub.batch = hub.db.NewBatch()
+
+	if hub.dumpAndStop {
+		hub.dumpData()
+		hub.db.Close()
+		hub.stop = true
+		close(hub.stopChan)
+	}
 	hub.dbMutex.Unlock()
 }
 
@@ -1148,6 +1165,22 @@ func (hub *Hub) Dump(hub4j *HubForJSON) {
 	}
 }
 
+func (hub *Hub) dumpData() {
+	hub4j := &HubForJSON{}
+	hub.Dump(hub4j)
+	bz, err := json.Marshal(hub4j)
+	if err != nil {
+		log.WithError(err).Error("hub json marshal fail")
+		return
+	}
+	hub.dumpBz = bz
+	log.Info("dump data finish")
+}
+
+func (hub *Hub) GetDumpData() []byte {
+	return hub.dumpBz
+}
+
 //===================================
 func (hub *Hub) UpdateOffset(partition int32, offset int64) {
 	key := getOffsetKey(partition)
@@ -1176,5 +1209,7 @@ func getOffsetKey(partition int32) []byte {
 }
 
 func (hub *Hub) Close() {
-	hub.db.Close()
+	hub.stopChan = make(chan byte)
+	hub.dumpAndStop = true
+	<-hub.stopChan
 }
