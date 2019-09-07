@@ -195,6 +195,7 @@ func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
 		slashSlice:    make([]*NotificationSlash, 0, 10),
 		dumpAndStop:   false,
 		stop:          false,
+		stopChan:      make(chan byte),
 	}
 }
 
@@ -1209,7 +1210,6 @@ func getOffsetKey(partition int32) []byte {
 }
 
 func (hub *Hub) Close() {
-	hub.stopChan = make(chan byte)
 	hub.dumpAndStop = true
 	<-hub.stopChan
 }
