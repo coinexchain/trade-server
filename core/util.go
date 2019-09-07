@@ -310,13 +310,13 @@ func (dm *DepthManager) GetHighest(n int) []*PricePoint {
 const MinuteNumInDay = 24 * 60
 
 type TickerManager struct {
-	PriceList     [MinuteNumInDay]sdk.Dec `json:"price_list"`
-	Price1st   sdk.Dec                 `json:"price_1st"`
-	Minute1st  int                     `json:"minute_1st"`
-	Price2nd   sdk.Dec                 `json:"price_1st"`
-	Minute2nd  int                     `json:"minute_1st"`
-	Market        string                  `json:"market"`
-	Initialized   bool                    `json:"initialized"`
+	PriceList   [MinuteNumInDay]sdk.Dec `json:"price_list"`
+	Price1st    sdk.Dec                 `json:"price_1st"`
+	Minute1st   int                     `json:"minute_1st"`
+	Price2nd    sdk.Dec                 `json:"price_2nd"`
+	Minute2nd   int                     `json:"minute_2nd"`
+	Market      string                  `json:"market"`
+	Initialized bool                    `json:"initialized"`
 }
 
 func DefaultTickerManager(Market string) *TickerManager {
@@ -378,6 +378,9 @@ func (tm *TickerManager) GetTicker(currMinute int) *Ticker {
 			OldPriceOneDayAgo: tm.PriceList[currMinute],
 			Market:            tm.Market,
 		}
+	}
+	if tm.Minute1st != currMinute { //flush the price
+		tm.UpdateNewestPrice(tm.Price1st, currMinute)
 	}
 	return nil
 }
