@@ -165,10 +165,11 @@ func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub)
 
 	var err error
 	type queryFunc func(string, int64, int64, int) ([]json.RawMessage, []int64)
-	queryAndPushFunc := func(param string, qf queryFunc) {
+	queryAndPushFunc := func(typeKey string, param string, qf queryFunc) {
 		data, _ := qf(param, hub.currBlockTime.Unix(), hub.sid, depth)
 		for _, v := range data {
-			err = c.WriteMessage(websocket.TextMessage, v)
+			msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", typeKey, string(v)))
+			err = c.WriteMessage(websocket.TextMessage, msg)
 			if err != nil {
 				break
 			}
@@ -185,25 +186,25 @@ func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub)
 	case OrderKey:
 		queryOrderAndPush(hub, c, params[0], depth)
 	case TxKey:
-		queryAndPushFunc(params[0], hub.QueryTx)
+		queryAndPushFunc(TxKey, params[0], hub.QueryTx)
 	case LockedKey:
-		queryAndPushFunc(params[0], hub.QueryLocked)
+		queryAndPushFunc(LockedKey, params[0], hub.QueryLocked)
 	case UnlockKey:
-		queryAndPushFunc(params[0], hub.QueryUnlock)
+		queryAndPushFunc(UnlockKey, params[0], hub.QueryUnlock)
 	case IncomeKey:
-		queryAndPushFunc(params[0], hub.QueryIncome)
+		queryAndPushFunc(IncomeKey, params[0], hub.QueryIncome)
 	case DealKey:
-		queryAndPushFunc(params[0], hub.QueryDeal)
+		queryAndPushFunc(DealKey, params[0], hub.QueryDeal)
 	case BancorKey:
-		queryAndPushFunc(params[0], hub.QueryBancorInfo)
+		queryAndPushFunc(BancorKey, params[0], hub.QueryBancorInfo)
 	case BancorTradeKey:
-		queryAndPushFunc(params[0], hub.QueryBancorTrade)
+		queryAndPushFunc(BancorTradeKey, params[0], hub.QueryBancorTrade)
 	case RedelegationKey:
-		queryAndPushFunc(params[0], hub.QueryRedelegation)
+		queryAndPushFunc(RedelegationKey, params[0], hub.QueryRedelegation)
 	case UnbondingKey:
-		queryAndPushFunc(params[0], hub.QueryUnbonding)
+		queryAndPushFunc(UnbondingKey, params[0], hub.QueryUnbonding)
 	case CommentKey:
-		queryAndPushFunc(params[0], hub.QueryComment)
+		queryAndPushFunc(CommentKey, params[0], hub.QueryComment)
 	}
 	return err
 }
@@ -211,7 +212,8 @@ func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub)
 func queryOrderAndPush(hub *Hub, c *Conn, account string, depth int) error {
 	data, _, _ := hub.QueryOrder(account, hub.currBlockTime.Unix(), hub.sid, depth)
 	for i := range data {
-		err := c.WriteMessage(websocket.TextMessage, data[i])
+		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", OrderKey, string(data[i])))
+		err := c.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			return err
 		}
@@ -230,13 +232,15 @@ func queryDepthAndPush(hub *Hub, c *Conn, market string, depth int) error {
 	if err != nil {
 		return err
 	}
-	return c.WriteMessage(websocket.TextMessage, bz)
+	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthKey, string(bz)))
+	return c.WriteMessage(websocket.TextMessage, msg)
 }
 
 func queryKlineAndpush(hub *Hub, c *Conn, params []string, depth int) error {
 	candleBz := hub.QueryCandleStick(params[0], GetSpanFromSpanStr(params[1]), hub.currBlockTime.Unix(), hub.sid, depth)
 	for _, v := range candleBz {
-		err := c.WriteMessage(websocket.TextMessage, v)
+		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", KlineKey, string(v)))
+		err := c.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			return err
 		}
@@ -247,7 +251,8 @@ func queryKlineAndpush(hub *Hub, c *Conn, params []string, depth int) error {
 func querySlashAndPush(hub *Hub, c *Conn, depth int) error {
 	data, _ := hub.QuerySlash(hub.currBlockTime.Unix(), hub.sid, depth)
 	for _, v := range data {
-		err := c.WriteMessage(websocket.TextMessage, v)
+		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", SlashKey, string(v)))
+		err := c.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			return err
 		}
