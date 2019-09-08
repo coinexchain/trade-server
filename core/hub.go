@@ -14,6 +14,29 @@ import (
 	dbm "github.com/tendermint/tm-db"
 )
 
+// only following methods from dbm.DB are used
+//type Batch interface {
+//	Set(key, value []byte)
+//	WriteSync()
+//	Close()
+//}
+//
+//type Iterator interface {
+//	Valid() bool
+//	Next()
+//	Key() (key []byte)
+//	Value() (value []byte)
+//	Close()
+//}
+//
+//type DB interface {
+//	Get([]byte) []byte
+//	Iterator(start, end []byte) Iterator
+//	ReverseIterator(start, end []byte) Iterator
+//	Close()
+//	NewBatch() Batch
+//}
+
 const (
 	MaxCount = 1024
 	//These bytes are used as the first byte in key
