@@ -178,13 +178,17 @@ func restoreHub(hub *core.Hub) {
 		log.WithError(err).Errorf("read from file fail %s", dumpFileName)
 		return
 	}
-	dataMD5 := md5.Sum(bz[16:])
-	if !bytes.Equal(bz[:16], dataMD5[:]) {
-		log.Errorf("hub data file is broken")
-		return
+	data := bz
+	if len(bz) > 16 && bz[0] != '{' { // TODO: Compatible with old formats. Delete later.
+		data = bz[16:]
+		dataMD5 := md5.Sum(data)
+		if !bytes.Equal(bz[:16], dataMD5[:]) {
+			log.Errorf("hub data file is broken")
+			return
+		}
 	}
 	hub4jo := &core.HubForJSON{}
-	if err = json.Unmarshal(bz[16:], hub4jo); err != nil {
+	if err = json.Unmarshal(data, hub4jo); err != nil {
 		log.WithError(err).Error("hub json unmarshal fail")
 		return
 	}
