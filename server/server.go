@@ -1,7 +1,9 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -151,8 +153,14 @@ func saveHub(hub *core.Hub) {
 		log.Error("dump data is empty")
 		return
 	}
+	// checksum
+	dataMD5 := md5.Sum(bz)
+	var buf bytes.Buffer
+	buf.Write(dataMD5[:])
+	buf.Write(bz)
+
 	dumpFileName := dataDir + "/" + DumpFile
-	if err := ioutil.WriteFile(dumpFileName, bz, 0644); err != nil {
+	if err := ioutil.WriteFile(dumpFileName, buf.Bytes(), 0644); err != nil {
 		log.WithError(err).Errorf("save to file fail %s", dumpFileName)
 		return
 	}
@@ -170,8 +178,13 @@ func restoreHub(hub *core.Hub) {
 		log.WithError(err).Errorf("read from file fail %s", dumpFileName)
 		return
 	}
+	dataMD5 := md5.Sum(bz[16:])
+	if !bytes.Equal(bz[:16], dataMD5[:]) {
+		log.Errorf("hub data file is broken")
+		return
+	}
 	hub4jo := &core.HubForJSON{}
-	if err = json.Unmarshal(bz, hub4jo); err != nil {
+	if err = json.Unmarshal(bz[16:], hub4jo); err != nil {
 		log.WithError(err).Error("hub json unmarshal fail")
 		return
 	}
