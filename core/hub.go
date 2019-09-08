@@ -277,6 +277,8 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 		hub.commit()
 	case "send_lock_coins":
 		hub.handleLockedCoinsMsg(bz)
+	case "notify_tx_outofgas":
+		//Do nothing
 	default:
 		hub.Log(fmt.Sprintf("Unknown Message Type:%s", msgType))
 	}
