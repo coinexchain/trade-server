@@ -690,15 +690,6 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 	key := hub.getCancelOrderKey(accAndSeq[0])
 	hub.batch.Set(key, bz)
 	hub.sid++
-	//Push to subscribers
-	info := hub.subMan.GetOrderSubscribeInfo()
-	targets, ok := info[accAndSeq[0]]
-	if !ok {
-		return
-	}
-	for _, target := range targets {
-		hub.subMan.PushCancelOrder(target, bz)
-	}
 	//Update depth info
 	triman, ok := hub.managersMap[v.TradingPair]
 	if !ok {
@@ -713,6 +704,14 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 		triman.sell.DeltaChange(v.Price, negStock)
 	} else {
 		triman.buy.DeltaChange(v.Price, negStock)
+	}
+	//Push to subscribers
+	info := hub.subMan.GetOrderSubscribeInfo()
+	targets, ok := info[accAndSeq[0]]
+	if ok {
+		for _, target := range targets {
+			hub.subMan.PushCancelOrder(target, bz)
+		}
 	}
 }
 
