@@ -10,6 +10,19 @@ docker安装参考：https://hub.docker.com/r/wurstmeister/kafka/
 
 mac可通过brew安装参考 https://github.com/coinexchain/trade-server/blob/master/examples/README.md
 
+为了让trade-server在数据存储出现异常时，可以将数据（默认data目录）删除再从kafka重新同步，而不需要让节点去重新同步，建议将kafka的消息保留时间设置为永久。启用此选项后需要对硬盘使用情况保持关注。  
+
+```properties
+# The minimum age of a log file to be eligible for deletion due to age
+log.retention.hours=-1
+
+# A size-based retention policy for logs. Segments are pruned from the log unless the remaining
+# segments drop below log.retention.bytes. Functions independently of log.retention.hours.
+log.retention.bytes=-1
+
+# log.cleaner.enable=false // TODO: 待确认
+```
+
 ## 2. dex-node部署及配置
 
 节点部署参考 https://github.com/coinexchain/testnets/blob/master/coinexdex-test/testnet-guide.md
