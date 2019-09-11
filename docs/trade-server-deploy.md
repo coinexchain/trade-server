@@ -1,5 +1,11 @@
 # trade-server部署说明
 
+```
+   +----------+ produce  +-------+ consume  +--------------+
+   | DEX Node | -------> | kafka | -------> | trade-server | 
+   +----------+          +-------+          +--------------+
+```
+
 ## 1. kafka部署
 
 kafka依赖zookeeper组件。可以通过源码、docker等方式安装部署。
