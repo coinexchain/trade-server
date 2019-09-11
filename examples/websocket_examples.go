@@ -42,14 +42,14 @@ func main() {
 	op := OpCommand{
 		Op: "subscribe",
 		Args: []string{
-			"blockinfo",
-			"slash",
+			// "blockinfo",
+			// "slash",
 			// "send_lock_coins:coinex1rafnyd9j9gc9cwu5q5uflefpdn62awyl7rvh8t",
-			// "depth:uyt/cet",
+			"depth:abcd/cet",
 			// "bancor-trade:coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly",
 			// "unlock:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
 			// "unlock:coinex1kc2nguz9xfttfpav4drldh2w96xyzrnqss9scw",
-			"ticker:abc/cet",
+			// "ticker:abcd/cet",
 			// "deal:abc/cet",
 			// "comment:cet",
 			// "order:coinex1l0x0d0z25ef3uv4hfgatfkut5xwpfgzqu4xkgf",
