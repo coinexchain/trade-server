@@ -1,7 +1,9 @@
 package core
 
 import (
+	"encoding/base64"
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -404,6 +406,17 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 	}
 	snBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(snBytes[:], uint64(v.SerialNumber))
+
+	// base64 -> hex
+	decodeBytes, err := base64.StdEncoding.DecodeString(v.Hash)
+	if err == nil {
+		v.Hash = strings.ToUpper(hex.EncodeToString(decodeBytes))
+		if bz, err = json.Marshal(v); err != nil {
+			hub.Log(fmt.Sprintf("Error in Marshal NotificationTx: %v (%v)", v, err))
+		}
+	} else {
+		hub.Log(fmt.Sprintf("Error in decode base64 tx hash: %v (%v)", v.Hash, err))
+	}
 
 	// Use the transaction's serial number as key, save its detail
 	key := append([]byte{DetailByte}, snBytes...)
