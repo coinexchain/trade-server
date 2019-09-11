@@ -117,21 +117,48 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, depth int,
 	return nil
 }
 
-func (w *WebsocketManager) RemoveSubscribeConn(topic string, c *Conn) error {
+func (w *WebsocketManager) RemoveSubscribeConn(subscriptionTopic string, c *Conn) error {
 	w.Lock()
 	defer w.Unlock()
+	values := strings.Split(subscriptionTopic, SeparateArgu)
+	if len(values) < 1 || len(values) > MaxArguNum+1 {
+		return fmt.Errorf("Expect range of parameters [%d, %d], actual : %d ", MinArguNum, MaxArguNum, len(values)-1)
+	}
+	topic := values[0]
+	params := values[1:]
 	if !checkTopicValid(topic) {
 		log.Errorf("The subscribed topic [%s] is illegal ", topic)
 		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
 	}
-	if topics, ok := w.connWithTopics[c]; ok {
-		if _, ok := topics[topic]; ok {
-			delete(topics, topic)
-		}
-	}
+
 	if conns, ok := w.topicAndConns[topic]; ok {
 		if _, ok := conns[c]; ok {
-			delete(conns, c)
+			if len(params) != 0 {
+				if len(params) == 1 {
+					if _, ok := c.topicWithParams[topic][params[0]]; ok {
+						delete(c.topicWithParams[topic], params[0])
+					}
+				} else {
+					tmpVal := strings.Join(params, SeparateArgu)
+					if _, ok := c.topicWithParams[topic][tmpVal]; ok {
+						delete(c.topicWithParams[topic], tmpVal)
+					}
+				}
+				if len(c.topicWithParams[topic]) == 0 {
+					delete(conns, c)
+				}
+			} else {
+				delete(conns, c)
+			}
+		}
+	}
+	if topics, ok := w.connWithTopics[c]; ok {
+		if _, ok := topics[topic]; ok {
+			if conns, ok := w.topicAndConns[topic]; ok {
+				if _, ok := conns[c]; !ok {
+					delete(topics, topic)
+				}
+			}
 		}
 	}
 	return nil
