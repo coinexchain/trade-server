@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/coinexchain/trade-server/server"
 	"github.com/coinexchain/trade-server/utils"
@@ -71,7 +72,7 @@ func loadConfigFile(cfgFile string) (*toml.Tree, error) {
 
 func waitForSignal() {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	<-c
 }
 
