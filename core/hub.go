@@ -230,10 +230,16 @@ func (hub *Hub) HasMarket(market string) bool {
 }
 
 func (hub *Hub) AddMarket(market string) {
-	hub.managersMap[market] = TripleManager{
-		sell: DefaultDepthManager(),
-		buy:  DefaultDepthManager(),
-		tkm:  DefaultTickerManager(market),
+	if strings.HasPrefix(market, "B:") {
+		hub.managersMap[market] = TripleManager{
+			tkm: DefaultTickerManager(market),
+		}
+	} else {
+		hub.managersMap[market] = TripleManager{
+			sell: DefaultDepthManager(),
+			buy:  DefaultDepthManager(),
+			tkm:  DefaultTickerManager(market),
+		}
 	}
 	hub.csMan.AddMarket(market)
 }
@@ -735,6 +741,11 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 		hub.Log("Error in Unmarshal MsgBancorTradeInfoForKafka")
 		return
 	}
+	//Create market if not exist
+	marketName := "B:" + v.Stock + "/" + v.Money
+	if !hub.HasMarket(marketName) {
+		hub.AddMarket(marketName)
+	}
 	//Save to KVStore
 	addr := v.Sender
 	key := hub.getBancorTradeKey(addr)
@@ -749,6 +760,11 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 	for _, target := range targets {
 		hub.subMan.PushBancorTrade(target, bz)
 	}
+	//Update candle sticks
+	csRec := hub.csMan.GetRecord(marketName)
+	if csRec != nil {
+		csRec.Update(hub.currBlockTime, v.TxPrice, v.Amount)
+	}
 }
 
 func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
@@ -757,6 +773,11 @@ func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
 	if err != nil {
 		hub.Log("Error in Unmarshal MsgBancorInfoForKafka")
 		return
+	}
+	//Create market if not exist
+	marketName := "B:" + v.Stock + "/" + v.Money
+	if !hub.HasMarket(marketName) {
+		hub.AddMarket(marketName)
 	}
 	//Save to KVStore
 	key := hub.getBancorInfoKey(v.Stock + "/" + v.Money)
@@ -840,6 +861,9 @@ func (hub *Hub) commitForDepth() {
 		hub.depthMutex.Unlock()
 	}()
 	for market, triman := range hub.managersMap {
+		if strings.HasPrefix(market, "B:") {
+			continue
+		}
 		depthDeltaSell := triman.sell.EndBlock()
 		depthDeltaBuy := triman.buy.EndBlock()
 		if len(depthDeltaSell) == 0 && len(depthDeltaBuy) == 0 {

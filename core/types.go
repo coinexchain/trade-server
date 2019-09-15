@@ -32,6 +32,7 @@ type Ticker struct {
 	Market            string  `json:"market"`
 	NewPrice          sdk.Dec `json:"new"`
 	OldPriceOneDayAgo sdk.Dec `json:"old"`
+	MinuteInDay       int     `json:"minute_in_day"`
 }
 
 type PricePoint struct {

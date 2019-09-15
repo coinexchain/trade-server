@@ -386,10 +386,6 @@ func Test1(t *testing.T) {
 	subMan.clearPushList()
 
 	hub.ConsumeMessage("commit", nil)
-	correct = `
-`
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
 
 	blockTimes := hub.QueryBlockTime(1100, 100)
 	bytes, _ = json.Marshal(blockTimes)
@@ -567,6 +563,7 @@ func Test1(t *testing.T) {
 3: {"height":1002,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 4: {"height":1002,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 6: {"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"100","unix_time":1563178750,"time_span":"1min","market":"abc/cet"}
+28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179350,"time_span":"1min","market":"B:xyz/cet"}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -586,9 +583,25 @@ func Test1(t *testing.T) {
 	}
 	bytes, _ = json.Marshal(fillOrderInfo)
 	hub.ConsumeMessage("fill_order_info", bytes)
+
+	msgBancorTradeInfoForKafka = MsgBancorTradeInfoForKafka{
+		Sender:      addr2,
+		Stock:       "xyz",
+		Money:       "cet",
+		Amount:      2,
+		Side:        SELL,
+		MoneyLimit:  20,
+		TxPrice:     sdk.NewDec(3),
+		BlockHeight: 1003,
+	}
+	bytes, _ = json.Marshal(msgBancorTradeInfoForKafka)
+	hub.ConsumeMessage("bancor_trade", bytes)
+
 	correct = `
 15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25}
 16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25}
+17: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":2,"side":2,"money_limit":20,"transaction_price":"3.000000000000000000","block_height":1003}
+18: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":2,"side":2,"money_limit":20,"transaction_price":"3.000000000000000000","block_height":1003}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -614,6 +627,9 @@ func Test1(t *testing.T) {
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563179470,"time_span":"1min","market":"abc/cet"}
 7: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1hour","market":"abc/cet"}
 5: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1day","market":"abc/cet"}
+28: {"open":"3.000000000000000000","close":"3.000000000000000000","high":"3.000000000000000000","low":"3.000000000000000000","total":"2","unix_time":1563179470,"time_span":"1min","market":"B:xyz/cet"}
+29: {"open":"2.000000000000000000","close":"3.000000000000000000","high":"3.000000000000000000","low":"2.000000000000000000","total":"3","unix_time":1563179470,"time_span":"1hour","market":"B:xyz/cet"}
+30: {"open":"2.000000000000000000","close":"3.000000000000000000","high":"3.000000000000000000","low":"2.000000000000000000","total":"3","unix_time":1563179470,"time_span":"1day","market":"B:xyz/cet"}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -642,7 +658,8 @@ func Test1(t *testing.T) {
 
 	hub.ConsumeMessage("commit", nil)
 	correct = `
-0: [{"market":"abc/cet","new":"0.125000000000000000","old":"0.100000000000000000"}]
+0: [{"market":"abc/cet","new":"0.125000000000000000","old":"0.100000000000000000","minute_in_day":0}]
+27: [{"market":"B:xyz/cet","new":"3.000000000000000000","old":"2.000000000000000000","minute_in_day":0}]
 8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"110.000000000000000000","a":"-200"}]}
 9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"110.000000000000000000","a":"-200"}]}
 `
@@ -650,6 +667,10 @@ func Test1(t *testing.T) {
 	subMan.clearPushList()
 
 	unixTime = T("2019-07-25T08:39:10Z").Unix()
+	data = hub.QueryCandleStick("B:xyz/cet", Hour, unixTime, 0, 20)
+	correct = `{"open":"2.000000000000000000","close":"3.000000000000000000","high":"3.000000000000000000","low":"2.000000000000000000","total":"3","unix_time":1563179470,"time_span":"1hour","market":"B:xyz/cet"}`
+	require.Equal(t, correct, toStr(data))
+
 	data = hub.QueryCandleStick("abc/cet", Hour, unixTime, 0, 20)
 	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1hour","market":"abc/cet"}`
 	require.Equal(t, correct, toStr(data))
@@ -695,4 +716,21 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("height_info", bytes)
 	hub.ConsumeMessage("commit", nil)
 	fmt.Println(subMan.PushList)
+
+	correctTickers := []*Ticker{
+		{
+			Market:            "abc/cet",
+			NewPrice:          sdk.NewDec(125).Quo(sdk.NewDec(1000)),
+			OldPriceOneDayAgo: sdk.NewDec(100).Quo(sdk.NewDec(1000)),
+			MinuteInDay:       0,
+		},
+		{
+			Market:            "B:xyz/cet",
+			NewPrice:          sdk.NewDec(3),
+			OldPriceOneDayAgo: sdk.NewDec(2),
+			MinuteInDay:       0,
+		},
+	}
+	tickers := hub.QueryTickers([]string{"abc/cet", "B:xyz/cet"})
+	require.Equal(t, correctTickers, tickers)
 }

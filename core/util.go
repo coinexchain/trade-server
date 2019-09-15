@@ -377,6 +377,7 @@ func (tm *TickerManager) GetTicker(currMinute int) *Ticker {
 			NewPrice:          tm.Price1st,
 			OldPriceOneDayAgo: tm.PriceList[currMinute],
 			Market:            tm.Market,
+			MinuteInDay:       currMinute,
 		}
 	}
 	if tm.Minute1st != currMinute { //flush the price
