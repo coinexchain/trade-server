@@ -35,6 +35,11 @@ type Ticker struct {
 	MinuteInDay       int     `json:"minute_in_day"`
 }
 
+type Donation struct {
+	Sender string `json:"sender"`
+	Amount string `json:"amount"`
+}
+
 type PricePoint struct {
 	Price  sdk.Dec `json:"p"`
 	Amount sdk.Int `json:"a"`

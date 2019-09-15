@@ -56,8 +56,9 @@ const (
 	RedelegationByte = byte(0x30)
 	UnbondingByte    = byte(0x32)
 	UnlockByte       = byte(0x34)
-	OffsetByte       = byte(0xF0)
 	LockedByte       = byte(0x36)
+	DonationByte     = byte(0x38)
+	OffsetByte       = byte(0xF0)
 )
 
 func limitCount(count int) int {
@@ -403,6 +404,61 @@ func (hub *Hub) handleLockedCoinsMsg(bz []byte) {
 	}
 }
 
+func (hub *Hub) analyzeMessages(MsgTypes []string, TxJSON string) {
+	if len(TxJSON) == 0 {
+		return
+	}
+	var tx map[string]interface{}
+	err := json.Unmarshal([]byte(TxJSON), &tx)
+	if err != nil {
+		hub.Log(fmt.Sprintf("Error in Unmarshal NotificationTx: %s (%v)", TxJSON, err))
+		return
+	}
+	msgListRaw, ok := tx["msg"]
+	if !ok {
+		hub.Log(fmt.Sprintf("No msg found: %s", TxJSON))
+		return
+	}
+	msgList, ok := msgListRaw.([]interface{})
+	if !ok {
+		hub.Log(fmt.Sprintf("msg is not array: %s", TxJSON))
+		return
+	}
+	if len(msgList) != len(MsgTypes) {
+		hub.Log(fmt.Sprintf("Length mismatch in Unmarshal NotificationTx: %s %s", TxJSON, MsgTypes))
+		return
+	}
+	var donation Donation
+	for i, msgType := range MsgTypes {
+		msg, ok := msgList[i].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if msgType == "MsgDonateToCommunityPool" {
+			donation.Sender, _ = msg["from_addr"].(string)
+			amount, _ := msg["amount"].([]interface{})
+			amount0, _ := amount[0].(map[string]interface{})
+			amountCET, _ := amount0["amount"].(string)
+			donation.Amount = amountCET
+		} else if msgType == "MsgCommentToken" {
+			donation.Sender, _ = msg["sender"].(string)
+			amount := int64(msg["donation"].(float64))
+			donation.Amount = fmt.Sprintf("%d", amount)
+		} else {
+			continue
+		}
+
+		bz, err := json.Marshal(&donation)
+		if err != nil {
+			hub.Log(fmt.Sprintf("Error in Marshal Donation: %v", donation))
+			continue
+		}
+		key := hub.getKeyFromBytes(DonationByte, []byte{}, 0)
+		hub.batch.Set(key, bz)
+		hub.sid++
+	}
+}
+
 func (hub *Hub) handleNotificationTx(bz []byte) {
 	var v NotificationTx
 	err := json.Unmarshal(bz, &v)
@@ -460,7 +516,10 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 			hub.subMan.PushIncome(target, bz)
 		}
 	}
+
+	hub.analyzeMessages(v.MsgTypes, v.TxJSON)
 }
+
 func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
 	var v NotificationBeginRedelegation
 	err := json.Unmarshal(bz, &v)
@@ -1034,6 +1093,11 @@ func (hub *Hub) QueryComment(token string, time int64, sid int64, count int) (da
 
 func (hub *Hub) QuerySlash(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(false, SlashByte, []byte{}, time, sid, count, nil)
+	return
+}
+
+func (hub *Hub) QueryDonation(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+	data, _, timesid = hub.query(false, DonationByte, []byte{}, time, sid, count, nil)
 	return
 }
 
