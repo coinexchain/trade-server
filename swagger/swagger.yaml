@@ -54,6 +54,52 @@ paths:
               description: Unix timestamp
         500:
           description: Server internal error
+  /misc/donations:
+    get:
+      tags:
+        - Misc
+      summary: Query donations info
+      description: Query donations by DonateToCommunityPool or CommentToken
+      operationId: queryDonation
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count limited to 1024
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              donation:
+                type: array
+                items:
+                  $ref: '#/definitions/Donation'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
+        500:
+          description: Server internal error
   /market/tickers:
     get:
       tags:
@@ -1316,3 +1362,11 @@ definitions:
         format: int64
         example: 1565740800
         description: The unix timestamp when tokens can transfer again
+  Donation:
+    type: object
+    properties:
+      sender:
+        $ref: '#/definitions/Address'
+      amount:
+        type: string
+        example: "0"
