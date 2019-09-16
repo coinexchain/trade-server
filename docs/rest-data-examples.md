@@ -335,6 +335,32 @@ $ curl "http://localhost:8000/expiry/unlocks?account=coinex1tlegt4y40m3qu3dd4zdd
 }
 ```
 
+- 查询用户的locked coin信息
+
+```bash
+$ curl -k "https://localhost:8000/expiry/lockeds?account=coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw&time=1569862862&sid=0&count=1"
+$ curl "http://localhost:8000/expiry/lockeds?account=coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw&time=1569862862&sid=0&count=1"
+{
+  "data": [
+    {
+      "from_address": "coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
+      "to_address": "coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
+      "amount": [
+        {
+          "denom": "cet",
+          "amount": "1000000"
+        }
+      ],
+      "unlock_time": "1569862861"
+    }
+  ],
+  "timesid": [
+    1566374466,
+    13246
+  ]
+}
+```
+
 - 查询用户签名的tx 
 
 ```bash
