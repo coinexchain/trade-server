@@ -88,7 +88,7 @@ paths:
           schema:
             type: object
             properties:
-              donation:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Donation'
@@ -294,7 +294,7 @@ paths:
           schema:
             type: object
             properties:
-              deals:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/FillOrderInfo'
@@ -345,7 +345,7 @@ paths:
           schema:
             type: object
             properties:
-              bancor_info:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/BancorInfo'
@@ -401,7 +401,7 @@ paths:
           schema:
             type: object
             properties:
-              bancor_trade:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/BancorTrade'
@@ -452,7 +452,7 @@ paths:
           schema:
             type: object
             properties:
-              redelegation:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Redelegation'
@@ -503,7 +503,7 @@ paths:
           schema:
             type: object
             properties:
-              unbonding:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Unbonding'
@@ -559,7 +559,7 @@ paths:
           schema:
             type: object
             properties:
-              unlock:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Locked'
@@ -615,7 +615,7 @@ paths:
           schema:
             type: object
             properties:
-              unlock:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Unlock'
@@ -671,7 +671,7 @@ paths:
           schema:
             type: object
             properties:
-              tx:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Tx'
@@ -727,7 +727,7 @@ paths:
           schema:
             type: object
             properties:
-              tx:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Tx'
@@ -778,7 +778,7 @@ paths:
           schema:
             type: object
             properties:
-              comment:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Comment'
@@ -824,7 +824,7 @@ paths:
           schema:
             type: object
             properties:
-              slash:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Slash'
