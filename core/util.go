@@ -87,6 +87,9 @@ type CandleStickRecord struct {
 	LastMinuteCSTime int64               `json:"last_minute_cs_time"`
 	LastHourCSTime   int64               `json:"last_hour_cs_time"`
 	LastDayCSTime    int64               `json:"last_day_cs_time"`
+	LastMinutePrice  sdk.Dec             `json:"last_minute_price"`
+	LastHourPrice    sdk.Dec             `json:"last_hour_price"`
+	LastDayPrice     sdk.Dec             `json:"last_day_price"`
 	Market           string              `json:"Market"`
 }
 
@@ -98,6 +101,9 @@ func NewCandleStickRecord(market string) *CandleStickRecord {
 	for i := 0; i < len(res.HourCS); i++ {
 		res.HourCS[i] = defaultBaseCandleStick()
 	}
+	res.LastMinutePrice = sdk.ZeroDec()
+	res.LastHourPrice = sdk.ZeroDec()
+	res.LastDayPrice = sdk.ZeroDec()
 	return res
 }
 
@@ -141,30 +147,66 @@ func (csr *CandleStickRecord) newCandleStick(cs baseCandleStick, t int64, span b
 }
 
 // When a new block comes, flush the pending candle sticks
-func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool) []CandleStick {
+func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, t time.Time) []CandleStick {
 	res := make([]CandleStick, 0, 3)
 	lastTime := csr.LastUpdateTime.Unix()
 	if isNewMinute && lastTime != 0 {
-		cs := csr.newCandleStick(csr.MinuteCS[csr.LastUpdateTime.Minute()], csr.LastUpdateTime.Unix(), Minute)
+		cs := csr.newCandleStick(csr.MinuteCS[csr.LastUpdateTime.Minute()], t.Unix(), Minute)
 		if !cs.TotalDeal.IsZero() && csr.LastUpdateTime.Unix() != csr.LastMinuteCSTime {
 			res = append(res, cs)
 			csr.LastMinuteCSTime = csr.LastUpdateTime.Unix()
+			csr.LastMinutePrice = cs.ClosePrice
+		} else {
+			res = append(res, CandleStick{
+				OpenPrice:      csr.LastMinutePrice,
+				ClosePrice:     csr.LastMinutePrice,
+				HighPrice:      csr.LastMinutePrice,
+				LowPrice:       csr.LastMinutePrice,
+				TotalDeal:      sdk.ZeroInt(),
+				EndingUnixTime: t.Unix(),
+				TimeSpan:       MinuteStr,
+				Market:         csr.Market,
+			})
 		}
 	}
 	if isNewHour && lastTime != 0 {
 		csr.HourCS[csr.LastUpdateTime.Hour()] = merge(csr.MinuteCS[:])
-		cs := csr.newCandleStick(csr.HourCS[csr.LastUpdateTime.Hour()], csr.LastUpdateTime.Unix(), Hour)
+		cs := csr.newCandleStick(csr.HourCS[csr.LastUpdateTime.Hour()], t.Unix(), Hour)
 		if !cs.TotalDeal.IsZero() && csr.LastUpdateTime.Unix() != csr.LastHourCSTime {
 			res = append(res, cs)
 			csr.LastHourCSTime = csr.LastUpdateTime.Unix()
+			csr.LastHourPrice = cs.ClosePrice
+		} else {
+			res = append(res, CandleStick{
+				OpenPrice:      csr.LastHourPrice,
+				ClosePrice:     csr.LastHourPrice,
+				HighPrice:      csr.LastHourPrice,
+				LowPrice:       csr.LastHourPrice,
+				TotalDeal:      sdk.ZeroInt(),
+				EndingUnixTime: t.Unix(),
+				TimeSpan:       HourStr,
+				Market:         csr.Market,
+			})
 		}
 	}
 	if isNewDay && lastTime != 0 {
 		dayCS := merge(csr.HourCS[:])
-		cs := csr.newCandleStick(dayCS, csr.LastUpdateTime.Unix(), Day)
+		cs := csr.newCandleStick(dayCS, t.Unix(), Day)
 		if !cs.TotalDeal.IsZero() && csr.LastUpdateTime.Unix() != csr.LastDayCSTime {
 			res = append(res, cs)
 			csr.LastDayCSTime = csr.LastUpdateTime.Unix()
+			csr.LastDayPrice = cs.ClosePrice
+		} else {
+			res = append(res, CandleStick{
+				OpenPrice:      csr.LastDayPrice,
+				ClosePrice:     csr.LastDayPrice,
+				HighPrice:      csr.LastDayPrice,
+				LowPrice:       csr.LastDayPrice,
+				TotalDeal:      sdk.ZeroInt(),
+				EndingUnixTime: t.Unix(),
+				TimeSpan:       DayStr,
+				Market:         csr.Market,
+			})
 		}
 	}
 
@@ -212,7 +254,7 @@ func (manager *CandleStickManager) NewBlock(t time.Time) []CandleStick {
 	isNewHour := t.Hour() != manager.LastBlockTime.Hour() || t.Unix()-manager.LastBlockTime.Unix() > 60*60
 	isNewMinute := t.Minute() != manager.LastBlockTime.Minute() || t.Unix()-manager.LastBlockTime.Unix() > 60
 	for _, csr := range manager.CsrMap {
-		csSlice := csr.newBlock(isNewDay, isNewHour, isNewMinute)
+		csSlice := csr.newBlock(isNewDay, isNewHour, isNewMinute, manager.LastBlockTime)
 		res = append(res, csSlice...)
 	}
 	manager.LastBlockTime = t

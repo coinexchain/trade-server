@@ -322,6 +322,9 @@ func (hub *Hub) beginForCandleSticks() {
 	var ok bool
 	currMinute := hub.currBlockTime.Hour() * hub.currBlockTime.Minute()
 	for _, cs := range candleSticks {
+		//if cs.Market=="hffp/cet" {
+		//	fmt.Printf("= %v %s\n", cs, time.Unix(cs.EndingUnixTime, 0).UTC().Format(time.RFC3339))
+		//}
 		if sym != cs.Market {
 			triman, ok = hub.managersMap[cs.Market]
 			if !ok {

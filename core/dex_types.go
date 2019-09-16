@@ -124,6 +124,7 @@ type NotificationTx struct {
 	TxJSON       string           `json:"tx_json"`
 	Height       int64            `json:"height"`
 	Hash         string           `json:"hash"`
+	ExtraInfo    string           `json:"extra_info,omitempty"`
 }
 
 type NotificationBeginRedelegation struct {
