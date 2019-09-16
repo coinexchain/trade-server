@@ -279,7 +279,7 @@ func testDepth(pointsSets [][]core.PricePoint) {
 	//	}
 	//}
 	refMan := DepthManager{ppMap: make(map[string]core.PricePoint)}
-	impMan := core.DefaultDepthManager()
+	impMan := core.DefaultDepthManager("")
 	for x, points := range pointsSets {
 		changes := make(map[string]core.PricePoint)
 		for _, point := range points {
@@ -472,9 +472,9 @@ func simulateKafkaInput() {
 		log.Fatal(err)
 	}
 
-	unixTime := T("2019-08-21T08:02:06.647266Z").Unix()
-	data := hub.QueryCandleStick("abc/cet", core.Minute, unixTime, 0, 20)
-	fmt.Printf("here %s %d\n", toStr(data), unixTime)
+	//unixTime := T("2019-08-21T08:02:06.647266Z").Unix()
+	//data := hub.QueryCandleStick("abc/cet", core.Minute, unixTime, 0, 20)
+	//fmt.Printf("here %s %d\n", toStr(data), unixTime)
 }
 
 func main() {

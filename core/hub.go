@@ -237,8 +237,8 @@ func (hub *Hub) AddMarket(market string) {
 		}
 	} else {
 		hub.managersMap[market] = TripleManager{
-			sell: DefaultDepthManager(),
-			buy:  DefaultDepthManager(),
+			sell: DefaultDepthManager("sell"),
+			buy:  DefaultDepthManager("buy"),
 			tkm:  DefaultTickerManager(market),
 		}
 	}
@@ -680,6 +680,7 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 	defer func() {
 		hub.depthMutex.Unlock()
 	}()
+
 	if v.Side == SELL {
 		triman.sell.DeltaChange(v.Price, amount)
 	} else {
@@ -1260,8 +1261,8 @@ func (hub *Hub) Load(hub4j *HubForJSON) {
 
 	for _, info := range hub4j.Markets {
 		triman := TripleManager{
-			sell: DefaultDepthManager(),
-			buy:  DefaultDepthManager(),
+			sell: DefaultDepthManager("sell"),
+			buy:  DefaultDepthManager("buy"),
 			tkm:  info.TkMan,
 		}
 		for _, pp := range info.SellPricePoints {

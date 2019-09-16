@@ -167,7 +167,7 @@ func TestCandleStickRecord(t *testing.T) {
 }
 
 func TestDepthManager(t *testing.T) {
-	dm := DefaultDepthManager()
+	dm := DefaultDepthManager("")
 	dm.DeltaChange(sdk.NewDec(90), sdk.NewInt(90))
 	dm.DeltaChange(sdk.NewDec(100), sdk.NewInt(100))
 	dm.DeltaChange(sdk.NewDec(80), sdk.NewInt(80))
