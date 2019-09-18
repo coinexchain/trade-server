@@ -5,9 +5,4 @@ DEX trade backend
 [![Coverage Status](https://coveralls.io/repos/github/coinexchain/trade-server/badge.svg?t=OJj2bl)](https://coveralls.io/github/coinexchain/trade-server)
 
 ## How to run trade-server
-1. Copy ``config.toml.default`` to ``config.toml``.
-2. Update the configuration.
-3. Start the server
-```bash
-nohup trade-server -c config.toml &
-```
+[Getting Started](https://github.com/coinexchain/trade-server/blob/master/docs/trade-server-deploy.md)
