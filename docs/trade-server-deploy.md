@@ -87,6 +87,8 @@ log-level = "info"
 log-format = "plain"
 ```
 
+### 启动
+
 启动时通过-c参数指定配置文件路径
 
 ```bash
