@@ -206,6 +206,8 @@ type Hub struct {
 	dumpBz      []byte
 	stop        bool
 	stopChan    chan byte
+
+	currTxHashID string
 }
 
 func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
@@ -378,6 +380,13 @@ func formatCandleStick(info *CandleStick) []byte {
 	return bz
 }
 
+func appendHashID(bz []byte, hashID string) []byte {
+	if len(hashID) == 0 {
+		return bz
+	}
+	return append(bz[0:len(bz)-1], []byte(fmt.Sprintf(`,"tx_hash":"%s"}`,hashID))...)
+}
+
 func (hub *Hub) handleNotificationSlash(bz []byte) {
 	var v NotificationSlash
 	err := json.Unmarshal(bz, &v)
@@ -394,6 +403,8 @@ func (hub *Hub) handleLockedCoinsMsg(bz []byte) {
 	if err != nil {
 		hub.Log("Err in Unmarshal LockedSendMsg")
 	}
+	//v.TxHash = hub.currTxHashID
+	bz = appendHashID(bz, hub.currTxHashID)
 	key := hub.getLockedKey(v.ToAddress)
 	hub.batch.Set(key, bz)
 	hub.sid++
@@ -479,6 +490,8 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 		hub.Log(fmt.Sprintf("Error in decode base64 tx hash: %v (%v)", v.Hash, err))
 	}
 
+	hub.currTxHashID = v.Hash
+
 	// Use the transaction's hashid as key, save its detail
 	key := append([]byte{DetailByte}, []byte(v.Hash)...)
 	hub.batch.Set(key, bz)
@@ -526,6 +539,8 @@ func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
 		hub.Log("Error in Unmarshal NotificationBeginRedelegation")
 		return
 	}
+	//v.TxHash = hub.currTxHashID
+	bz = appendHashID(bz, hub.currTxHashID)
 	t, err := time.Parse(time.RFC3339, v.CompletionTime)
 	if err != nil {
 		hub.Log("Error in Parsing Time")
@@ -536,6 +551,7 @@ func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
 	hub.batch.Set(key, bz)
 	hub.sid++
 }
+
 func (hub *Hub) handleNotificationBeginUnbonding(bz []byte) {
 	var v NotificationBeginUnbonding
 	err := json.Unmarshal(bz, &v)
@@ -543,6 +559,8 @@ func (hub *Hub) handleNotificationBeginUnbonding(bz []byte) {
 		hub.Log("Error in Unmarshal NotificationBeginUnbonding")
 		return
 	}
+	//v.TxHash = hub.currTxHashID
+	bz = appendHashID(bz, hub.currTxHashID)
 	t, err := time.Parse(time.RFC3339, v.CompletionTime)
 	if err != nil {
 		hub.Log("Error in Parsing Time")
@@ -634,6 +652,8 @@ func (hub *Hub) handleTokenComment(bz []byte) {
 		hub.Log("Error in Unmarshal TokenComment")
 		return
 	}
+	//v.TxHash = hub.currTxHashID
+	bz = appendHashID(bz, hub.currTxHashID)
 	key := hub.getCommentKey(v.Token)
 	hub.batch.Set(key, bz)
 	hub.sid++
@@ -653,6 +673,8 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 		hub.Log("Error in Unmarshal CreateOrderInfo")
 		return
 	}
+	//v.TxHash = hub.currTxHashID
+	bz = appendHashID(bz, hub.currTxHashID)
 	// Add a new market which is seen for the first time
 	if !hub.HasMarket(v.TradingPair) {
 		hub.AddMarket(v.TradingPair)
@@ -756,6 +778,10 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 		hub.Log("Error in Unmarshal CancelOrderInfo")
 		return
 	}
+	if v.DelReason == "Manually cancel the order" {
+		//v.TxHash = hub.currTxHashID
+		bz = appendHashID(bz, hub.currTxHashID)
+	}
 	// Add a new market which is seen for the first time
 	if !hub.HasMarket(v.TradingPair) {
 		hub.AddMarket(v.TradingPair)
@@ -800,6 +826,8 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 		hub.Log("Error in Unmarshal MsgBancorTradeInfoForKafka")
 		return
 	}
+	//v.TxHash = hub.currTxHashID
+	bz = appendHashID(bz, hub.currTxHashID)
 	//Create market if not exist
 	marketName := "B:" + v.Stock + "/" + v.Money
 	if !hub.HasMarket(marketName) {
