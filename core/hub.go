@@ -286,8 +286,6 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 		hub.commit()
 	case "send_lock_coins":
 		hub.handleLockedCoinsMsg(bz)
-	case "funds_not_enough":
-		//Do nothing
 	default:
 		hub.Log(fmt.Sprintf("Unknown Message Type:%s", msgType))
 	}
@@ -469,8 +467,6 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 		hub.Log(fmt.Sprintf("Error in Unmarshal NotificationTx: %s", string(bz)))
 		return
 	}
-	snBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(snBytes[:], uint64(v.SerialNumber))
 
 	// base64 -> hex
 	decodeBytes, err := base64.StdEncoding.DecodeString(v.Hash)
@@ -483,15 +479,15 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 		hub.Log(fmt.Sprintf("Error in decode base64 tx hash: %v (%v)", v.Hash, err))
 	}
 
-	// Use the transaction's serial number as key, save its detail
-	key := append([]byte{DetailByte}, snBytes...)
+	// Use the transaction's hashid as key, save its detail
+	key := append([]byte{DetailByte}, []byte(v.Hash)...)
 	hub.batch.Set(key, bz)
 	hub.sid++
 
 	for _, acc := range v.Signers {
 		signer := acc
 		k := hub.getTxKey(signer)
-		hub.batch.Set(k, snBytes)
+		hub.batch.Set(k, []byte(v.Hash))
 		hub.sid++
 
 		info := hub.subMan.GetTxSubscribeInfo()
@@ -507,7 +503,7 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 	for _, transRec := range v.Transfers {
 		recipient := transRec.Recipient
 		k := hub.getIncomeKey(recipient)
-		hub.batch.Set(k, snBytes)
+		hub.batch.Set(k, []byte(v.Hash))
 		hub.sid++
 
 		info := hub.subMan.GetIncomeSubscribeInfo()
@@ -1235,6 +1231,13 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64,
 		}
 	}
 	return
+}
+
+func (hub *Hub) QueryTxByHashID(hexHashID string) json.RawMessage {
+	hub.dbMutex.RLock()
+	defer hub.dbMutex.RUnlock()
+	key := append([]byte{DetailByte}, []byte(hexHashID)...)
+	return json.RawMessage(hub.db.Get(key))
 }
 
 //===================================

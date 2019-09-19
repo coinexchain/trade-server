@@ -134,4 +134,6 @@ type Querier interface {
 	QueryUnlockAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryIncomeAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryTxAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+
+	QueryTxByHashID(hexHashID string) json.RawMessage
 }
