@@ -69,7 +69,7 @@ type CreateOrderInfo struct {
 	FrozenFee   int64   `json:"frozen_fee"`
 	Freeze      int64   `json:"freeze"`
 
-	TxHash         string `json:"tx_hash,omitempty"`
+	TxHash string `json:"tx_hash,omitempty"`
 }
 
 type FillOrderInfo struct {
@@ -105,7 +105,7 @@ type CancelOrderInfo struct {
 	DealStock      int64 `json:"deal_stock"`
 	DealMoney      int64 `json:"deal_money"`
 
-	TxHash         string `json:"tx_hash,omitempty"`
+	TxHash string `json:"tx_hash,omitempty"`
 }
 
 type NewHeightInfo struct {
@@ -138,7 +138,7 @@ type NotificationBeginRedelegation struct {
 	Amount         string `json:"amount"`
 	CompletionTime string `json:"completion_time"`
 
-	TxHash         string `json:"tx_hash,omitempty"`
+	TxHash string `json:"tx_hash,omitempty"`
 }
 
 type NotificationBeginUnbonding struct {
@@ -147,7 +147,7 @@ type NotificationBeginUnbonding struct {
 	Amount         string `json:"amount"`
 	CompletionTime string `json:"completion_time"`
 
-	TxHash         string `json:"tx_hash,omitempty"`
+	TxHash string `json:"tx_hash,omitempty"`
 }
 
 type NotificationCompleteRedelegation struct {
@@ -202,7 +202,7 @@ type TokenComment struct {
 	ContentType int8         `json:"content_type"`
 	References  []CommentRef `json:"references"`
 
-	TxHash         string `json:"tx_hash,omitempty"`
+	TxHash string `json:"tx_hash,omitempty"`
 }
 
 type MsgBancorInfoForKafka struct {
@@ -229,7 +229,7 @@ type MsgBancorTradeInfoForKafka struct {
 	TxPrice     sdk.Dec `json:"transaction_price"`
 	BlockHeight int64   `json:"block_height"`
 
-	TxHash         string `json:"tx_hash,omitempty"`
+	TxHash string `json:"tx_hash,omitempty"`
 }
 
 type LockedSendMsg struct {
@@ -238,7 +238,7 @@ type LockedSendMsg struct {
 	Amount      sdk.Coins `json:"amount"`
 	UnlockTime  int64     `json:"unlock_time"`
 
-	TxHash         string `json:"tx_hash,omitempty"`
+	TxHash string `json:"tx_hash,omitempty"`
 }
 
 func DecToBigEndianBytes(d sdk.Dec) []byte {

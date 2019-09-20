@@ -62,6 +62,26 @@ func NewCandleStickSubscriber(id int64, timespan string) *CandleStickSubscriber 
 	}
 }
 
+type DepthSubscriber struct {
+	PlainSubscriber
+	level string
+}
+
+func (s *DepthSubscriber) Detail() interface{} {
+	return s.level
+}
+
+func (s *DepthSubscriber) WriteMsg([]byte) error {
+	return nil
+}
+
+func NewDepthSubscriber(id int64, level string) *DepthSubscriber {
+	return &DepthSubscriber{
+		PlainSubscriber: PlainSubscriber{ID: id},
+		level:           level,
+	}
+}
+
 type pushInfo struct {
 	Target  Subscriber
 	Payload string
@@ -118,6 +138,8 @@ func (sm *MocSubscribeManager) compareResult(t *testing.T, correct string) {
 			id = v.ID
 		case *CandleStickSubscriber:
 			id = v.ID
+		case *DepthSubscriber:
+			id = v.ID
 		}
 		s := fmt.Sprintf("%d: %s", id, info.Payload)
 		out = append(out, s)
@@ -149,10 +171,10 @@ func GetSubscribeManager(addr1, addr2 string) *MocSubscribeManager {
 	res.CandleStickSubscribeInfo["abc/cet"][2] = NewCandleStickSubscriber(5, DayStr)
 	res.DepthSubscribeInfo = make(map[string][]Subscriber)
 	res.DepthSubscribeInfo["abc/cet"] = make([]Subscriber, 2)
-	res.DepthSubscribeInfo["abc/cet"][0] = &PlainSubscriber{ID: 8}
-	res.DepthSubscribeInfo["abc/cet"][1] = &PlainSubscriber{ID: 9}
+	res.DepthSubscribeInfo["abc/cet"][0] = NewDepthSubscriber(8, "all")
+	res.DepthSubscribeInfo["abc/cet"][1] = NewDepthSubscriber(9, "all")
 	res.DepthSubscribeInfo["xyz/cet"] = make([]Subscriber, 1)
-	res.DepthSubscribeInfo["xyz/cet"][0] = &PlainSubscriber{ID: 10}
+	res.DepthSubscribeInfo["xyz/cet"][0] = NewDepthSubscriber(10, "all")
 	res.DealSubscribeInfo = make(map[string][]Subscriber)
 	res.DealSubscribeInfo["xyz/cet"] = make([]Subscriber, 1)
 	res.DealSubscribeInfo["xyz/cet"][0] = &PlainSubscriber{ID: 11}
