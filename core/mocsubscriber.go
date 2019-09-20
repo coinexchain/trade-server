@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"testing"
 
@@ -107,8 +108,7 @@ func (sm *MocSubscribeManager) clearPushList() {
 }
 
 func (sm *MocSubscribeManager) compareResult(t *testing.T, correct string) {
-	out := make([]string, 1, 10)
-	out[0] = "\n"
+	out := make([]string, 0, 10)
 	for _, info := range sm.PushList {
 		var id int64
 		switch v := info.Target.(type) {
@@ -119,10 +119,13 @@ func (sm *MocSubscribeManager) compareResult(t *testing.T, correct string) {
 		case *CandleStickSubscriber:
 			id = v.ID
 		}
-		s := fmt.Sprintf("%d: %s\n", id, info.Payload)
+		s := fmt.Sprintf("%d: %s", id, info.Payload)
 		out = append(out, s)
 	}
-	require.Equal(t, correct, strings.Join(out, ""))
+	correctList := strings.Split(strings.TrimSpace(correct), "\n")
+	sort.Strings(correctList)
+	sort.Strings(out)
+	require.Equal(t, correctList, out)
 }
 
 func GetSubscribeManager(addr1, addr2 string) *MocSubscribeManager {
@@ -134,7 +137,7 @@ func GetSubscribeManager(addr1, addr2 string) *MocSubscribeManager {
 	res.HeightSubscribeInfo = make([]Subscriber, 2)
 	res.HeightSubscribeInfo[0] = &PlainSubscriber{ID: 3}
 	res.HeightSubscribeInfo[1] = &PlainSubscriber{ID: 4}
-	res.TickerSubscribeInfo = make([]Subscriber, 1)
+	res.TickerSubscribeInfo = make([]Subscriber, 2)
 	m := make(map[string]struct{})
 	m["abc/cet"] = struct{}{}
 	m["xyz/cet"] = struct{}{}
@@ -189,6 +192,14 @@ func GetSubscribeManager(addr1, addr2 string) *MocSubscribeManager {
 	res.LockedSubcribeInfo = make(map[string][]Subscriber)
 	res.LockedSubcribeInfo[addr1] = make([]Subscriber, 1)
 	res.LockedSubcribeInfo[addr1][0] = &PlainSubscriber{ID: 26}
+
+	m = make(map[string]struct{})
+	m["B:xyz/cet"] = struct{}{}
+	res.TickerSubscribeInfo[1] = NewTickerSubscriber(27, m)
+	res.CandleStickSubscribeInfo["B:xyz/cet"] = make([]Subscriber, 3)
+	res.CandleStickSubscribeInfo["B:xyz/cet"][0] = NewCandleStickSubscriber(28, MinuteStr)
+	res.CandleStickSubscribeInfo["B:xyz/cet"][1] = NewCandleStickSubscriber(29, HourStr)
+	res.CandleStickSubscribeInfo["B:xyz/cet"][2] = NewCandleStickSubscriber(30, DayStr)
 	return res
 }
 

@@ -32,6 +32,12 @@ type Ticker struct {
 	Market            string  `json:"market"`
 	NewPrice          sdk.Dec `json:"new"`
 	OldPriceOneDayAgo sdk.Dec `json:"old"`
+	MinuteInDay       int     `json:"minute_in_day"`
+}
+
+type Donation struct {
+	Sender string `json:"sender"`
+	Amount string `json:"amount"`
 }
 
 type PricePoint struct {
@@ -120,6 +126,7 @@ type Querier interface {
 	QueryTx(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryComment(token string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QuerySlash(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryDonation(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 
 	QueryOrderAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64)
 	QueryLockedAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
@@ -127,4 +134,6 @@ type Querier interface {
 	QueryUnlockAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryIncomeAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryTxAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+
+	QueryTxByHashID(hexHashID string) json.RawMessage
 }

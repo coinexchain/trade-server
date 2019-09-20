@@ -54,6 +54,52 @@ paths:
               description: Unix timestamp
         500:
           description: Server internal error
+  /misc/donations:
+    get:
+      tags:
+        - Misc
+      summary: Query donations info
+      description: Query donations by DonateToCommunityPool or CommentToken
+      operationId: queryDonation
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier count limited to 1024
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/Donation'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
+        500:
+          description: Server internal error
   /market/tickers:
     get:
       tags:
@@ -248,7 +294,7 @@ paths:
           schema:
             type: object
             properties:
-              deals:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/FillOrderInfo'
@@ -299,7 +345,7 @@ paths:
           schema:
             type: object
             properties:
-              bancor_info:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/BancorInfo'
@@ -355,7 +401,7 @@ paths:
           schema:
             type: object
             properties:
-              bancor_trade:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/BancorTrade'
@@ -406,7 +452,7 @@ paths:
           schema:
             type: object
             properties:
-              redelegation:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Redelegation'
@@ -457,7 +503,7 @@ paths:
           schema:
             type: object
             properties:
-              unbonding:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Unbonding'
@@ -513,7 +559,7 @@ paths:
           schema:
             type: object
             properties:
-              unlock:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Locked'
@@ -569,7 +615,7 @@ paths:
           schema:
             type: object
             properties:
-              unlock:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Unlock'
@@ -625,7 +671,7 @@ paths:
           schema:
             type: object
             properties:
-              tx:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Tx'
@@ -681,7 +727,7 @@ paths:
           schema:
             type: object
             properties:
-              tx:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Tx'
@@ -732,7 +778,7 @@ paths:
           schema:
             type: object
             properties:
-              comment:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Comment'
@@ -778,7 +824,7 @@ paths:
           schema:
             type: object
             properties:
-              slash:
+              data:
                 type: array
                 items:
                   $ref: '#/definitions/Slash'
@@ -1316,3 +1362,11 @@ definitions:
         format: int64
         example: 1565740800
         description: The unix timestamp when tokens can transfer again
+  Donation:
+    type: object
+    properties:
+      sender:
+        $ref: '#/definitions/Address'
+      amount:
+        type: string
+        example: "0"

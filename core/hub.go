@@ -1,7 +1,9 @@
 package core
 
 import (
+	"encoding/base64"
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -54,8 +56,9 @@ const (
 	RedelegationByte = byte(0x30)
 	UnbondingByte    = byte(0x32)
 	UnlockByte       = byte(0x34)
-	OffsetByte       = byte(0xF0)
 	LockedByte       = byte(0x36)
+	DonationByte     = byte(0x38)
+	OffsetByte       = byte(0xF0)
 )
 
 func limitCount(count int) int {
@@ -203,6 +206,8 @@ type Hub struct {
 	dumpBz      []byte
 	stop        bool
 	stopChan    chan byte
+
+	currTxHashID string
 }
 
 func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
@@ -228,10 +233,16 @@ func (hub *Hub) HasMarket(market string) bool {
 }
 
 func (hub *Hub) AddMarket(market string) {
-	hub.managersMap[market] = TripleManager{
-		sell: DefaultDepthManager(),
-		buy:  DefaultDepthManager(),
-		tkm:  DefaultTickerManager(market),
+	if strings.HasPrefix(market, "B:") {
+		hub.managersMap[market] = TripleManager{
+			tkm: DefaultTickerManager(market),
+		}
+	} else {
+		hub.managersMap[market] = TripleManager{
+			sell: DefaultDepthManager("sell"),
+			buy:  DefaultDepthManager("buy"),
+			tkm:  DefaultTickerManager(market),
+		}
 	}
 	hub.csMan.AddMarket(market)
 }
@@ -277,8 +288,6 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 		hub.commit()
 	case "send_lock_coins":
 		hub.handleLockedCoinsMsg(bz)
-	case "funds_not_enough":
-		//Do nothing
 	default:
 		hub.Log(fmt.Sprintf("Unknown Message Type:%s", msgType))
 	}
@@ -313,6 +322,9 @@ func (hub *Hub) beginForCandleSticks() {
 	var ok bool
 	currMinute := hub.currBlockTime.Hour() * hub.currBlockTime.Minute()
 	for _, cs := range candleSticks {
+		//if cs.Market=="hffp/cet" {
+		//	fmt.Printf("= %v %s\n", cs, time.Unix(cs.EndingUnixTime, 0).UTC().Format(time.RFC3339))
+		//}
 		if sym != cs.Market {
 			triman, ok = hub.managersMap[cs.Market]
 			if !ok {
@@ -368,6 +380,13 @@ func formatCandleStick(info *CandleStick) []byte {
 	return bz
 }
 
+func appendHashID(bz []byte, hashID string) []byte {
+	if len(hashID) == 0 {
+		return bz
+	}
+	return append(bz[0:len(bz)-1], []byte(fmt.Sprintf(`,"tx_hash":"%s"}`, hashID))...)
+}
+
 func (hub *Hub) handleNotificationSlash(bz []byte) {
 	var v NotificationSlash
 	err := json.Unmarshal(bz, &v)
@@ -384,6 +403,8 @@ func (hub *Hub) handleLockedCoinsMsg(bz []byte) {
 	if err != nil {
 		hub.Log("Err in Unmarshal LockedSendMsg")
 	}
+	//v.TxHash = hub.currTxHashID
+	bz = appendHashID(bz, hub.currTxHashID)
 	key := hub.getLockedKey(v.ToAddress)
 	hub.batch.Set(key, bz)
 	hub.sid++
@@ -395,6 +416,61 @@ func (hub *Hub) handleLockedCoinsMsg(bz []byte) {
 	}
 }
 
+func (hub *Hub) analyzeMessages(MsgTypes []string, TxJSON string) {
+	if len(TxJSON) == 0 {
+		return
+	}
+	var tx map[string]interface{}
+	err := json.Unmarshal([]byte(TxJSON), &tx)
+	if err != nil {
+		hub.Log(fmt.Sprintf("Error in Unmarshal NotificationTx: %s (%v)", TxJSON, err))
+		return
+	}
+	msgListRaw, ok := tx["msg"]
+	if !ok {
+		hub.Log(fmt.Sprintf("No msg found: %s", TxJSON))
+		return
+	}
+	msgList, ok := msgListRaw.([]interface{})
+	if !ok {
+		hub.Log(fmt.Sprintf("msg is not array: %s", TxJSON))
+		return
+	}
+	if len(msgList) != len(MsgTypes) {
+		hub.Log(fmt.Sprintf("Length mismatch in Unmarshal NotificationTx: %s %s", TxJSON, MsgTypes))
+		return
+	}
+	var donation Donation
+	for i, msgType := range MsgTypes {
+		msg, ok := msgList[i].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if msgType == "MsgDonateToCommunityPool" {
+			donation.Sender, _ = msg["from_addr"].(string)
+			amount, _ := msg["amount"].([]interface{})
+			amount0, _ := amount[0].(map[string]interface{})
+			amountCET, _ := amount0["amount"].(string)
+			donation.Amount = amountCET
+		} else if msgType == "MsgCommentToken" {
+			donation.Sender, _ = msg["sender"].(string)
+			amount := int64(msg["donation"].(float64))
+			donation.Amount = fmt.Sprintf("%d", amount)
+		} else {
+			continue
+		}
+
+		bz, err := json.Marshal(&donation)
+		if err != nil {
+			hub.Log(fmt.Sprintf("Error in Marshal Donation: %v", donation))
+			continue
+		}
+		key := hub.getKeyFromBytes(DonationByte, []byte{}, 0)
+		hub.batch.Set(key, bz)
+		hub.sid++
+	}
+}
+
 func (hub *Hub) handleNotificationTx(bz []byte) {
 	var v NotificationTx
 	err := json.Unmarshal(bz, &v)
@@ -402,18 +478,29 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 		hub.Log(fmt.Sprintf("Error in Unmarshal NotificationTx: %s", string(bz)))
 		return
 	}
-	snBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(snBytes[:], uint64(v.SerialNumber))
 
-	// Use the transaction's serial number as key, save its detail
-	key := append([]byte{DetailByte}, snBytes...)
+	// base64 -> hex
+	decodeBytes, err := base64.StdEncoding.DecodeString(v.Hash)
+	if err == nil {
+		v.Hash = strings.ToUpper(hex.EncodeToString(decodeBytes))
+		if bz, err = json.Marshal(v); err != nil {
+			hub.Log(fmt.Sprintf("Error in Marshal NotificationTx: %v (%v)", v, err))
+		}
+	} else {
+		hub.Log(fmt.Sprintf("Error in decode base64 tx hash: %v (%v)", v.Hash, err))
+	}
+
+	hub.currTxHashID = v.Hash
+
+	// Use the transaction's hashid as key, save its detail
+	key := append([]byte{DetailByte}, []byte(v.Hash)...)
 	hub.batch.Set(key, bz)
 	hub.sid++
 
 	for _, acc := range v.Signers {
 		signer := acc
 		k := hub.getTxKey(signer)
-		hub.batch.Set(k, snBytes)
+		hub.batch.Set(k, []byte(v.Hash))
 		hub.sid++
 
 		info := hub.subMan.GetTxSubscribeInfo()
@@ -429,7 +516,7 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 	for _, transRec := range v.Transfers {
 		recipient := transRec.Recipient
 		k := hub.getIncomeKey(recipient)
-		hub.batch.Set(k, snBytes)
+		hub.batch.Set(k, []byte(v.Hash))
 		hub.sid++
 
 		info := hub.subMan.GetIncomeSubscribeInfo()
@@ -441,7 +528,10 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 			hub.subMan.PushIncome(target, bz)
 		}
 	}
+
+	hub.analyzeMessages(v.MsgTypes, v.TxJSON)
 }
+
 func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
 	var v NotificationBeginRedelegation
 	err := json.Unmarshal(bz, &v)
@@ -449,6 +539,8 @@ func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
 		hub.Log("Error in Unmarshal NotificationBeginRedelegation")
 		return
 	}
+	//v.TxHash = hub.currTxHashID
+	bz = appendHashID(bz, hub.currTxHashID)
 	t, err := time.Parse(time.RFC3339, v.CompletionTime)
 	if err != nil {
 		hub.Log("Error in Parsing Time")
@@ -459,6 +551,7 @@ func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
 	hub.batch.Set(key, bz)
 	hub.sid++
 }
+
 func (hub *Hub) handleNotificationBeginUnbonding(bz []byte) {
 	var v NotificationBeginUnbonding
 	err := json.Unmarshal(bz, &v)
@@ -466,6 +559,8 @@ func (hub *Hub) handleNotificationBeginUnbonding(bz []byte) {
 		hub.Log("Error in Unmarshal NotificationBeginUnbonding")
 		return
 	}
+	//v.TxHash = hub.currTxHashID
+	bz = appendHashID(bz, hub.currTxHashID)
 	t, err := time.Parse(time.RFC3339, v.CompletionTime)
 	if err != nil {
 		hub.Log("Error in Parsing Time")
@@ -557,6 +652,8 @@ func (hub *Hub) handleTokenComment(bz []byte) {
 		hub.Log("Error in Unmarshal TokenComment")
 		return
 	}
+	//v.TxHash = hub.currTxHashID
+	bz = appendHashID(bz, hub.currTxHashID)
 	key := hub.getCommentKey(v.Token)
 	hub.batch.Set(key, bz)
 	hub.sid++
@@ -576,6 +673,8 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 		hub.Log("Error in Unmarshal CreateOrderInfo")
 		return
 	}
+	//v.TxHash = hub.currTxHashID
+	bz = appendHashID(bz, hub.currTxHashID)
 	// Add a new market which is seen for the first time
 	if !hub.HasMarket(v.TradingPair) {
 		hub.AddMarket(v.TradingPair)
@@ -602,6 +701,7 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 	defer func() {
 		hub.depthMutex.Unlock()
 	}()
+
 	if v.Side == SELL {
 		triman.sell.DeltaChange(v.Price, amount)
 	} else {
@@ -678,6 +778,10 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 		hub.Log("Error in Unmarshal CancelOrderInfo")
 		return
 	}
+	if v.DelReason == "Manually cancel the order" {
+		//v.TxHash = hub.currTxHashID
+		bz = appendHashID(bz, hub.currTxHashID)
+	}
 	// Add a new market which is seen for the first time
 	if !hub.HasMarket(v.TradingPair) {
 		hub.AddMarket(v.TradingPair)
@@ -722,6 +826,13 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 		hub.Log("Error in Unmarshal MsgBancorTradeInfoForKafka")
 		return
 	}
+	//v.TxHash = hub.currTxHashID
+	bz = appendHashID(bz, hub.currTxHashID)
+	//Create market if not exist
+	marketName := "B:" + v.Stock + "/" + v.Money
+	if !hub.HasMarket(marketName) {
+		hub.AddMarket(marketName)
+	}
 	//Save to KVStore
 	addr := v.Sender
 	key := hub.getBancorTradeKey(addr)
@@ -736,6 +847,11 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 	for _, target := range targets {
 		hub.subMan.PushBancorTrade(target, bz)
 	}
+	//Update candle sticks
+	csRec := hub.csMan.GetRecord(marketName)
+	if csRec != nil {
+		csRec.Update(hub.currBlockTime, v.TxPrice, v.Amount)
+	}
 }
 
 func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
@@ -744,6 +860,11 @@ func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
 	if err != nil {
 		hub.Log("Error in Unmarshal MsgBancorInfoForKafka")
 		return
+	}
+	//Create market if not exist
+	marketName := "B:" + v.Stock + "/" + v.Money
+	if !hub.HasMarket(marketName) {
+		hub.AddMarket(marketName)
 	}
 	//Save to KVStore
 	key := hub.getBancorInfoKey(v.Stock + "/" + v.Money)
@@ -827,6 +948,9 @@ func (hub *Hub) commitForDepth() {
 		hub.depthMutex.Unlock()
 	}()
 	for market, triman := range hub.managersMap {
+		if strings.HasPrefix(market, "B:") {
+			continue
+		}
 		depthDeltaSell, mergeDeltaSell := triman.sell.EndBlock()
 		depthDeltaBuy, mergeDeltaBuy := triman.buy.EndBlock()
 		if len(depthDeltaSell) == 0 && len(depthDeltaBuy) == 0 {
@@ -1013,6 +1137,11 @@ func (hub *Hub) QuerySlash(time int64, sid int64, count int) (data []json.RawMes
 	return
 }
 
+func (hub *Hub) QueryDonation(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+	data, _, timesid = hub.query(false, DonationByte, []byte{}, time, sid, count, nil)
+	return
+}
+
 // --------------
 
 func (hub *Hub) QueryOrderAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
@@ -1145,6 +1274,13 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64,
 	return
 }
 
+func (hub *Hub) QueryTxByHashID(hexHashID string) json.RawMessage {
+	hub.dbMutex.RLock()
+	defer hub.dbMutex.RUnlock()
+	key := append([]byte{DetailByte}, []byte(hexHashID)...)
+	return json.RawMessage(hub.db.Get(key))
+}
+
 //===================================
 // for serialization and deserialization of Hub
 
@@ -1172,8 +1308,8 @@ func (hub *Hub) Load(hub4j *HubForJSON) {
 
 	for _, info := range hub4j.Markets {
 		triman := TripleManager{
-			sell: DefaultDepthManager(),
-			buy:  DefaultDepthManager(),
+			sell: DefaultDepthManager("sell"),
+			buy:  DefaultDepthManager("buy"),
 			tkm:  info.TkMan,
 		}
 		for _, pp := range info.SellPricePoints {

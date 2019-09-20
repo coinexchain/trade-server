@@ -2,7 +2,6 @@ package core
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -67,14 +66,14 @@ func Test1(t *testing.T) {
 		Transfers:    []TransferRecord{transRec},
 		SerialNumber: 20000,
 		MsgTypes:     []string{"MsgType1"},
-		TxJSON:       "blabla",
+		TxJSON:       "",
 		Height:       1001,
 	}
 	bytes, _ = json.Marshal(notificationTx)
 	hub.ConsumeMessage("notify_tx", bytes)
 	correct = `
-25: {"signers":["cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca"],"transfers":[{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","recipient":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","amount":"1cet"}],"serial_number":20000,"msg_types":["MsgType1"],"tx_json":"blabla","height":1001,"hash":null}
-20: {"signers":["cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca"],"transfers":[{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","recipient":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","amount":"1cet"}],"serial_number":20000,"msg_types":["MsgType1"],"tx_json":"blabla","height":1001,"hash":null}
+25: {"signers":["cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca"],"transfers":[{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","recipient":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","amount":"1cet"}],"serial_number":20000,"msg_types":["MsgType1"],"tx_json":"","height":1001,"hash":""}
+20: {"signers":["cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca"],"transfers":[{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","recipient":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","amount":"1cet"}],"serial_number":20000,"msg_types":["MsgType1"],"tx_json":"","height":1001,"hash":""}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -386,10 +385,6 @@ func Test1(t *testing.T) {
 	subMan.clearPushList()
 
 	hub.ConsumeMessage("commit", nil)
-	correct = `
-`
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
 
 	blockTimes := hub.QueryBlockTime(1100, 100)
 	bytes, _ = json.Marshal(blockTimes)
@@ -515,7 +510,7 @@ func Test1(t *testing.T) {
 	require.Equal(t, 0, len(timesid))
 
 	data, timesid = hub.QueryIncome(addr2, unixTime, 0, 20)
-	correct = `{"signers":["cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca"],"transfers":[{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","recipient":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","amount":"1cet"}],"serial_number":20000,"msg_types":["MsgType1"],"tx_json":"blabla","height":1001,"hash":null}`
+	correct = `{"signers":["cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca"],"transfers":[{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","recipient":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","amount":"1cet"}],"serial_number":20000,"msg_types":["MsgType1"],"tx_json":"","height":1001,"hash":""}`
 	require.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
 	require.Equal(t, "[1563178030,2]", string(bytes))
@@ -530,7 +525,7 @@ func Test1(t *testing.T) {
 	require.Equal(t, 0, len(timesid))
 
 	data, timesid = hub.QueryTx(addr1, unixTime, 0, 20)
-	correct = `{"signers":["cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca"],"transfers":[{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","recipient":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","amount":"1cet"}],"serial_number":20000,"msg_types":["MsgType1"],"tx_json":"blabla","height":1001,"hash":null}`
+	correct = `{"signers":["cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca"],"transfers":[{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","recipient":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","amount":"1cet"}],"serial_number":20000,"msg_types":["MsgType1"],"tx_json":"","height":1001,"hash":""}`
 	require.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
 	require.Equal(t, "[1563178030,1]", string(bytes))
@@ -566,7 +561,8 @@ func Test1(t *testing.T) {
 	correct = `
 3: {"height":1002,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 4: {"height":1002,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
-6: {"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"100","unix_time":1563178750,"time_span":"1min","market":"abc/cet"}
+6: {"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"0","unix_time":1563179350,"time_span":"1min","market":"abc/cet"}
+28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179350,"time_span":"1min","market":"B:xyz/cet"}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -586,6 +582,7 @@ func Test1(t *testing.T) {
 	}
 	bytes, _ = json.Marshal(fillOrderInfo)
 	hub.ConsumeMessage("fill_order_info", bytes)
+
 	correct = `
 15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25}
 16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25}
@@ -614,6 +611,10 @@ func Test1(t *testing.T) {
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563179470,"time_span":"1min","market":"abc/cet"}
 7: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1hour","market":"abc/cet"}
 5: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1day","market":"abc/cet"}
+28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563179470,"time_span":"1min","market":"B:xyz/cet"}
+29: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179470,"time_span":"1hour","market":"B:xyz/cet"}
+30: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179470,"time_span":"1day","market":"B:xyz/cet"}
+
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -642,7 +643,7 @@ func Test1(t *testing.T) {
 
 	hub.ConsumeMessage("commit", nil)
 	correct = `
-0: [{"market":"abc/cet","new":"0.125000000000000000","old":"0.100000000000000000"}]
+0: [{"market":"abc/cet","new":"0.125000000000000000","old":"0.100000000000000000","minute_in_day":0}]
 8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"110.000000000000000000","a":"-200"}]}
 9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"110.000000000000000000","a":"-200"}]}
 `
@@ -650,6 +651,10 @@ func Test1(t *testing.T) {
 	subMan.clearPushList()
 
 	unixTime = T("2019-07-25T08:39:10Z").Unix()
+	data = hub.QueryCandleStick("B:xyz/cet", Hour, unixTime, 0, 20)
+	correct = `{"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179470,"time_span":"1hour","market":"B:xyz/cet"}`
+	require.Equal(t, correct, toStr(data))
+
 	data = hub.QueryCandleStick("abc/cet", Hour, unixTime, 0, 20)
 	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1hour","market":"abc/cet"}`
 	require.Equal(t, correct, toStr(data))
@@ -657,7 +662,8 @@ func Test1(t *testing.T) {
 	data = hub.QueryCandleStick("abc/cet", Day, unixTime, 0, 20)
 	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1day","market":"abc/cet"}`
 	require.Equal(t, correct, toStr(data))
-	fmt.Println(subMan.PushList)
+	subMan.showResult()
+	subMan.clearPushList()
 
 	newHeightInfo = &NewHeightInfo{
 		Height:        1010,
@@ -667,7 +673,19 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
 	hub.ConsumeMessage("commit", nil)
-	fmt.Println(subMan.PushList)
+	correct = `3: {"height":1010,"timestamp":"2019-07-15T08:37:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1010,"timestamp":"2019-07-15T08:37:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+7: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563235270,"time_span":"1hour","market":"abc/cet"}
+6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563235270,"time_span":"1min","market":"abc/cet"}
+5: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563235270,"time_span":"1day","market":"abc/cet"}
+28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563235270,"time_span":"1min","market":"B:xyz/cet"}
+29: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563235270,"time_span":"1hour","market":"B:xyz/cet"}
+30: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563235270,"time_span":"1day","market":"B:xyz/cet"}
+
+`
+	subMan.compareResult(t, correct)
+	subMan.clearPushList()
+
 	newHeightInfo = &NewHeightInfo{
 		Height:        1011,
 		TimeStamp:     T("2019-07-15T08:38:10Z"),
@@ -676,7 +694,49 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
 	hub.ConsumeMessage("commit", nil)
-	fmt.Println(subMan.PushList)
+	correct = `3: {"height":1011,"timestamp":"2019-07-15T08:38:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1011,"timestamp":"2019-07-15T08:38:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"0","unix_time":1563179830,"time_span":"1min","market":"abc/cet"}
+28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563179830,"time_span":"1min","market":"B:xyz/cet"}
+`
+	subMan.compareResult(t, correct)
+	subMan.clearPushList()
+
+	notificationTx = &NotificationTx{
+		Signers: []string{"coinex1celqkm3yfkgg6nz9s5yfpnkzdsd0n3jhux4p65"},
+		Transfers: []TransferRecord{
+			{
+				Sender:    "coinex1celqkm3yfkgg6nz9s5yfpnkzdsd0n3jhux4p65",
+				Recipient: "coinex1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8vc4efa",
+				Amount:    "200000000cet",
+			},
+		},
+		SerialNumber: 0,
+		MsgTypes:     []string{"MsgCommentToken"},
+		TxJSON:       `{"msg":[{"sender":"coinex1celqkm3yfkgg6nz9s5yfpnkzdsd0n3jhux4p65","token":"cet","donation":200000000,"title":"I-Love-CET","content":"Y2V0LXRvLXRoZS1tb29u","content_type":3,"references":null}],"fee":{"amount":[{"denom":"cet","amount":"100000000"}],"gas":200000},"signatures":[{"pub_key":[2,119,25,36,163,210,253,58,145,17,158,75,123,12,139,148,28,200,192,210,26,15,209,158,174,123,120,36,169,194,90,160,193],"signature":"KJS8GfOXmrN0LiNRlupYrhcjpLw5YWN4SOaJjEQHglM6+3JbVz7ewNni+qy4XpEcj/t+d4EN5od+OvFjRGK3qA=="}],"memo":"主贴I-Love-CET由用户node0在cet讨论区发表，附带2_0000_0000个sato.CET的捐赠，内容如下："}`,
+		Height:       5,
+		Hash:         "",
+	}
+	bytes, _ = json.Marshal(notificationTx)
+	hub.ConsumeMessage("notify_tx", bytes)
+
+	notificationTx = &NotificationTx{
+		Signers: []string{"coinex10dxnwwzht8x2qt3tv8wkgqdlxkm4ks9fn97xxa"},
+		Transfers: []TransferRecord{
+			{
+				Sender:    "coinex10dxnwwzht8x2qt3tv8wkgqdlxkm4ks9fn97xxa",
+				Recipient: "coinex1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8vc4efa",
+				Amount:    "1000000000cet",
+			},
+		},
+		SerialNumber: 0,
+		MsgTypes:     []string{"MsgDonateToCommunityPool"},
+		TxJSON:       `{"msg":[{"from_addr":"coinex10dxnwwzht8x2qt3tv8wkgqdlxkm4ks9fn97xxa","amount":[{"denom":"cet","amount":"1000000000"}]}],"fee":{"amount":[{"denom":"cet","amount":"100000000"}],"gas":"200000"},"signatures":[{"pub_key":{"type":"tendermint/PubKeySecp256k1","value":"Anig0kB8ClDYlzcPf570kYeoxhoYM+rOtdpsP9HmNtl2"},"signature":"gYsePRyt/XTm9+uOAzWRqIYShvqU4YxAKmzmjupbEPgEdWI0XR1S0n8TFz8n9x4Fx5NZyNdcHPwvYCrBwa6znA=="}],"memo":"用户node0发起向CommunityPool的捐款10_0000_0000sato.CET"}`,
+		Height:       5,
+		Hash:         "",
+	}
+	bytes, _ = json.Marshal(notificationTx)
+	hub.ConsumeMessage("notify_tx", bytes)
 	newHeightInfo = &NewHeightInfo{
 		Height:        1012,
 		TimeStamp:     T("2019-07-15T08:39:10Z"),
@@ -684,8 +744,31 @@ func Test1(t *testing.T) {
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
+
+	msgBancorTradeInfoForKafka = MsgBancorTradeInfoForKafka{
+		Sender:      addr2,
+		Stock:       "xyz",
+		Money:       "cet",
+		Amount:      2,
+		Side:        SELL,
+		MoneyLimit:  20,
+		TxPrice:     sdk.NewDec(3),
+		BlockHeight: 1003,
+	}
+	bytes, _ = json.Marshal(msgBancorTradeInfoForKafka)
+	hub.ConsumeMessage("bancor_trade", bytes)
+
 	hub.ConsumeMessage("commit", nil)
-	fmt.Println(subMan.PushList)
+	correct = `3: {"height":1012,"timestamp":"2019-07-15T08:39:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1012,"timestamp":"2019-07-15T08:39:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+17: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":2,"side":2,"money_limit":20,"transaction_price":"3.000000000000000000","block_height":1003}
+18: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":2,"side":2,"money_limit":20,"transaction_price":"3.000000000000000000","block_height":1003}
+28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563179890,"time_span":"1min","market":"B:xyz/cet"}
+6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"0","unix_time":1563179890,"time_span":"1min","market":"abc/cet"}
+`
+	subMan.compareResult(t, correct)
+	subMan.clearPushList()
+
 	newHeightInfo = &NewHeightInfo{
 		Height:        1013,
 		TimeStamp:     T("2019-07-15T08:40:10Z"),
@@ -694,5 +777,36 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
 	hub.ConsumeMessage("commit", nil)
-	fmt.Println(subMan.PushList)
+	correct = `3: {"height":1013,"timestamp":"2019-07-15T08:40:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1013,"timestamp":"2019-07-15T08:40:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+27: [{"market":"B:xyz/cet","new":"3.000000000000000000","old":"2.000000000000000000","minute_in_day":320}]
+28: {"open":"3.000000000000000000","close":"3.000000000000000000","high":"3.000000000000000000","low":"3.000000000000000000","total":"2","unix_time":1563179950,"time_span":"1min","market":"B:xyz/cet"}
+6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"0","unix_time":1563179950,"time_span":"1min","market":"abc/cet"}
+`
+	subMan.compareResult(t, correct)
+	subMan.clearPushList()
+
+	correctTickers := []*Ticker{
+		{
+			Market:            "abc/cet",
+			NewPrice:          sdk.NewDec(125).Quo(sdk.NewDec(1000)),
+			OldPriceOneDayAgo: sdk.NewDec(100).Quo(sdk.NewDec(1000)),
+			MinuteInDay:       0,
+		},
+		{
+			Market:            "B:xyz/cet",
+			NewPrice:          sdk.NewDec(3),
+			OldPriceOneDayAgo: sdk.NewDec(2),
+			MinuteInDay:       320,
+		},
+	}
+	tickers := hub.QueryTickers([]string{"abc/cet", "B:xyz/cet"})
+	require.Equal(t, correctTickers, tickers)
+
+	data, timesid = hub.QueryDonation(unixTime, 0, 20)
+	correct = `{"sender":"coinex10dxnwwzht8x2qt3tv8wkgqdlxkm4ks9fn97xxa","amount":"1000000000"}
+{"sender":"coinex1celqkm3yfkgg6nz9s5yfpnkzdsd0n3jhux4p65","amount":"200000000"}`
+	require.Equal(t, correct, toStr(data))
+	bytes, _ = json.Marshal(timesid)
+	require.Equal(t, "[1563179890,44,1563179890,40]", string(bytes))
 }

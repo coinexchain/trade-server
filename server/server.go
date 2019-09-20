@@ -183,7 +183,7 @@ func restoreHub(hub *core.Hub) {
 		data = bz[16:]
 		dataMD5 := md5.Sum(data)
 		if !bytes.Equal(bz[:16], dataMD5[:]) {
-			log.Errorf("hub data file is broken")
+			log.Error("hub data file is broken")
 			return
 		}
 	}
