@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -384,7 +383,7 @@ func appendHashID(bz []byte, hashID string) []byte {
 	if len(hashID) == 0 {
 		return bz
 	}
-	return append(bz[0:len(bz)-1], []byte(fmt.Sprintf(`,"tx_hash":"%s"}`,hashID))...)
+	return append(bz[0:len(bz)-1], []byte(fmt.Sprintf(`,"tx_hash":"%s"}`, hashID))...)
 }
 
 func (hub *Hub) handleNotificationSlash(bz []byte) {
@@ -497,26 +496,14 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 	hub.batch.Set(key, bz)
 	hub.sid++
 
-	for _, acc := range v.Signers {
-		signer := acc
-		k := hub.getTxKey(signer)
-		hub.batch.Set(k, []byte(v.Hash))
-		hub.sid++
-
-		info := hub.subMan.GetTxSubscribeInfo()
-		targets, ok := info[signer]
-		if !ok {
-			continue
-		}
-		for _, target := range targets {
-			hub.subMan.PushTx(target, bz)
-		}
-	}
-
+	tokenNames := make(map[string]bool)
 	for _, transRec := range v.Transfers {
+		tokenName := getTokenNameFromAmount(transRec.Amount)
+		tokenNames[tokenName] = true
+
 		recipient := transRec.Recipient
 		k := hub.getIncomeKey(recipient)
-		hub.batch.Set(k, []byte(v.Hash))
+		hub.batch.Set(k, []byte("|"+tokenName+"|"+v.Hash))
 		hub.sid++
 
 		info := hub.subMan.GetIncomeSubscribeInfo()
@@ -526,6 +513,29 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 		}
 		for _, target := range targets {
 			hub.subMan.PushIncome(target, bz)
+		}
+	}
+
+	tokensAndHash := make([]byte, 1, 60)
+	tokensAndHash[0] = byte('|')
+	for tokenName := range tokenNames {
+		tokensAndHash = append(tokensAndHash, []byte(tokenName+"|")...)
+	}
+	tokensAndHash = append(tokensAndHash, []byte(v.Hash)...)
+
+	for _, acc := range v.Signers {
+		signer := acc
+		k := hub.getTxKey(signer)
+		hub.batch.Set(k, tokensAndHash)
+		hub.sid++
+
+		info := hub.subMan.GetTxSubscribeInfo()
+		targets, ok := info[signer]
+		if !ok {
+			continue
+		}
+		for _, target := range targets {
+			hub.subMan.PushTx(target, bz)
 		}
 	}
 
@@ -1196,11 +1206,8 @@ func (hub *Hub) QueryIncomeAboutToken(token, account string, time int64, sid int
 		data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count, nil)
 		return
 	}
-	r := regexp.MustCompile(fmt.Sprintf("\"amount\":\"[0-9]+%s", token))
 	data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-		entryStr := string(entry)
-		ending := strings.Index(entryStr, "\"serial_number\":")
-		return r.MatchString(entryStr[:ending])
+		return strings.Contains(string(entry), "|"+token+"|")
 	})
 	return
 
@@ -1211,11 +1218,8 @@ func (hub *Hub) QueryTxAboutToken(token, account string, time int64, sid int64, 
 		data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count, nil)
 		return
 	}
-	r := regexp.MustCompile(fmt.Sprintf("\"amount\":\"[0-9]+%s", token))
 	data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-		entryStr := string(entry)
-		ending := strings.Index(entryStr, "\"serial_number\":")
-		return r.MatchString(entryStr[:ending])
+		return strings.Contains(string(entry), "|"+token+"|")
 	})
 	return
 }
@@ -1244,12 +1248,13 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64,
 		idx -= 8
 		time := binary.BigEndian.Uint64(iKey[idx-8 : idx])
 		entry := json.RawMessage(iter.Value())
-		if fetchTxDetail {
-			key := append([]byte{DetailByte}, iter.Value()...)
-			entry = json.RawMessage(hub.db.Get(key))
-		}
 		if filter != nil && !filter(tag, entry) {
 			continue
+		}
+		if fetchTxDetail {
+			hexTxHashID := getTxHashID(iter.Value())
+			key := append([]byte{DetailByte}, hexTxHashID...)
+			entry = json.RawMessage(hub.db.Get(key))
 		}
 		data = append(data, entry)
 		tags = append(tags, tag)
@@ -1259,6 +1264,15 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64,
 		}
 	}
 	return
+}
+
+func getTxHashID(v []byte) []byte {
+	for i := len(v) - 1; i >= 0; i-- {
+		if v[i] == byte('|') {
+			return v[i+1:]
+		}
+	}
+	return []byte{}
 }
 
 func (hub *Hub) QueryTxByHashID(hexHashID string) json.RawMessage {
