@@ -360,7 +360,21 @@ func (w *WebsocketManager) getNoDetailSubscribe(topic string) map[string][]Subsc
 }
 
 func (w *WebsocketManager) GetDepthSubscribeInfo() map[string][]Subscriber {
-	return w.getNoDetailSubscribe(DepthKey)
+	w.RLock()
+	defer w.RUnlock()
+	conns := w.topicAndConns[DepthKey]
+	res := make(map[string][]Subscriber)
+	for conn := range conns {
+		params := conn.topicWithParams[DepthKey]
+		for p := range params {
+			vals := strings.Split(p, SeparateArgu)
+			res[vals[0]] = append(res[vals[0]], ImplSubscriber{
+				Conn:  conn,
+				value: vals[1],
+			})
+		}
+	}
+	return res
 }
 
 func (w *WebsocketManager) GetDealSubscribeInfo() map[string][]Subscriber {

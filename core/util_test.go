@@ -192,7 +192,7 @@ func TestDepthManager(t *testing.T) {
 	dm.EndBlock()
 	dm.DeltaChange(sdk.NewDec(80), sdk.NewInt(-10))
 
-	ppMap := dm.EndBlock()
+	ppMap, _ := dm.EndBlock()
 	for _, pp := range ppMap {
 		require.Equal(t, &PricePoint{sdk.NewDec(80), sdk.NewInt(70)}, pp)
 	}

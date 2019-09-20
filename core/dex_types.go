@@ -260,3 +260,34 @@ func encodeDepth(market string, depth map[string]*PricePoint, buy bool) []byte {
 	}
 	return bz
 }
+
+func encodeDepthLevels(market string, depths map[string]map[sdk.Dec]sdk.Int, buy bool) map[string][]byte {
+	if len(depths) == 0 {
+		return nil
+	}
+	rets := make(map[string][]byte)
+	for level, depth := range depths {
+		rets[level] = encodeDepthLevel(market, depth, buy)
+	}
+	return rets
+}
+
+func encodeDepthLevel(market string, depth map[sdk.Dec]sdk.Int, buy bool) []byte {
+	values := make([]*PricePoint, 0, len(depth))
+	for p, a := range depth {
+		values = append(values, &PricePoint{Price: p, Amount: a})
+	}
+
+	detail := DepthDetails{TradingPair: market}
+	if buy {
+		detail.Bids = values
+	} else {
+		detail.Asks = values
+	}
+
+	bz, err := json.Marshal(detail)
+	if err != nil {
+		log.Error(err)
+	}
+	return bz
+}
