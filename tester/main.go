@@ -475,12 +475,27 @@ func simulateKafkaInput() {
 		log.Fatal(err)
 	}
 
-	unixTime := T("2019-09-29T08:02:06.647266Z").Unix()
-	data := hub.QueryCandleStick("hffp/cet", core.Hour, unixTime, 0, 1000)
-	fmt.Printf("here %s %d\n", toStr(data), unixTime)
-	unixTime = T("2019-09-29T08:02:06.647266Z").Unix()
-	data = hub.QueryCandleStick("hffp/cet", core.Day, unixTime, 0, 1000)
-	fmt.Printf("here %s %d\n", toStr(data), unixTime)
+	//unixTime := T("2019-09-29T08:02:06.647266Z").Unix()
+	//data := hub.QueryCandleStick("hffp/cet", core.Hour, unixTime, 0, 1000)
+	//fmt.Printf("here %s %d\n", toStr(data), unixTime)
+
+	//unixTime = T("2019-09-29T08:02:06.647266Z").Unix()
+	//data = hub.QueryCandleStick("hffp/cet", core.Day, unixTime, 0, 1000)
+	//fmt.Printf("here %s %d\n", toStr(data), unixTime)
+
+	t := T("2020-09-29T08:02:06.647266Z").Unix()
+	acc := "coinex1wt8remcgk6v03q4337p2nm9l9r98tyejed4s6l"
+	msgList, timesid := hub.QueryIncomeAboutToken("cet", acc, t, 0, 1024)
+	for i, msg := range msgList {
+		fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
+	}
+	fmt.Printf("------------------------\n")
+	acc = "coinex1qampszmdkpuyrsg620sdldmhxuha6mrrj87y9c"
+	msgList, timesid = hub.QueryTxAboutToken("cet", acc, t, 0, 1024)
+	for i, msg := range msgList {
+		fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
+	}
+
 }
 
 func main() {

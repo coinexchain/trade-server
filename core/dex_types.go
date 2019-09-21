@@ -121,6 +121,17 @@ type TransferRecord struct {
 	Amount    string `json:"amount"`
 }
 
+func getTokenNameFromAmount(amount string) string {
+	tokenName := ""
+	for i, c := range amount {
+		if c < '0' || c > '9' {
+			tokenName = amount[i:]
+			break
+		}
+	}
+	return tokenName
+}
+
 type NotificationTx struct {
 	Signers      []string         `json:"signers"`
 	Transfers    []TransferRecord `json:"transfers"`

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -282,19 +282,19 @@ func Test1(t *testing.T) {
 	hub4j := &HubForJSON{}
 	hub.Dump(hub4j)
 	bz, err := json.Marshal(hub4j)
-	require.Equal(t, nil, err)
+	assert.Equal(t, nil, err)
 	hub = NewHub(db, subMan)
 	hub4jo := &HubForJSON{}
 	err = json.Unmarshal(bz, hub4jo)
-	require.Equal(t, nil, err)
+	assert.Equal(t, nil, err)
 	hub.Load(hub4jo)
 
 	sellDepth, buyDepth := hub.QueryDepth("abc/cet", 20)
 	correct = `[{"p":"100.000000000000000000","a":"300"}]`
 	bytes, _ = json.Marshal(sellDepth)
-	require.Equal(t, correct, string(bytes))
+	assert.Equal(t, correct, string(bytes))
 	bytes, _ = json.Marshal(buyDepth)
-	require.Equal(t, correct, string(bytes))
+	assert.Equal(t, correct, string(bytes))
 
 	newHeightInfo = &NewHeightInfo{
 		Height:        1001,
@@ -383,10 +383,10 @@ func Test1(t *testing.T) {
 	sellDepth, buyDepth = hub.QueryDepth("abc/cet", 20)
 	correct = `[{"p":"100.000000000000000000","a":"200"}]`
 	bytes, _ = json.Marshal(sellDepth)
-	require.Equal(t, correct, string(bytes))
+	assert.Equal(t, correct, string(bytes))
 	correct = `[{"p":"100.000000000000000000","a":"300"}]`
 	bytes, _ = json.Marshal(buyDepth)
-	require.Equal(t, correct, string(bytes))
+	assert.Equal(t, correct, string(bytes))
 
 	cancelOrderInfo := &CancelOrderInfo{
 		OrderID:        addr1 + "-1",
@@ -481,167 +481,167 @@ func Test1(t *testing.T) {
 	blockTimes := hub.QueryBlockTime(1100, 100)
 	bytes, _ = json.Marshal(blockTimes)
 	correct = `[1563179350,1563178750,1563178030]`
-	require.Equal(t, correct, string(bytes))
+	assert.Equal(t, correct, string(bytes))
 
 	//subMan.showResult()
 	correct = `{"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"100","unix_time":1563178750,"time_span":"1min","market":"abc/cet"}`
 	unixTime := T("2019-07-15T08:39:10Z").Unix()
 	data := hub.QueryCandleStick("abc/cet", Minute, unixTime, 0, 20)
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 
 	data, tags, timesid := hub.QueryOrder(addr1, unixTime, 0, 20)
 	correct = `{"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":1,"price":"100.000000000000000000","del_reason":"Manually cancel the order","used_commission":0,"left_stock":50,"remain_amount":0,"deal_stock":100,"deal_money":10}
 {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":100,"deal_money":10,"curr_stock":100,"curr_money":10}
 {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-2","sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","trading_pair":"abc/cet","order_type":2,"price":"100.000000000000000000","quantity":300,"side":1,"time_in_force":3,"feature_fee":1,"height":1001,"frozen_fee":1,"freeze":10}
 {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","trading_pair":"abc/cet","order_type":2,"price":"100.000000000000000000","quantity":300,"side":2,"time_in_force":3,"feature_fee":1,"height":1001,"frozen_fee":1,"freeze":10}`
-	require.Equal(t, correct, toStr(data))
-	require.Equal(t, "dfcc", string(tags))
+	assert.Equal(t, correct, toStr(data))
+	assert.Equal(t, "dfcc", string(tags))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178750,13,1563178750,11,1563178030,8,1563178030,7]", string(bytes))
+	assert.Equal(t, "[1563178750,13,1563178750,11,1563178030,8,1563178030,7]", string(bytes))
 
 	data, tags, _ = hub.QueryOrderAboutToken("cet", addr1, unixTime, 0, 20)
-	require.Equal(t, correct, toStr(data))
-	require.Equal(t, "dfcc", string(tags))
+	assert.Equal(t, correct, toStr(data))
+	assert.Equal(t, "dfcc", string(tags))
 	data, tags, _ = hub.QueryOrderAboutToken("abc", addr1, unixTime, 0, 20)
-	require.Equal(t, correct, toStr(data))
-	require.Equal(t, "dfcc", string(tags))
+	assert.Equal(t, correct, toStr(data))
+	assert.Equal(t, "dfcc", string(tags))
 	data, tags, _ = hub.QueryOrderAboutToken("xyz", addr1, unixTime, 0, 20)
-	require.Equal(t, 0, len(data))
-	require.Equal(t, 0, len(tags))
+	assert.Equal(t, 0, len(data))
+	assert.Equal(t, 0, len(tags))
 
 	data, tags, timesid = hub.QueryOrder(addr1, 1563178750, 10, 20)
 	correct = `{"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-2","sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","trading_pair":"abc/cet","order_type":2,"price":"100.000000000000000000","quantity":300,"side":1,"time_in_force":3,"feature_fee":1,"height":1001,"frozen_fee":1,"freeze":10}
 {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","trading_pair":"abc/cet","order_type":2,"price":"100.000000000000000000","quantity":300,"side":2,"time_in_force":3,"feature_fee":1,"height":1001,"frozen_fee":1,"freeze":10}`
-	require.Equal(t, correct, toStr(data))
-	require.Equal(t, "cc", string(tags))
+	assert.Equal(t, correct, toStr(data))
+	assert.Equal(t, "cc", string(tags))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178030,8,1563178030,7]", string(bytes))
+	assert.Equal(t, "[1563178030,8,1563178030,7]", string(bytes))
 
 	data, tags, timesid = hub.QueryOrderAboutToken("cet", addr1, 1563178750, 10, 20)
-	require.Equal(t, correct, toStr(data))
-	require.Equal(t, "cc", string(tags))
+	assert.Equal(t, correct, toStr(data))
+	assert.Equal(t, "cc", string(tags))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178030,8,1563178030,7]", string(bytes))
+	assert.Equal(t, "[1563178030,8,1563178030,7]", string(bytes))
 
 	data, timesid = hub.QueryLocked(addr1, unixTime, 0, 20)
 	correct = `{"from_address":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","to_address":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","amount":[{"denom":"xyz","amount":"15888"}],"unlock_time":1563179350}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178030,6]", string(bytes))
+	assert.Equal(t, "[1563178030,6]", string(bytes))
 
 	data, timesid = hub.QueryLockedAboutToken("xyz", addr1, unixTime, 0, 20)
 	correct = `{"from_address":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","to_address":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","amount":[{"denom":"xyz","amount":"15888"}],"unlock_time":1563179350}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178030,6]", string(bytes))
+	assert.Equal(t, "[1563178030,6]", string(bytes))
 
 	data, timesid = hub.QueryLockedAboutToken("zbc", addr1, unixTime, 0, 20)
-	require.Equal(t, 0, len(data))
-	require.Equal(t, 0, len(timesid))
+	assert.Equal(t, 0, len(data))
+	assert.Equal(t, 0, len(timesid))
 
 	data, timesid = hub.QueryDeal("abc/cet", unixTime, 0, 20)
 	correct = `{"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":100,"deal_money":10,"curr_stock":100,"curr_money":10}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178750,12]", string(bytes))
+	assert.Equal(t, "[1563178750,12]", string(bytes))
 
 	data, timesid = hub.QueryBancorInfo("xyz/cet", unixTime, 0, 20)
 	correct = `{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","stock":"xyz","money":"cet","init_price":"10.000000000000000000","max_supply":"10000","max_price":"100.000000000000000000","price":"20.000000000000000000","stock_in_pool":"50","money_in_pool":"5000","earliest_cancel_time":0,"block_height":1001}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563179350,15]", string(bytes))
+	assert.Equal(t, "[1563179350,15]", string(bytes))
 
 	data, timesid = hub.QueryBancorTrade(addr2, unixTime, 0, 20)
 	correct = `{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":1,"side":2,"money_limit":10,"transaction_price":"2.000000000000000000","block_height":1001}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563179350,16]", string(bytes))
+	assert.Equal(t, "[1563179350,16]", string(bytes))
 
 	data, timesid = hub.QueryBancorTradeAboutToken("xyz", addr2, unixTime, 0, 20)
 	correct = `{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":1,"side":2,"money_limit":10,"transaction_price":"2.000000000000000000","block_height":1001}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563179350,16]", string(bytes))
+	assert.Equal(t, "[1563179350,16]", string(bytes))
 
 	data, timesid = hub.QueryBancorTradeAboutToken("cet", addr2, unixTime, 0, 20)
 	correct = `{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":1,"side":2,"money_limit":10,"transaction_price":"2.000000000000000000","block_height":1001}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563179350,16]", string(bytes))
+	assert.Equal(t, "[1563179350,16]", string(bytes))
 
 	data, timesid = hub.QueryBancorTradeAboutToken("abc", addr2, unixTime, 0, 20)
-	require.Equal(t, 0, len(data))
-	require.Equal(t, 0, len(timesid))
+	assert.Equal(t, 0, len(data))
+	assert.Equal(t, 0, len(timesid))
 
 	data, timesid = hub.QueryRedelegation(addr2, unixTime, 0, 20)
 	correct = `{"delegator":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","src":"Val1","dst":"Val2","amount":"500","completion_time":"2019-07-15T08:18:10Z"}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178690,4]", string(bytes))
+	assert.Equal(t, "[1563178690,4]", string(bytes))
 
 	data, timesid = hub.QueryUnbonding(addr1, unixTime, 0, 20)
 	correct = `{"delegator":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","validator":"Val1","amount":"300","completion_time":"2019-07-15T08:18:10Z"}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178690,5]", string(bytes))
+	assert.Equal(t, "[1563178690,5]", string(bytes))
 
 	data, timesid = hub.QueryUnlock(addr2, unixTime, 0, 20)
 	correct = `{"address":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","unlocked":[{"denom":"abc","amount":"15000"}],"locked_coins":[{"coin":{"denom":"cet","amount":"5000"},"unlock_time":1563178690}],"frozen_coins":[],"coins":[],"height":1001}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178030,3]", string(bytes))
+	assert.Equal(t, "[1563178030,3]", string(bytes))
 
 	data, timesid = hub.QueryUnlockAboutToken("abc", addr2, unixTime, 0, 20)
 	correct = `{"address":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","unlocked":[{"denom":"abc","amount":"15000"}],"locked_coins":[{"coin":{"denom":"cet","amount":"5000"},"unlock_time":1563178690}],"frozen_coins":[],"coins":[],"height":1001}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178030,3]", string(bytes))
+	assert.Equal(t, "[1563178030,3]", string(bytes))
 
 	data, timesid = hub.QueryUnlockAboutToken("xyz", addr2, unixTime, 0, 20)
-	require.Equal(t, 0, len(data))
-	require.Equal(t, 0, len(timesid))
+	assert.Equal(t, 0, len(data))
+	assert.Equal(t, 0, len(timesid))
 
 	data, timesid = hub.QueryIncome(addr2, unixTime, 0, 20)
 	correct = `{"signers":["cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca"],"transfers":[{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","recipient":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","amount":"1cet"}],"serial_number":20000,"msg_types":["MsgType1"],"tx_json":"","height":1001,"hash":""}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178030,2]", string(bytes))
+	assert.Equal(t, "[1563178030,1]", string(bytes))
 
 	data, timesid = hub.QueryIncomeAboutToken("cet", addr2, unixTime, 0, 20)
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178030,2]", string(bytes))
+	assert.Equal(t, "[1563178030,1]", string(bytes))
 
 	data, timesid = hub.QueryIncomeAboutToken("xyz", addr2, unixTime, 0, 20)
-	require.Equal(t, 0, len(data))
-	require.Equal(t, 0, len(timesid))
+	assert.Equal(t, 0, len(data))
+	assert.Equal(t, 0, len(timesid))
 
 	data, timesid = hub.QueryTx(addr1, unixTime, 0, 20)
 	correct = `{"signers":["cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca"],"transfers":[{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","recipient":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","amount":"1cet"}],"serial_number":20000,"msg_types":["MsgType1"],"tx_json":"","height":1001,"hash":""}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178030,1]", string(bytes))
+	assert.Equal(t, "[1563178030,2]", string(bytes))
 
 	data, timesid = hub.QueryTxAboutToken("cet", addr1, unixTime, 0, 20)
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178030,1]", string(bytes))
+	assert.Equal(t, "[1563178030,2]", string(bytes))
 
 	data, timesid = hub.QueryTxAboutToken("xyz", addr1, unixTime, 0, 20)
-	require.Equal(t, 0, len(data))
-	require.Equal(t, 0, len(timesid))
+	assert.Equal(t, 0, len(data))
+	assert.Equal(t, 0, len(timesid))
 
 	data, timesid = hub.QueryComment("cet", unixTime, 0, 20)
 	correct = `{"id":181,"height":1001,"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","token":"cet","donation":0,"title":"I love CET","content":"I love CET so much.","content_type":3,"references":[{"id":180,"reward_target":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","reward_token":"cet","reward_amount":500000,"attitudes":[]}]}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178750,10]", string(bytes))
+	assert.Equal(t, "[1563178750,10]", string(bytes))
 
 	data, timesid = hub.QuerySlash(unixTime, 0, 20)
 	correct = `{"validator":"Val1","power":"30%","reason":"double_sign","jailed":true}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563178030,9]", string(bytes))
+	assert.Equal(t, "[1563178030,9]", string(bytes))
 
 	newHeightInfo = &NewHeightInfo{
 		Height:        1002,
@@ -745,15 +745,15 @@ func Test1(t *testing.T) {
 	unixTime = T("2019-07-25T08:39:10Z").Unix()
 	data = hub.QueryCandleStick("B:xyz/cet", Hour, unixTime, 0, 20)
 	correct = `{"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179470,"time_span":"1hour","market":"B:xyz/cet"}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 
 	data = hub.QueryCandleStick("abc/cet", Hour, unixTime, 0, 20)
 	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1hour","market":"abc/cet"}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 
 	data = hub.QueryCandleStick("abc/cet", Day, unixTime, 0, 20)
 	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1day","market":"abc/cet"}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	subMan.showResult()
 	subMan.clearPushList()
 
@@ -893,12 +893,12 @@ func Test1(t *testing.T) {
 		},
 	}
 	tickers := hub.QueryTickers([]string{"abc/cet", "B:xyz/cet"})
-	require.Equal(t, correctTickers, tickers)
+	assert.Equal(t, correctTickers, tickers)
 
 	data, timesid = hub.QueryDonation(unixTime, 0, 20)
 	correct = `{"sender":"coinex10dxnwwzht8x2qt3tv8wkgqdlxkm4ks9fn97xxa","amount":"1000000000"}
 {"sender":"coinex1celqkm3yfkgg6nz9s5yfpnkzdsd0n3jhux4p65","amount":"200000000"}`
-	require.Equal(t, correct, toStr(data))
+	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	require.Equal(t, "[1563179890,44,1563179890,40]", string(bytes))
+	assert.Equal(t, "[1563179890,44,1563179890,40]", string(bytes))
 }
