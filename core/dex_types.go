@@ -8,6 +8,7 @@ import (
 	//	"github.com/coinexchain/dex/modules/market"
 
 	"encoding/json"
+	"sort"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -292,6 +293,9 @@ func encodeDepthLevel(market string, depth map[sdk.Dec]sdk.Int, buy bool) []byte
 	for p, a := range depth {
 		values = append(values, &PricePoint{Price: p, Amount: a})
 	}
+	sort.Slice(values, func(i, j int) bool {
+		return values[i].Price.GTE(values[j].Price)
+	})
 
 	detail := DepthDetails{TradingPair: market}
 	if buy {

@@ -150,6 +150,17 @@ func (sm *MocSubscribeManager) compareResult(t *testing.T, correct string) {
 	require.Equal(t, correctList, out)
 }
 
+func GetDepthSubscribeManeger() *MocSubscribeManager {
+	res := &MocSubscribeManager{}
+	res.PushList = make([]pushInfo, 0, 100)
+	res.DepthSubscribeInfo = make(map[string][]Subscriber)
+	res.DepthSubscribeInfo["abc/cet"] = make([]Subscriber, 2)
+	res.DepthSubscribeInfo["abc/cet"][0] = NewDepthSubscriber(8, "10")
+	res.DepthSubscribeInfo["abc/cet"][1] = NewDepthSubscriber(9, "1")
+
+	return res
+}
+
 func GetSubscribeManager(addr1, addr2 string) *MocSubscribeManager {
 	res := &MocSubscribeManager{}
 	res.PushList = make([]pushInfo, 0, 100)
@@ -170,9 +181,10 @@ func GetSubscribeManager(addr1, addr2 string) *MocSubscribeManager {
 	res.CandleStickSubscribeInfo["abc/cet"][1] = NewCandleStickSubscriber(7, HourStr)
 	res.CandleStickSubscribeInfo["abc/cet"][2] = NewCandleStickSubscriber(5, DayStr)
 	res.DepthSubscribeInfo = make(map[string][]Subscriber)
-	res.DepthSubscribeInfo["abc/cet"] = make([]Subscriber, 2)
+	res.DepthSubscribeInfo["abc/cet"] = make([]Subscriber, 3)
 	res.DepthSubscribeInfo["abc/cet"][0] = NewDepthSubscriber(8, "all")
 	res.DepthSubscribeInfo["abc/cet"][1] = NewDepthSubscriber(9, "all")
+	res.DepthSubscribeInfo["abc/cet"][2] = NewDepthSubscriber(120, "0.0001")
 	res.DepthSubscribeInfo["xyz/cet"] = make([]Subscriber, 1)
 	res.DepthSubscribeInfo["xyz/cet"][0] = NewDepthSubscriber(10, "all")
 	res.DealSubscribeInfo = make(map[string][]Subscriber)

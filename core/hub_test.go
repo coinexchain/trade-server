@@ -22,6 +22,97 @@ func toStr(payload []json.RawMessage) string {
 	return strings.Join(out, "\n")
 }
 
+func TestDepthLevel(t *testing.T) {
+	acc1, _ := simpleAddr("00001")
+	addr1 := acc1.String()
+	db := dbm.NewMemDB()
+	subMan := GetDepthSubscribeManeger()
+	hub := NewHub(db, subMan)
+
+	createOrderInfo := &CreateOrderInfo{
+		OrderID:     addr1 + "-1",
+		Sender:      addr1,
+		TradingPair: "abc/cet",
+		OrderType:   LIMIT,
+		Price:       sdk.NewDec(12),
+		Quantity:    300,
+		Side:        SELL,
+		TimeInForce: GTE,
+		FeatureFee:  1,
+		Height:      1001,
+		FrozenFee:   1,
+		Freeze:      10,
+	}
+	bytes, _ := json.Marshal(createOrderInfo)
+	hub.ConsumeMessage("create_order_info", bytes)
+
+	createOrderInfo = &CreateOrderInfo{
+		OrderID:     addr1 + "-2",
+		Sender:      addr1,
+		TradingPair: "abc/cet",
+		OrderType:   LIMIT,
+		Price:       sdk.NewDec(15),
+		Quantity:    400,
+		Side:        BUY,
+		TimeInForce: GTE,
+		FeatureFee:  1,
+		Height:      1001,
+		FrozenFee:   1,
+		Freeze:      10,
+	}
+	bytes, _ = json.Marshal(createOrderInfo)
+	hub.ConsumeMessage("create_order_info", bytes)
+
+	createOrderInfo = &CreateOrderInfo{
+		OrderID:     addr1 + "-3",
+		Sender:      addr1,
+		TradingPair: "abc/cet",
+		OrderType:   LIMIT,
+		Price:       sdk.NewDec(3),
+		Quantity:    300,
+		Side:        BUY,
+		TimeInForce: GTE,
+		FeatureFee:  1,
+		Height:      1001,
+		FrozenFee:   1,
+		Freeze:      10,
+	}
+	bytes, _ = json.Marshal(createOrderInfo)
+	hub.ConsumeMessage("create_order_info", bytes)
+	correct := `
+8: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"400"},{"p":"10.000000000000000000","a":"300"}],"asks":null}
+8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"12.000000000000000000","a":"300"}]}
+9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"12.000000000000000000","a":"300"}]}
+9: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"400"},{"p":"3.000000000000000000","a":"300"}],"asks":null}
+`
+	hub.ConsumeMessage("commit", nil)
+	subMan.compareResult(t, correct)
+	subMan.clearPushList()
+
+	cancelOrderInfo := &CancelOrderInfo{
+		OrderID:        addr1 + "-3",
+		TradingPair:    "abc/cet",
+		Height:         1001,
+		Side:           BUY,
+		Price:          sdk.NewDec(3),
+		DelReason:      "Manually cancel the order",
+		UsedCommission: 0,
+		LeftStock:      300,
+		RemainAmount:   0,
+		DealStock:      0,
+		DealMoney:      0,
+	}
+	bytes, _ = json.Marshal(cancelOrderInfo)
+	hub.ConsumeMessage("del_order_info", bytes)
+	correct = `
+8: {"trading_pair":"abc/cet","bids":[{"p":"10.000000000000000000","a":"0"}],"asks":null}
+9: {"trading_pair":"abc/cet","bids":[{"p":"3.000000000000000000","a":"0"}],"asks":null}
+`
+	hub.ConsumeMessage("commit", nil)
+	subMan.compareResult(t, correct)
+
+}
+
 func Test1(t *testing.T) {
 	acc1, _ := simpleAddr("00001")
 	acc2, _ := simpleAddr("00002")
@@ -325,6 +416,7 @@ func Test1(t *testing.T) {
 8: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":null}
 9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"200"}]}
 9: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":null}
+
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()

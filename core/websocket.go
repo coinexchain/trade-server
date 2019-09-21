@@ -209,7 +209,7 @@ func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub)
 	case KlineKey:
 		err = queryKlineAndpush(hub, c, params, depth)
 	case DepthKey:
-		err = queryDepthAndPush(hub, c, params[0], depth)
+		err = queryDepthAndPush(hub, c, params[0], params[1], depth)
 	case OrderKey:
 		queryOrderAndPush(hub, c, params[0], depth)
 	case TxKey:
@@ -248,19 +248,41 @@ func queryOrderAndPush(hub *Hub, c *Conn, account string, depth int) error {
 	return nil
 }
 
-func queryDepthAndPush(hub *Hub, c *Conn, market string, depth int) error {
+func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, depth int) error {
+	var msg []byte
 	sell, buy := hub.QueryDepth(market, depth)
-	depRes := DepthDetails{
-		TradingPair: market,
-		Bids:        buy,
-		Asks:        sell,
+	if level == "all" {
+		depRes := DepthDetails{
+			TradingPair: market,
+			Bids:        buy,
+			Asks:        sell,
+		}
+		bz, err := json.Marshal(depRes)
+		if err != nil {
+			return err
+		}
+		msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthKey, string(bz)))
+		return c.WriteMessage(websocket.TextMessage, msg)
 	}
-	bz, err := json.Marshal(depRes)
-	if err != nil {
-		return err
+
+	sellLevels := mergePrice(sell)
+	buyLevels := mergePrice(buy)
+	levelBuys := encodeDepthLevels(market, buyLevels, true)
+	levelSells := encodeDepthLevels(market, sellLevels, false)
+	if v, ok := levelSells[level]; ok && len(v) != 0 {
+		msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthKey, string(v)))
+		if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
+			return err
+		}
 	}
-	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthKey, string(bz)))
-	return c.WriteMessage(websocket.TextMessage, msg)
+	if v, ok := levelBuys[level]; ok && len(v) != 0 {
+		msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthKey, string(v)))
+		if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func queryKlineAndpush(hub *Hub, c *Conn, params []string, depth int) error {

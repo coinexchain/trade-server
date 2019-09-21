@@ -328,7 +328,11 @@ func (dm *DepthManager) DeltaChange(price sdk.Dec, amount sdk.Int) {
 // returns the changed PricePoints of last block. Clear dm.Updated for the next block
 func (dm *DepthManager) EndBlock() (map[string]*PricePoint, map[string]map[sdk.Dec]sdk.Int) {
 	ret := dm.Updated
-	merRet := mergePrice(ret)
+	points := make([]*PricePoint, 0, len(ret))
+	for _, v := range ret {
+		points = append(points, v)
+	}
+	merRet := mergePrice(points)
 	dm.Updated = make(map[string]*PricePoint)
 
 	return ret, merRet
@@ -338,7 +342,7 @@ var levels = [11]string{"0.00000001", "0.0000001", "0.000001", "0.00001", "0.000
 var DepthLevel []sdk.Dec
 
 func init() {
-	DepthLevel := make([]sdk.Dec, 0, 11)
+	DepthLevel = make([]sdk.Dec, 0, 11)
 	for _, level := range levels {
 		p, err := sdk.NewDecFromStr(level)
 		if err != nil {
@@ -348,20 +352,31 @@ func init() {
 	}
 }
 
-func mergePrice(update map[string]*PricePoint) map[string]map[sdk.Dec]sdk.Int {
+func mergePrice(update []*PricePoint) map[string]map[sdk.Dec]sdk.Int {
 	if len(update) == 0 {
 		return nil
 	}
 	levelDepth := make(map[string]map[sdk.Dec]sdk.Int, len(levels))
+	for _, lev := range levels {
+		levelDepth[lev] = make(map[sdk.Dec]sdk.Int)
+	}
 	for _, point := range update {
 		for i, lev := range DepthLevel {
+			if point == nil {
+				panic("null")
+			}
+
 			if point.Price.GTE(lev) {
 				if val, ok := levelDepth[levels[i]][point.Price]; ok {
 					levelDepth[levels[i]][point.Price] = val.Add(point.Amount)
 				} else {
-					m := make(map[sdk.Dec]sdk.Int)
-					m[point.Price] = point.Amount
-					levelDepth[levels[i]] = m
+					levelDepth[levels[i]][point.Price] = point.Amount
+				}
+			} else {
+				if val, ok := levelDepth[levels[i]][lev]; ok {
+					levelDepth[levels[i]][lev] = val.Add(point.Amount)
+				} else {
+					levelDepth[levels[i]][lev] = point.Amount
 				}
 			}
 		}
