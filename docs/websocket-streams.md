@@ -208,7 +208,7 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
 
 获取交易对的深度信息
 
-**SubscriptionTopic** : `depth:<trading-pair>`
+**SubscriptionTopic** : `depth:<trading-pair>:<level>`
 
 **Response**:
 
@@ -232,6 +232,10 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
     }
 }
 ```
+
+**支持的level ** : "0.00000001", "0.0000001", "0.000001", "0.00001", "0.0001", "0.001", "0.01", "0.1", "1", "10", "100", "all"
+
+
 
 **payload** : 参见`../swagger/swagger.yaml  /market/depths 请求应答`
 
