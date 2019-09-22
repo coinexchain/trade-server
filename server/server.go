@@ -86,10 +86,7 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	if len(addrs) == 0 {
 		log.Fatal("kafka address is empty")
 	}
-	consumer, err := NewConsumer(strings.Split(addrs, ","), DexTopic, &hub)
-	if err != nil {
-		log.WithError(err).Fatal("create consumer error")
-	}
+	consumer := NewConsumer(strings.Split(addrs, ","), DexTopic, &hub)
 
 	return &TradeSever{
 		httpSvr:  httpSvr,
@@ -130,7 +127,6 @@ func (ts *TradeSever) Stop() {
 
 	// stop hub (before closing consumer)
 	ts.hub.Close()
-	saveHub(ts.hub)
 
 	// stop consumer
 	ts.consumer.Close()
@@ -147,48 +143,33 @@ func newLevelDB(name string, dir string) (db dbm.DB, err error) {
 	return dbm.NewDB(name, dbm.GoLevelDBBackend, dir), err
 }
 
-func saveHub(hub *core.Hub) {
-	bz := hub.GetDumpData()
-	if bz == nil {
-		log.Error("dump data is empty")
-		return
-	}
-	// checksum
-	dataMD5 := md5.Sum(bz)
-	var buf bytes.Buffer
-	buf.Write(dataMD5[:])
-	buf.Write(bz)
-
-	dumpFileName := dataDir + "/" + DumpFile
-	if err := ioutil.WriteFile(dumpFileName, buf.Bytes(), 0644); err != nil {
-		log.WithError(err).Errorf("save to file fail %s", dumpFileName)
-		return
-	}
-	log.Info("save hub finish")
-}
-
 func restoreHub(hub *core.Hub) {
-	dumpFileName := dataDir + "/" + DumpFile
-	if _, err := os.Stat(dumpFileName); err != nil {
-		log.WithError(err).Infof("stat file fail: %s", dumpFileName)
-		return
-	}
-	bz, err := ioutil.ReadFile(dumpFileName)
-	if err != nil {
-		log.WithError(err).Errorf("read from file fail %s", dumpFileName)
-		return
-	}
-	data := bz
-	if len(bz) > 16 && bz[0] != '{' { // TODO: Compatible with old formats. Delete later.
-		data = bz[16:]
-		dataMD5 := md5.Sum(data)
-		if !bytes.Equal(bz[:16], dataMD5[:]) {
-			log.Error("hub data file is broken")
+	data := hub.LoadDumpData()
+	if data == nil {
+		// TODO: Compatible with old data. Delete later.
+		// try to restore from file
+		dumpFileName := dataDir + "/" + DumpFile
+		if _, err := os.Stat(dumpFileName); err != nil {
+			log.WithError(err).Infof("stat file fail: %s", dumpFileName)
 			return
+		}
+		bz, err := ioutil.ReadFile(dumpFileName)
+		if err != nil {
+			log.WithError(err).Errorf("read from file fail %s", dumpFileName)
+			return
+		}
+		data = bz
+		if len(bz) > 16 && bz[0] != '{' {
+			data = bz[16:]
+			dataMD5 := md5.Sum(data)
+			if !bytes.Equal(bz[:16], dataMD5[:]) {
+				log.Error("hub data file is broken")
+				return
+			}
 		}
 	}
 	hub4jo := &core.HubForJSON{}
-	if err = json.Unmarshal(data, hub4jo); err != nil {
+	if err := json.Unmarshal(data, hub4jo); err != nil {
 		log.WithError(err).Error("hub json unmarshal fail")
 		return
 	}

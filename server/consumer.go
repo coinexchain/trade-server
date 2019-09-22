@@ -16,13 +16,13 @@ type TradeConsumer struct {
 	hub      *core.Hub
 }
 
-func NewConsumer(addrs []string, topic string, hub *core.Hub) (*TradeConsumer, error) {
+func NewConsumer(addrs []string, topic string, hub *core.Hub) *TradeConsumer {
 	// set logger
 	sarama.Logger = log.StandardLogger()
 
 	consumer, err := sarama.NewConsumer(addrs, nil)
 	if err != nil {
-		panic(err)
+		log.WithError(err).Fatal("create consumer error")
 	}
 
 	return &TradeConsumer{
@@ -31,7 +31,7 @@ func NewConsumer(addrs []string, topic string, hub *core.Hub) (*TradeConsumer, e
 		stopChan: make(chan byte, 1),
 		quitChan: make(chan byte, 1),
 		hub:      hub,
-	}, nil
+	}
 }
 
 func (tc *TradeConsumer) Consume() {
