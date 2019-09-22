@@ -42,6 +42,7 @@ const (
 	MaxCount     = 1024
 	DumpVersion  = byte(0)
 	DumpInterval = 1000
+	DumpMinTime  = 10 * time.Minute
 	//These bytes are used as the first byte in key
 	CandleStickByte  = byte(0x10)
 	DealByte         = byte(0x12)
@@ -205,9 +206,10 @@ type Hub struct {
 	slashSlice []*NotificationSlash
 
 	// dump
-	partition int32
-	offset    int64
-	dumpFlag  bool
+	partition    int32
+	offset       int64
+	dumpFlag     bool
+	lastDumpTime time.Time
 
 	stopped bool
 
@@ -228,6 +230,7 @@ func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
 		partition:     0,
 		offset:        0,
 		dumpFlag:      false,
+		lastDumpTime:  time.Now(),
 		stopped:       false,
 	}
 }
@@ -1368,6 +1371,7 @@ func (hub *Hub) commitForDump() {
 	offsetBuf := int64ToBigEndianBytes(hub.offset)
 	hub.batch.Set(offsetKey, offsetBuf)
 
+	hub.lastDumpTime = time.Now()
 	log.Infof("dump date at offset: %v", hub.offset)
 }
 
@@ -1383,8 +1387,9 @@ func (hub *Hub) UpdateOffset(partition int32, offset int64) {
 	hub.partition = partition
 	hub.offset = offset
 
+	now := time.Now()
 	// dump data every <interval> offset
-	if offset%DumpInterval == 0 {
+	if offset%DumpInterval == 0 && now.Sub(hub.lastDumpTime) > DumpMinTime {
 		hub.dumpFlag = true
 	}
 }
