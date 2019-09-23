@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 	"strings"
@@ -378,6 +379,16 @@ func QueryTxsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		data, timesid := hub.QueryTxAboutToken(strings.ToLower(token), account, time, sid, count)
 
 		postQueryKVStoreResponse(w, data, timesid)
+	}
+}
+func QueryTxsByHashRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		hashHexStr := vars["hashes"]
+
+		data := hub.QueryTxByHashID(hashHexStr)
+
+		postQueryResponse(w, data)
 	}
 }
 
