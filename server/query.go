@@ -22,6 +22,7 @@ const (
 	queryKeyAccount    = "account"
 	queryKeyToken      = "token"
 	queryKeyMarketList = "market_list"
+	queryKeyOrderTag   = "tag"
 )
 
 func QueryBlockTimesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
@@ -149,6 +150,11 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		}
 
 		token := r.FormValue(queryKeyToken)
+		tag := r.FormValue(queryKeyOrderTag)
+		if err := parseQueryTagParams(tag); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		data, tags, timesid := hub.QueryOrderAboutToken(strings.ToLower(token), account, time, sid, count)
 
 		createOrders := make([]json.RawMessage, 0)
@@ -174,10 +180,21 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 				cancelTimeSid = append(cancelTimeSid, timesid[i*2+1])
 			}
 		}
-		orders := core.OrderInfo{
-			CreateOrderInfo: core.OrderResponse{Data: createOrders, Timesid: createTimeSid},
-			FillOrderInfo:   core.OrderResponse{Data: fillOrders, Timesid: fillTimeSid},
-			CancelOrderInfo: core.OrderResponse{Data: cancelOrders, Timesid: cancelTimeSid},
+
+		var orders interface{}
+		switch tag {
+		case core.CreateOrderStr:
+			orders = core.OrderResponse{Data: createOrders, Timesid: createTimeSid}
+		case core.FillOrderStr:
+			orders = core.OrderResponse{Data: fillOrders, Timesid: fillTimeSid}
+		case core.CancelOrderStr:
+			orders = core.OrderResponse{Data: cancelOrders, Timesid: cancelTimeSid}
+		case "":
+			orders = core.OrderInfo{
+				CreateOrderInfo: core.OrderResponse{Data: createOrders, Timesid: createTimeSid},
+				FillOrderInfo:   core.OrderResponse{Data: fillOrders, Timesid: fillTimeSid},
+				CancelOrderInfo: core.OrderResponse{Data: cancelOrders, Timesid: cancelTimeSid},
+			}
 		}
 
 		postQueryResponse(w, orders)
@@ -508,6 +525,14 @@ func parseQueryTimespanParams(str string) (byte, error) {
 	return timespan, nil
 }
 
+func parseQueryTagParams(str string) error {
+	if str != "" && str != core.CreateOrderStr && str != core.FillOrderStr && str != core.CancelOrderStr {
+		return ErrInvalidTag()
+	}
+
+	return nil
+}
+
 func parseQueryKVStoreParams(r *http.Request) (time int64, sid int64, count int, err error) {
 
 	timeStr := r.FormValue(queryKeyTime)
@@ -560,6 +585,9 @@ func ErrInvalidParams(params string) error {
 }
 func ErrInvalidTimespan() error {
 	return fmt.Errorf("timespan must be 1min/1hour/1day")
+}
+func ErrInvalidTag() error {
+	return fmt.Errorf("tag must be create/fill/cancel")
 }
 
 type DataWrapped struct {

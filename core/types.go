@@ -15,6 +15,9 @@ const (
 	MinuteStr          = "1min"
 	HourStr            = "1hour"
 	DayStr             = "1day"
+	CreateOrderStr     = "create"
+	FillOrderStr       = "fill"
+	CancelOrderStr     = "cancel"
 )
 
 type CandleStick struct {
