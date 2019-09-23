@@ -156,7 +156,7 @@ func QueryOrdersRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		data, tags, timesid := hub.QueryOrderAboutToken(strings.ToLower(token), account, time, sid, count)
+		data, tags, timesid := hub.QueryOrderAboutToken(tag, strings.ToLower(token), account, time, sid, count)
 
 		createOrders := make([]json.RawMessage, 0)
 		fillOrders := make([]json.RawMessage, 0)

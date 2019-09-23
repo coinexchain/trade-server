@@ -407,13 +407,13 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(timesid)
 	assert.Equal(t, "[1563178750,13,1563178750,11,1563178030,8,1563178030,7]", string(bytes))
 
-	data, tags, _ = hub.QueryOrderAboutToken("cet", addr1, unixTime, 0, 20)
+	data, tags, _ = hub.QueryOrderAboutToken("", "cet", addr1, unixTime, 0, 20)
 	assert.Equal(t, correct, toStr(data))
 	assert.Equal(t, "dfcc", string(tags))
-	data, tags, _ = hub.QueryOrderAboutToken("abc", addr1, unixTime, 0, 20)
+	data, tags, _ = hub.QueryOrderAboutToken("", "abc", addr1, unixTime, 0, 20)
 	assert.Equal(t, correct, toStr(data))
 	assert.Equal(t, "dfcc", string(tags))
-	data, tags, _ = hub.QueryOrderAboutToken("xyz", addr1, unixTime, 0, 20)
+	data, tags, _ = hub.QueryOrderAboutToken("", "xyz", addr1, unixTime, 0, 20)
 	assert.Equal(t, 0, len(data))
 	assert.Equal(t, 0, len(tags))
 
@@ -425,7 +425,7 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(timesid)
 	assert.Equal(t, "[1563178030,8,1563178030,7]", string(bytes))
 
-	data, tags, timesid = hub.QueryOrderAboutToken("cet", addr1, 1563178750, 10, 20)
+	data, tags, timesid = hub.QueryOrderAboutToken("", "cet", addr1, 1563178750, 10, 20)
 	assert.Equal(t, correct, toStr(data))
 	assert.Equal(t, "cc", string(tags))
 	bytes, _ = json.Marshal(timesid)

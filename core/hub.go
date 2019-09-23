@@ -62,6 +62,10 @@ const (
 	DonationByte     = byte(0x38)
 	OffsetByte       = byte(0xF0)
 	DumpByte         = byte(0xF1)
+
+	CreateOrderOnlyByte = byte(0x40)
+	FillOrderOnlyByte   = byte(0x42)
+	CancelOrderOnlyByte = byte(0x44)
 )
 
 func limitCount(count int) int {
@@ -1147,11 +1151,19 @@ func (hub *Hub) QueryDonation(time int64, sid int64, count int) (data []json.Raw
 
 // --------------
 
-func (hub *Hub) QueryOrderAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
-	if token == "" {
-		return hub.query(false, OrderByte, []byte(account), time, sid, count, nil)
+func (hub *Hub) QueryOrderAboutToken(tag, token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
+	firstByte := OrderByte
+	if tag == CreateOrderStr {
+		firstByte = CreateOrderOnlyByte
+	} else if tag == FillOrderStr {
+		firstByte = FillOrderOnlyByte
+	} else if tag == CancelOrderStr {
+		firstByte = CancelOrderOnlyByte
 	}
-	return hub.query(false, OrderByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+	if token == "" {
+		return hub.query(false, firstByte, []byte(account), time, sid, count, nil)
+	}
+	return hub.query(false, firstByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
 		s1 := fmt.Sprintf("/%s\",\"height\":", token)
 		s2 := fmt.Sprintf("\"trading_pair\":\"%s/", token)
 		if tag == CreateOrderEndByte {
@@ -1232,8 +1244,14 @@ func (hub *Hub) QueryTxAboutToken(token, account string, time int64, sid int64, 
 
 type filterFunc func(tag byte, entry []byte) bool
 
-func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64, sid int64,
+func (hub *Hub) query(fetchTxDetail bool, firstByteIn byte, bz []byte, time int64, sid int64,
 	count int, filter filterFunc) (data []json.RawMessage, tags []byte, timesid []int64) {
+	firstByte := firstByteIn
+	if firstByteIn == CreateOrderOnlyByte || firstByteIn == FillOrderOnlyByte || firstByteIn == CancelOrderOnlyByte {
+		firstByte = OrderByte
+	} else {
+		firstByteIn = 0
+	}
 	count = limitCount(count)
 	data = make([]json.RawMessage, 0, count)
 	tags = make([]byte, 0, count)
@@ -1265,7 +1283,13 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64,
 		data = append(data, entry)
 		tags = append(tags, tag)
 		timesid = append(timesid, []int64{int64(time), int64(sid)}...)
-		if count--; count == 0 {
+		if firstByteIn == 0 ||
+			(firstByteIn == CreateOrderOnlyByte && tag == CreateOrderEndByte) ||
+			(firstByteIn == FillOrderOnlyByte && tag == FillOrderEndByte) ||
+			(firstByteIn == CancelOrderOnlyByte && tag == CancelOrderEndByte) {
+			count--
+		}
+		if count == 0 {
 			break
 		}
 	}
