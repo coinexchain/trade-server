@@ -248,6 +248,11 @@ paths:
           description: Symbol
           required: false
           type: string
+        - in: query
+          name: tag
+          description: Filter responses type by tag string create/fill/cancel
+          required: false
+          type: string
       responses:
         200:
           description: OK

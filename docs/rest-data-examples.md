@@ -47,7 +47,7 @@ $ curl "http://localhost:8000/market/depths?market=abc/cet&count=1"
 }
 ```
 
-- 查询给定market的K线信息  timespan=16/32/48
+- 查询给定market的K线信息  timespan=1min/1hour/1day
 
 ```bash
 $ curl -k "https://localhost:8000/market/candle-sticks?market=abc/cet&timespan=1day&time=1567745901&count=1&sid=0"
@@ -66,7 +66,7 @@ $ curl "http://localhost:8000/market/candle-sticks?market=abc/cet&timespan=1day&
 ]
 ```
 
-- 查询用户的orders信息
+- 查询用户的orders信息 tag=create/fill/cancel
 
 ```bash
 $ curl -k  "https://localhost:8000/market/user-orders?account=coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly&time=1567745901&count=3&sid=0"
