@@ -248,6 +248,11 @@ paths:
           description: Symbol
           required: false
           type: string
+        - in: query
+          name: tag
+          description: Filter responses type by tag string create/fill/cancel
+          required: false
+          type: string
       responses:
         200:
           description: OK
@@ -739,6 +744,28 @@ paths:
                   description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
+  /tx/txs/{hash}:
+    get:
+      summary: Get a Tx from trade server by hash
+      operationId: getTxFromTradeServer
+      tags:
+        - Tx
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: hash
+          description: Tx hash
+          required: true
+          type: string
+          x-example: 2B6D7633C460DAABFCA47592B7F76A95CE95C52B515179C9E9BA49AA620377BA
+      responses:
+        200:
+          description: Tx with the provided hash
+          schema:
+            $ref: '#/definitions/Tx'
+        500:
+          description: Internal Server Error
   /comment/comments:
     get:
       tags:

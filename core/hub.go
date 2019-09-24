@@ -39,7 +39,10 @@ import (
 //}
 
 const (
-	MaxCount = 1024
+	MaxCount     = 1024
+	DumpVersion  = byte(0)
+	DumpInterval = 1000
+	DumpMinTime  = 10 * time.Minute
 	//These bytes are used as the first byte in key
 	CandleStickByte  = byte(0x10)
 	DealByte         = byte(0x12)
@@ -58,6 +61,11 @@ const (
 	LockedByte       = byte(0x36)
 	DonationByte     = byte(0x38)
 	OffsetByte       = byte(0xF0)
+	DumpByte         = byte(0xF1)
+
+	CreateOrderOnlyByte = byte(0x40)
+	FillOrderOnlyByte   = byte(0x42)
+	CancelOrderOnlyByte = byte(0x44)
 )
 
 func limitCount(count int) int {
@@ -201,10 +209,13 @@ type Hub struct {
 	// cache for NotificationSlash
 	slashSlice []*NotificationSlash
 
-	dumpAndStop bool
-	dumpBz      []byte
-	stop        bool
-	stopChan    chan byte
+	// dump
+	partition    int32
+	offset       int64
+	dumpFlag     bool
+	lastDumpTime time.Time
+
+	stopped bool
 
 	currTxHashID string
 }
@@ -220,9 +231,11 @@ func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
 		lastBlockTime: time.Unix(0, 0),
 		tickerMap:     make(map[string]*Ticker),
 		slashSlice:    make([]*NotificationSlash, 0, 10),
-		dumpAndStop:   false,
-		stop:          false,
-		stopChan:      make(chan byte),
+		partition:     0,
+		offset:        0,
+		dumpFlag:      false,
+		lastDumpTime:  time.Now(),
+		stopped:       false,
 	}
 }
 
@@ -999,23 +1012,20 @@ func (hub *Hub) commitForDepth() {
 }
 
 func (hub *Hub) commit() {
-	if hub.stop {
+	if hub.stopped {
 		return
 	}
 	hub.commitForSlash()
 	hub.commitForTicker()
 	hub.commitForDepth()
+	if hub.dumpFlag {
+		hub.commitForDump()
+		hub.dumpFlag = false
+	}
 	hub.dbMutex.Lock()
 	hub.batch.WriteSync()
 	hub.batch.Close()
 	hub.batch = hub.db.NewBatch()
-
-	if hub.dumpAndStop {
-		hub.dumpData()
-		hub.db.Close()
-		hub.stop = true
-		close(hub.stopChan)
-	}
 	hub.dbMutex.Unlock()
 }
 
@@ -1154,11 +1164,19 @@ func (hub *Hub) QueryDonation(time int64, sid int64, count int) (data []json.Raw
 
 // --------------
 
-func (hub *Hub) QueryOrderAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
-	if token == "" {
-		return hub.query(false, OrderByte, []byte(account), time, sid, count, nil)
+func (hub *Hub) QueryOrderAboutToken(tag, token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
+	firstByte := OrderByte
+	if tag == CreateOrderStr {
+		firstByte = CreateOrderOnlyByte
+	} else if tag == FillOrderStr {
+		firstByte = FillOrderOnlyByte
+	} else if tag == CancelOrderStr {
+		firstByte = CancelOrderOnlyByte
 	}
-	return hub.query(false, OrderByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
+	if token == "" {
+		return hub.query(false, firstByte, []byte(account), time, sid, count, nil)
+	}
+	return hub.query(false, firstByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
 		s1 := fmt.Sprintf("/%s\",\"height\":", token)
 		s2 := fmt.Sprintf("\"trading_pair\":\"%s/", token)
 		if tag == CreateOrderEndByte {
@@ -1239,8 +1257,14 @@ func (hub *Hub) QueryTxAboutToken(token, account string, time int64, sid int64, 
 
 type filterFunc func(tag byte, entry []byte) bool
 
-func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64, sid int64,
+func (hub *Hub) query(fetchTxDetail bool, firstByteIn byte, bz []byte, time int64, sid int64,
 	count int, filter filterFunc) (data []json.RawMessage, tags []byte, timesid []int64) {
+	firstByte := firstByteIn
+	if firstByteIn == CreateOrderOnlyByte || firstByteIn == FillOrderOnlyByte || firstByteIn == CancelOrderOnlyByte {
+		firstByte = OrderByte
+	} else {
+		firstByteIn = 0
+	}
 	count = limitCount(count)
 	data = make([]json.RawMessage, 0, count)
 	tags = make([]byte, 0, count)
@@ -1272,7 +1296,13 @@ func (hub *Hub) query(fetchTxDetail bool, firstByte byte, bz []byte, time int64,
 		data = append(data, entry)
 		tags = append(tags, tag)
 		timesid = append(timesid, []int64{int64(time), int64(sid)}...)
-		if count--; count == 0 {
+		if firstByteIn == 0 ||
+			(firstByteIn == CreateOrderOnlyByte && tag == CreateOrderEndByte) ||
+			(firstByteIn == FillOrderOnlyByte && tag == FillOrderEndByte) ||
+			(firstByteIn == CancelOrderOnlyByte && tag == CancelOrderEndByte) {
+			count--
+		}
+		if count == 0 {
 			break
 		}
 	}
@@ -1353,40 +1383,68 @@ func (hub *Hub) Dump(hub4j *HubForJSON) {
 	}
 }
 
-func (hub *Hub) dumpData() {
+func (hub *Hub) LoadDumpData() []byte {
+	key := getDumpKey()
+	hub.dbMutex.RLock()
+	defer hub.dbMutex.RUnlock()
+	bz := hub.db.Get(key)
+	return bz
+}
+
+func (hub *Hub) commitForDump() {
+	// save dump data
 	hub4j := &HubForJSON{}
 	hub.Dump(hub4j)
-	bz, err := json.Marshal(hub4j)
+	dumpKey := getDumpKey()
+	dumpBuf, err := json.Marshal(hub4j)
 	if err != nil {
 		log.WithError(err).Error("hub json marshal fail")
 		return
 	}
-	hub.dumpBz = bz
-	log.Info("dump data finish")
+	hub.batch.Set(dumpKey, dumpBuf)
+
+	// save offset
+	offsetKey := getOffsetKey(hub.partition)
+	offsetBuf := int64ToBigEndianBytes(hub.offset)
+	hub.batch.Set(offsetKey, offsetBuf)
+
+	hub.lastDumpTime = time.Now()
+	log.Infof("dump date at offset: %v", hub.offset)
 }
 
-func (hub *Hub) GetDumpData() []byte {
-	return hub.dumpBz
+func getDumpKey() []byte {
+	key := make([]byte, 2)
+	key[0] = DumpByte
+	key[1] = DumpVersion
+	return key
 }
 
 //===================================
 func (hub *Hub) UpdateOffset(partition int32, offset int64) {
-	key := getOffsetKey(partition)
-	offsetBuf := int64ToBigEndianBytes(offset)
-	hub.batch.Set(key, offsetBuf)
+	hub.partition = partition
+	hub.offset = offset
+
+	now := time.Now()
+	// dump data every <interval> offset
+	if offset%DumpInterval == 0 && now.Sub(hub.lastDumpTime) > DumpMinTime {
+		hub.dumpFlag = true
+	}
 }
 
 func (hub *Hub) LoadOffset(partition int32) int64 {
 	key := getOffsetKey(partition)
+	hub.partition = partition
+
 	hub.dbMutex.RLock()
-	defer func() {
-		hub.dbMutex.RUnlock()
-	}()
+	defer hub.dbMutex.RUnlock()
+
 	offsetBuf := hub.db.Get(key)
 	if offsetBuf == nil {
-		return 0
+		hub.offset = 0
+	} else {
+		hub.offset = int64(binary.BigEndian.Uint64(offsetBuf))
 	}
-	return int64(binary.BigEndian.Uint64(offsetBuf))
+	return hub.offset
 }
 
 func getOffsetKey(partition int32) []byte {
@@ -1397,6 +1455,17 @@ func getOffsetKey(partition int32) []byte {
 }
 
 func (hub *Hub) Close() {
-	hub.dumpAndStop = true
-	<-hub.stopChan
+	// try to dump the latest block
+	hub.dumpFlag = true
+	for i := 0; i < 5; i++ {
+		time.Sleep(time.Second)
+		if !hub.dumpFlag {
+			break
+		}
+	}
+	// close db
+	hub.dbMutex.Lock()
+	hub.db.Close()
+	hub.stopped = true
+	hub.dbMutex.Unlock()
 }

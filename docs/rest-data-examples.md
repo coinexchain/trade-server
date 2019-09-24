@@ -47,7 +47,7 @@ $ curl "http://localhost:8000/market/depths?market=abc/cet&count=1"
 }
 ```
 
-- 查询给定market的K线信息  timespan=16/32/48
+- 查询给定market的K线信息  timespan=1min/1hour/1day
 
 ```bash
 $ curl -k "https://localhost:8000/market/candle-sticks?market=abc/cet&timespan=1day&time=1567745901&count=1&sid=0"
@@ -66,7 +66,7 @@ $ curl "http://localhost:8000/market/candle-sticks?market=abc/cet&timespan=1day&
 ]
 ```
 
-- 查询用户的orders信息
+- 查询用户的orders信息 tag=create/fill/cancel
 
 ```bash
 $ curl -k  "https://localhost:8000/market/user-orders?account=coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly&time=1567745901&count=3&sid=0"
@@ -360,7 +360,31 @@ $ curl "http://localhost:8000/expiry/lockeds?account=coinex1tlegt4y40m3qu3dd4zdd
   ]
 }
 ```
+- 根据Hash查询tx
 
+```bash
+$ curl -k "https://localhost:8000/tx/txs/2B6D7633C460DAABFCA47592B7F76A95CE95C52B515179C9E9BA49AA620377BA" 
+$ curl "http://localhost:8000/tx/txs/2B6D7633C460DAABFCA47592B7F76A95CE95C52B515179C9E9BA49AA620377BA" 
+{
+  "signers": [
+    "coinex1avmxlmztzxap20hawpc85h3uzj3277ja88wec2"
+  ],
+  "transfers": [
+    {
+      "sender": "coinex1avmxlmztzxap20hawpc85h3uzj3277ja88wec2",
+      "recipient": "coinex1j0awxx9lf32y235esjkwvs8h36whqj7f699f8z",
+      "amount": "600000000cet"
+    }
+  ],
+  "serial_number": 13827,
+  "msg_types": [
+    "MsgSend"
+  ],
+  "tx_json": "{\"msg\":[{\"from_address\":\"coinex1avmxlmztzxap20hawpc85h3uzj3277ja88wec2\",\"to_address\":\"coinex1j0awxx9lf32y235esjkwvs8h36whqj7f699f8z\",\"amount\":[{\"denom\":\"cet\",\"amount\":\"600000000\"}],\"unlock_time\":0}],\"fee\":{\"amount\":[{\"denom\":\"cet\",\"amount\":\"200000000\"}],\"gas\":1000000},\"signatures\":[{\"pub_key\":[3,179,51,177,38,165,239,131,137,70,140,45,16,32,32,180,206,208,147,220,179,33,64,50,7,222,134,13,154,168,169,84,223],\"signature\":\"srnjer9+PRkcuZCQjGLQfcBEU+1wO/jPFy9h6sxJBvBwoZ3FuSSC00mvmPmPz/2R9nJ3gGG/KVzIZ128XgIk9w==\"}],\"memo\":\"send money from one account to another\"}",
+  "height": 1928,
+  "hash": ""
+}
+```
 - 查询用户签名的tx 
 
 ```bash

@@ -15,6 +15,9 @@ const (
 	MinuteStr          = "1min"
 	HourStr            = "1hour"
 	DayStr             = "1day"
+	CreateOrderStr     = "create"
+	FillOrderStr       = "fill"
+	CancelOrderStr     = "cancel"
 )
 
 type CandleStick struct {
@@ -113,8 +116,6 @@ type Querier interface {
 	QueryDepth(market string, count int) (sell []*PricePoint, buy []*PricePoint)
 	QueryCandleStick(market string, timespan byte, time int64, sid int64, count int) []json.RawMessage
 
-	QueryOrder(account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64)
-
 	QueryLocked(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryDeal(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryBancorInfo(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
@@ -128,7 +129,7 @@ type Querier interface {
 	QuerySlash(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryDonation(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 
-	QueryOrderAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64)
+	QueryOrderAboutToken(tag, token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64)
 	QueryLockedAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryBancorTradeAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryUnlockAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)

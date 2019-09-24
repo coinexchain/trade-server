@@ -33,6 +33,7 @@ func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager, proxy bool
 	router.HandleFunc("/expiry/unlocks", QueryUnlocksRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/tx/incomes", QueryIncomesRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/tx/txs", QueryTxsRequestHandlerFn(hub)).Methods("GET")
+	router.HandleFunc("/tx/txs/{hash}", QueryTxsByHashRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/comment/comments", QueryCommentsRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/slash/slashings", QuerySlashingsRequestHandlerFn(hub)).Methods("GET")
 
