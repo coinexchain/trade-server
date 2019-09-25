@@ -92,7 +92,7 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, depth int,
 
 	topic := values[0]
 	params := values[1:]
-	if !checkTopicValid(topic) {
+	if !checkTopicValid(topic, params) {
 		log.Errorf("The subscribed topic [%s] is illegal ", topic)
 		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
 	}
@@ -129,7 +129,7 @@ func (w *WebsocketManager) RemoveSubscribeConn(subscriptionTopic string, c *Conn
 	}
 	topic := values[0]
 	params := values[1:]
-	if !checkTopicValid(topic) {
+	if !checkTopicValid(topic, params) {
 		log.Errorf("The subscribed topic [%s] is illegal ", topic)
 		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
 	}
@@ -167,14 +167,41 @@ func (w *WebsocketManager) RemoveSubscribeConn(subscriptionTopic string, c *Conn
 	return nil
 }
 
-func checkTopicValid(topic string) bool {
+func checkTopicValid(topic string, params []string) bool {
 	switch topic {
-	case BlockInfoKey, SlashKey, TickerKey,
-		KlineKey, DepthKey, DealKey, BancorKey,
-		BancorTradeKey, CommentKey, OrderKey,
-		IncomeKey, UnbondingKey, RedelegationKey,
-		UnlockKey, TxKey, LockedKey:
+	case BlockInfoKey, SlashKey:
+		if len(params) != 0 {
+			return false
+		}
 		return true
+	case TickerKey, UnbondingKey, RedelegationKey, LockedKey,
+		UnlockKey, TxKey, IncomeKey, OrderKey, CommentKey,
+		BancorTradeKey, BancorKey, DealKey:
+		if len(params) != 1 {
+			return false
+		}
+		return true
+	case KlineKey:
+		if len(params) != 2 {
+			return false
+		}
+		switch params[1] {
+		case MinuteStr, HourStr, DayStr:
+			return true
+		default:
+			return false
+		}
+	case DepthKey:
+		if len(params) != 2 {
+			return false
+		}
+		switch params[1] {
+		case "all", "0.00000001", "0.0000001", "0.000001", "0.00001",
+			"0.0001", "0.001", "0.01", "0.1", "1", "10", "100":
+			return true
+		default:
+			return false
+		}
 	default:
 		return false
 	}
@@ -215,6 +242,9 @@ func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub)
 		err = queryDepthAndPush(hub, c, params[0], params[1], depth)
 	case OrderKey:
 		queryOrderAndPush(hub, c, params[0], depth)
+	// case TickerKey:
+	// 	queryAndPushFunc(TickerKey, params[0], hub.QueryTickers)
+	// 	hub.QueryTickers()
 	case TxKey:
 		queryAndPushFunc(TxKey, params[0], hub.QueryTx)
 	case LockedKey:
