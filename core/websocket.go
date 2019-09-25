@@ -192,16 +192,18 @@ func checkTopicValid(topic string, params []string) bool {
 			return false
 		}
 	case DepthKey:
-		if len(params) != 2 {
-			return false
-		}
-		switch params[1] {
-		case "all", "0.00000001", "0.0000001", "0.000001", "0.00001",
-			"0.0001", "0.001", "0.01", "0.1", "1", "10", "100":
+		if len(params) == 1 {
 			return true
-		default:
-			return false
+		} else if len(params) == 2 {
+			switch params[1] {
+			case "all", "0.00000001", "0.0000001", "0.000001", "0.00001",
+				"0.0001", "0.001", "0.01", "0.1", "1", "10", "100":
+				return true
+			default:
+				return false
+			}
 		}
+		return false
 	default:
 		return false
 	}
@@ -232,6 +234,10 @@ func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub)
 			}
 		}
 	}
+	depthLevel := "all"
+	if len(params) == 2 && topic == DepthKey {
+		depthLevel = params[1]
+	}
 
 	switch topic {
 	case SlashKey:
@@ -239,7 +245,7 @@ func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub)
 	case KlineKey:
 		err = queryKlineAndpush(hub, c, params, depth)
 	case DepthKey:
-		err = queryDepthAndPush(hub, c, params[0], params[1], depth)
+		err = queryDepthAndPush(hub, c, params[0], depthLevel, depth)
 	case OrderKey:
 		queryOrderAndPush(hub, c, params[0], depth)
 	// case TickerKey:
@@ -422,10 +428,14 @@ func (w *WebsocketManager) GetDepthSubscribeInfo() map[string][]Subscriber {
 	for conn := range conns {
 		params := conn.topicWithParams[DepthKey]
 		for p := range params {
+			level := "all"
 			vals := strings.Split(p, SeparateArgu)
+			if len(vals) == 2 {
+				level = vals[1]
+			}
 			res[vals[0]] = append(res[vals[0]], ImplSubscriber{
 				Conn:  conn,
-				value: vals[1],
+				value: level,
 			})
 		}
 	}
