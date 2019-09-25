@@ -35,6 +35,9 @@ type Conn struct {
 }
 
 func NewConn(c *websocket.Conn) *Conn {
+	c.SetPongHandler(func(appData string) error {
+		return c.WriteMessage(websocket.TextMessage, []byte(appData))
+	})
 	return &Conn{
 		Conn:            c,
 		topicWithParams: make(map[string]map[string]struct{}),

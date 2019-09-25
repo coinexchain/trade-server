@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -45,7 +46,7 @@ func main() {
 			// "blockinfo",
 			// "slash",
 			// "send_lock_coins:coinex1rafnyd9j9gc9cwu5q5uflefpdn62awyl7rvh8t",
-			"depth:abc/cet:all",
+			"depth:abc/cet:all:2",
 			"depth:abc/cet:10",
 			// "bancor-trade:coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly",
 			// "unlock:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
@@ -75,6 +76,19 @@ func main() {
 		log.Fatal(err)
 		return
 	}
+
+	t := time.NewTicker(time.Second * 2)
+	defer t.Stop()
+
+	go func() {
+		for {
+			err := c.WriteMessage(websocket.TextMessage, []byte("{\"op\":\"ping\"}"))
+			fmt.Println(err)
+			<-t.C
+		}
+
+	}()
+
 	<-done
 
 }

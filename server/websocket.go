@@ -54,16 +54,20 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 
 				var command OpCommand
 				if err := json.Unmarshal(message, &command); err != nil {
-					log.WithError(err).Error("unmarshal message failed")
+					log.WithError(err).Error("unmarshal message failed: %s", string(message))
 					continue
 				}
-
+				fmt.Println(command)
 				switch command.Op {
 				case Subscribe:
 					for _, subTopic := range command.Args {
 						err = wsManager.AddSubscribeConn(subTopic, command.Depth, wsConn, hub)
 						if err != nil {
 							log.WithError(err).Error(fmt.Sprintf("Subscribe topic (%s) failed ", subTopic))
+							err = wsConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("\"error\": %s", err.Error())))
+							if err != nil {
+								_ = wsConn.Close()
+							}
 						}
 					}
 				case Unsubscribe:
@@ -71,11 +75,19 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 						err = wsManager.RemoveSubscribeConn(subTopic, wsConn)
 						if err != nil {
 							log.WithError(err).Error(fmt.Sprintf("Unsubscribe topic (%s) failed ", subTopic))
+							err = wsConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("\"error\": %s", err.Error())))
+							if err != nil {
+								_ = wsConn.Close()
+							}
 						}
 					}
 				case Ping:
-					if err = wsConn.PongHandler()(`{"type": "pong"}`); err != nil {
+					if err = wsConn.PongHandler()(`{\"type\":\"pong\"}`); err != nil {
 						log.WithError(err).Error(fmt.Sprintf("pong message failed"))
+						err = wsConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("\"error\": %s", err.Error())))
+						if err != nil {
+							_ = wsConn.Close()
+						}
 					}
 				}
 
