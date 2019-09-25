@@ -10,7 +10,7 @@
 
 基本的指令发送格式
 
-`{"op":"<command>", "args":["args1", "args2", "args3", ...] }`
+`{"op":"<command>", "args":["args1", "args2", "args3", ...], "depth": <10> }`
 
 *	订阅
 	*  subscribe
