@@ -224,15 +224,16 @@ func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub)
 
 	var err error
 	type queryFunc func(string, int64, int64, int) ([]json.RawMessage, []int64)
-	queryAndPushFunc := func(typeKey string, param string, qf queryFunc) {
+	queryAndPushFunc := func(typeKey string, param string, qf queryFunc) error {
 		data, _ := qf(param, hub.currBlockTime.Unix(), hub.sid, depth)
 		for _, v := range data {
 			msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", typeKey, string(v)))
 			err = c.WriteMessage(websocket.TextMessage, msg)
 			if err != nil {
-				break
+				return err
 			}
 		}
+		return nil
 	}
 	depthLevel := "all"
 	if len(params) == 2 && topic == DepthKey {
@@ -247,31 +248,41 @@ func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub)
 	case DepthKey:
 		err = queryDepthAndPush(hub, c, params[0], depthLevel, depth)
 	case OrderKey:
-		queryOrderAndPush(hub, c, params[0], depth)
-	// case TickerKey:
-	// 	queryAndPushFunc(TickerKey, params[0], hub.QueryTickers)
-	// 	hub.QueryTickers()
+		err = queryOrderAndPush(hub, c, params[0], depth)
+	case TickerKey:
+		err = queryTickerAndPush(hub, c, params[0])
 	case TxKey:
-		queryAndPushFunc(TxKey, params[0], hub.QueryTx)
+		err = queryAndPushFunc(TxKey, params[0], hub.QueryTx)
 	case LockedKey:
-		queryAndPushFunc(LockedKey, params[0], hub.QueryLocked)
+		err = queryAndPushFunc(LockedKey, params[0], hub.QueryLocked)
 	case UnlockKey:
-		queryAndPushFunc(UnlockKey, params[0], hub.QueryUnlock)
+		err = queryAndPushFunc(UnlockKey, params[0], hub.QueryUnlock)
 	case IncomeKey:
-		queryAndPushFunc(IncomeKey, params[0], hub.QueryIncome)
+		err = queryAndPushFunc(IncomeKey, params[0], hub.QueryIncome)
 	case DealKey:
-		queryAndPushFunc(DealKey, params[0], hub.QueryDeal)
+		err = queryAndPushFunc(DealKey, params[0], hub.QueryDeal)
 	case BancorKey:
-		queryAndPushFunc(BancorKey, params[0], hub.QueryBancorInfo)
+		err = queryAndPushFunc(BancorKey, params[0], hub.QueryBancorInfo)
 	case BancorTradeKey:
-		queryAndPushFunc(BancorTradeKey, params[0], hub.QueryBancorTrade)
+		err = queryAndPushFunc(BancorTradeKey, params[0], hub.QueryBancorTrade)
 	case RedelegationKey:
-		queryAndPushFunc(RedelegationKey, params[0], hub.QueryRedelegation)
+		err = queryAndPushFunc(RedelegationKey, params[0], hub.QueryRedelegation)
 	case UnbondingKey:
-		queryAndPushFunc(UnbondingKey, params[0], hub.QueryUnbonding)
+		err = queryAndPushFunc(UnbondingKey, params[0], hub.QueryUnbonding)
 	case CommentKey:
-		queryAndPushFunc(CommentKey, params[0], hub.QueryComment)
+		err = queryAndPushFunc(CommentKey, params[0], hub.QueryComment)
 	}
+	return err
+}
+
+func queryTickerAndPush(hub *Hub, c *Conn, market string) error {
+	tickers := hub.QueryTickers([]string{market})
+	baseData, err := json.Marshal(tickers)
+	if err != nil {
+		return err
+	}
+	err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("{\"type\":\"%s\","+
+		" \"payload\":%s}", OrderKey, string(baseData))))
 	return err
 }
 
