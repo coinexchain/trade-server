@@ -54,10 +54,9 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 
 				var command OpCommand
 				if err := json.Unmarshal(message, &command); err != nil {
-					log.WithError(err).Error("unmarshal message failed: %s", string(message))
+					log.WithError(err).Error("unmarshal message failed: ", string(message))
 					continue
 				}
-				fmt.Println(command)
 				switch command.Op {
 				case Subscribe:
 					for _, subTopic := range command.Args {
