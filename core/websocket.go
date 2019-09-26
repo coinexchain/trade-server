@@ -292,7 +292,7 @@ func queryOrderAndPush(hub *Hub, c *Conn, account string, depth int) error {
 	if len(data) != len(tags) {
 		return errors.Errorf("The number of orders and tags is not equal")
 	}
-	for i := range data {
+	for i := len(data) - 1; i >= 0; i-- {
 		var msg []byte
 		if tags[i] == CreateOrderEndByte {
 			msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", CreateOrderKey, string(data[i])))
