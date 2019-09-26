@@ -87,7 +87,7 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 						}
 					}
 				case Ping:
-					if err = wsConn.PongHandler()(`{\"type\":\"pong\"}`); err != nil {
+					if err = wsConn.PingHandler()(`{"type":"pong"}`); err != nil {
 						log.WithError(err).Error(fmt.Sprintf("pong message failed"))
 						err = wsConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("{\"error\": \"%s\"}", err.Error())))
 						if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
