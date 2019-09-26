@@ -38,6 +38,7 @@ install:
   - go get github.com/mattn/goveralls
 
 script:
+  - cat core/hub_test.go
   - ./scripts/check.sh
 
 notifications:
