@@ -753,9 +753,11 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 	key := hub.getFillOrderKey(accAndSeq[0])
 	hub.batch.Set(key, bz)
 	hub.sid++
-	key = hub.getDealKey(v.TradingPair)
-	hub.batch.Set(key, bz)
-	hub.sid++
+	if v.Side == SELL {
+		key = hub.getDealKey(v.TradingPair)
+		hub.batch.Set(key, bz)
+		hub.sid++
+	}
 	//Push to subscribers
 	info := hub.subMan.GetOrderSubscribeInfo()
 	targets, ok := info[accAndSeq[0]]
@@ -764,18 +766,22 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 			hub.subMan.PushFillOrder(target, bz)
 		}
 	}
-	info = hub.subMan.GetDealSubscribeInfo()
-	targets, ok = info[v.TradingPair]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushDeal(target, bz)
+	if v.Side == SELL {
+		info = hub.subMan.GetDealSubscribeInfo()
+		targets, ok = info[v.TradingPair]
+		if ok {
+			for _, target := range targets {
+				hub.subMan.PushDeal(target, bz)
+			}
 		}
 	}
 	//Update candle sticks
-	csRec := hub.csMan.GetRecord(v.TradingPair)
-	if csRec != nil {
-		price := sdk.NewDec(v.CurrMoney).QuoInt64(v.CurrStock)
-		csRec.Update(hub.currBlockTime, price, v.CurrStock)
+	if v.Side == SELL {
+		csRec := hub.csMan.GetRecord(v.TradingPair)
+		if csRec != nil {
+			price := sdk.NewDec(v.CurrMoney).QuoInt64(v.CurrStock)
+			csRec.Update(hub.currBlockTime, price, v.CurrStock)
+		}
 	}
 	//Update depth info
 	triman, ok := hub.managersMap[v.TradingPair]

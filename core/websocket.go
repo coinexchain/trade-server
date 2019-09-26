@@ -139,14 +139,10 @@ func (w *WebsocketManager) RemoveSubscribeConn(subscriptionTopic string, c *Conn
 		if _, ok := conns[c]; ok {
 			if len(params) != 0 {
 				if len(params) == 1 {
-					if _, ok := c.topicWithParams[topic][params[0]]; ok {
-						delete(c.topicWithParams[topic], params[0])
-					}
+					delete(c.topicWithParams[topic], params[0])
 				} else {
 					tmpVal := strings.Join(params, SeparateArgu)
-					if _, ok := c.topicWithParams[topic][tmpVal]; ok {
-						delete(c.topicWithParams[topic], tmpVal)
-					}
+					delete(c.topicWithParams[topic], tmpVal)
 				}
 				if len(c.topicWithParams[topic]) == 0 {
 					delete(conns, c)

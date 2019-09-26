@@ -462,9 +462,9 @@ func postQueryResponse(w http.ResponseWriter, data interface{}) {
 		err      error
 	)
 
-	switch data.(type) {
+	switch data := data.(type) {
 	case []byte:
-		baseData = data.([]byte)
+		baseData = data
 
 	default:
 		baseData, err = json.Marshal(data)
