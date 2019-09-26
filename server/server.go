@@ -86,8 +86,16 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	if len(addrs) == 0 {
 		log.Fatal("kafka address is empty")
 	}
-	consumer := NewConsumer(strings.Split(addrs, ","), DexTopic, &hub)
 
+	var filePath string
+	backupToggle := svrConfig.GetDefault("backup-toggle", false).(bool)
+	if backupToggle {
+		filePath = svrConfig.GetDefault("backup-file", "").(string)
+		if filePath == "" {
+			log.Fatal("backup data filePath is null")
+		}
+	}
+	consumer := NewConsumer(strings.Split(addrs, ","), DexTopic, filePath, &hub)
 	return &TradeSever{
 		httpSvr:  httpSvr,
 		consumer: consumer,
@@ -130,7 +138,6 @@ func (ts *TradeSever) Stop() {
 
 	// stop consumer
 	ts.consumer.Close()
-
 	log.Info("Server stop...")
 }
 

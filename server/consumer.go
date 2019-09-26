@@ -14,9 +14,10 @@ type TradeConsumer struct {
 	stopChan chan byte
 	quitChan chan byte
 	hub      *core.Hub
+	writer   MsgWriter
 }
 
-func NewConsumer(addrs []string, topic string, hub *core.Hub) *TradeConsumer {
+func NewConsumer(addrs []string, topic string, writeConfig string, hub *core.Hub) *TradeConsumer {
 	// set logger
 	sarama.Logger = log.StandardLogger()
 
@@ -24,13 +25,20 @@ func NewConsumer(addrs []string, topic string, hub *core.Hub) *TradeConsumer {
 	if err != nil {
 		log.WithError(err).Fatal("create consumer error")
 	}
-
+	var writer MsgWriter
+	if writeConfig != "" {
+		writer, err = NewFileMsgWriter(writeConfig)
+		if err != nil {
+			log.WithError(err).Fatal("create writer error")
+		}
+	}
 	return &TradeConsumer{
 		Consumer: consumer,
 		topic:    topic,
 		stopChan: make(chan byte, 1),
 		quitChan: make(chan byte, 1),
 		hub:      hub,
+		writer:   writer,
 	}
 }
 
@@ -75,6 +83,11 @@ func (tc *TradeConsumer) Consume() {
 					tc.hub.UpdateOffset(msg.Partition, msg.Offset)
 					tc.hub.ConsumeMessage(string(msg.Key), msg.Value)
 					offset = msg.Offset
+					if tc.writer != nil {
+						if err := tc.writer.WriteKV(msg.Key, msg.Value); err != nil {
+							log.WithError(err).Errorf("write file failed")
+						}
+					}
 					log.WithFields(log.Fields{"key": string(msg.Key), "value": string(msg.Value), "offset": offset}).Debug("consume message")
 				case <-tc.quitChan:
 					return
@@ -92,5 +105,11 @@ func (tc *TradeConsumer) Close() {
 	if err := tc.Consumer.Close(); err != nil {
 		log.WithError(err).Fatal("consumer close")
 	}
+	if tc.writer != nil {
+		if err := tc.writer.Close(); err != nil {
+			log.WithError(err).Fatal("file close failed")
+		}
+	}
+
 	log.Info("Consumer close")
 }
