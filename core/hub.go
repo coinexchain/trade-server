@@ -270,9 +270,13 @@ func (hub *Hub) Log(s string) {
 var _ Consumer = &Hub{}
 
 func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
-	switch msgType {
-	case "height_info":
+	if msgType == "height_info" {
 		hub.handleNewHeightInfo(bz)
+		return
+	} else if hub.skipHeight {
+		return
+	}
+	switch msgType {
 	case "notify_slash":
 		hub.handleNotificationSlash(bz)
 	case "notify_tx":
@@ -315,17 +319,7 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 		hub.Log("Error in Unmarshal NewHeightInfo")
 		return
 	}
-	b := make([]byte, 8)
-	binary.LittleEndian.PutUint64(b[:], uint64(v.TimeStamp.Unix()))
-	key := append([]byte{BlockHeightByte}, int64ToBigEndianBytes(v.Height)...)
-	hub.batch.Set(key, b)
 
-	for _, ss := range hub.subMan.GetHeightSubscribeInfo() {
-		hub.subMan.PushHeight(ss, bz)
-	}
-
-	hub.lastBlockTime = hub.currBlockTime
-	hub.currBlockTime = v.TimeStamp
 	if hub.currBlockHeight >= v.Height {
 		hub.skipHeight = true
 		hub.Log(fmt.Sprintf("Skipping Height %d<%d\n", hub.currBlockHeight, v.Height))
@@ -336,6 +330,21 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 		hub.skipHeight = true
 		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", hub.currBlockHeight, v.Height))
 	}
+
+	if hub.skipHeight {
+		return
+	}
+
+	b := make([]byte, 8)
+	binary.LittleEndian.PutUint64(b[:], uint64(v.TimeStamp.Unix()))
+	key := append([]byte{BlockHeightByte}, int64ToBigEndianBytes(v.Height)...)
+	hub.batch.Set(key, b)
+	for _, ss := range hub.subMan.GetHeightSubscribeInfo() {
+		hub.subMan.PushHeight(ss, bz)
+	}
+
+	hub.lastBlockTime = hub.currBlockTime
+	hub.currBlockTime = v.TimeStamp
 	hub.beginForCandleSticks()
 }
 
