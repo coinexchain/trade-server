@@ -45,7 +45,7 @@ func main() {
 			// "blockinfo",
 			// "slash",
 			// "send_lock_coins:coinex1rafnyd9j9gc9cwu5q5uflefpdn62awyl7rvh8t",
-			"depth:abc/cet:all",
+			// "depth:abc/cet:all",
 			// "depth:abc/cet:10",
 			// "bancor-trade:coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly",
 			// "unlock:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
@@ -53,7 +53,7 @@ func main() {
 			// "ticker:abc/cet",
 			// "deal:abc/cet",
 			// "comment:cet",
-			// "order:coinex1l0x0d0z25ef3uv4hfgatfkut5xwpfgzqu4xkgf",
+			"order:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
 			// "kline:abc/cet:1min",
 			// "txs:coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg",
 			// "txs:coinex1avmxlmztzxap20hawpc85h3uzj3277ja88wec2",
@@ -63,7 +63,7 @@ func main() {
 			// "redelegation:coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg",
 			// "unbonding:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
 		},
-		Depth: 100,
+		Depth: 2,
 	}
 
 	bz, err := json.Marshal(op)

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -287,9 +288,19 @@ func queryTickerAndPush(hub *Hub, c *Conn, market string) error {
 }
 
 func queryOrderAndPush(hub *Hub, c *Conn, account string, depth int) error {
-	data, _, _ := hub.QueryOrder(account, hub.currBlockTime.Unix(), hub.sid, depth)
+	data, tags, _ := hub.QueryOrder(account, hub.currBlockTime.Unix(), hub.sid, depth)
+	if len(data) != len(tags) {
+		return errors.Errorf("The number of orders and tags is not equal")
+	}
 	for i := range data {
-		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", OrderKey, string(data[i])))
+		var msg []byte
+		if tags[i] == CreateOrderEndByte {
+			msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", CreateOrderKey, string(data[i])))
+		} else if tags[i] == FillOrderEndByte {
+			msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", FillOrderKey, string(data[i])))
+		} else if tags[i] == CancelOrderEndByte {
+			msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", CancelOrderKey, string(data[i])))
+		}
 		err := c.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			return err
@@ -532,13 +543,13 @@ func (w *WebsocketManager) PushDeal(subscriber Subscriber, info []byte) {
 	w.sendEncodeMsg(subscriber, DealKey, info)
 }
 func (w *WebsocketManager) PushCreateOrder(subscriber Subscriber, info []byte) {
-	w.sendEncodeMsg(subscriber, OrderKey, info)
+	w.sendEncodeMsg(subscriber, CreateOrderKey, info)
 }
 func (w *WebsocketManager) PushFillOrder(subscriber Subscriber, info []byte) {
-	w.sendEncodeMsg(subscriber, OrderKey, info)
+	w.sendEncodeMsg(subscriber, FillOrderKey, info)
 }
 func (w *WebsocketManager) PushCancelOrder(subscriber Subscriber, info []byte) {
-	w.sendEncodeMsg(subscriber, OrderKey, info)
+	w.sendEncodeMsg(subscriber, CancelOrderKey, info)
 }
 func (w *WebsocketManager) PushBancorInfo(subscriber Subscriber, info []byte) {
 	w.sendEncodeMsg(subscriber, BancorKey, info)

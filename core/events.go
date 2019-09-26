@@ -23,3 +23,9 @@ const (
 	Type    = "type"
 	Payload = "payload"
 )
+
+const (
+	CreateOrderKey = "create_order"
+	FillOrderKey   = "fill_order"
+	CancelOrderKey = "cancel_order"
+)
