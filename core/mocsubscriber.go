@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 type PlainSubscriber struct {
@@ -147,7 +147,7 @@ func (sm *MocSubscribeManager) compareResult(t *testing.T, correct string) {
 	correctList := strings.Split(strings.TrimSpace(correct), "\n")
 	sort.Strings(correctList)
 	sort.Strings(out)
-	require.Equal(t, correctList, out)
+	assert.Equal(t, correctList, out)
 }
 
 func GetDepthSubscribeManeger() *MocSubscribeManager {

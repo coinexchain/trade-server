@@ -122,6 +122,7 @@ func Test1(t *testing.T) {
 	db := dbm.NewMemDB()
 	subMan := GetSubscribeManager(addr1, addr2)
 	hub := NewHub(db, subMan)
+	hub.currBlockHeight = 999
 
 	newHeightInfo := &NewHeightInfo{
 		Height:        1000,
@@ -644,15 +645,15 @@ func Test1(t *testing.T) {
 	assert.Equal(t, "[1563178030,9]", string(bytes))
 
 	newHeightInfo = &NewHeightInfo{
-		Height:        1002,
+		Height:        1003,
 		TimeStamp:     T("2019-07-15T08:31:10Z"),
 		LastBlockHash: []byte("23456789012345678901"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
 	correct = `
-3: {"height":1002,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
-4: {"height":1002,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
+3: {"height":1003,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
+4: {"height":1003,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 6: {"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"0","unix_time":1563179350,"time_span":"1min","market":"abc/cet"}
 28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179350,"time_span":"1min","market":"B:xyz/cet"}
 `
@@ -691,15 +692,15 @@ func Test1(t *testing.T) {
 	subMan.clearPushList()
 
 	newHeightInfo = &NewHeightInfo{
-		Height:        1003,
+		Height:        1004,
 		TimeStamp:     T("2019-07-16T00:01:10Z"),
 		LastBlockHash: []byte("23456789012345678901"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
 	correct = `
-3: {"height":1003,"timestamp":"2019-07-16T00:01:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
-4: {"height":1003,"timestamp":"2019-07-16T00:01:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
+3: {"height":1004,"timestamp":"2019-07-16T00:01:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
+4: {"height":1004,"timestamp":"2019-07-16T00:01:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563179470,"time_span":"1min","market":"abc/cet"}
 7: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1hour","market":"abc/cet"}
 5: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1day","market":"abc/cet"}
@@ -758,15 +759,16 @@ func Test1(t *testing.T) {
 	subMan.clearPushList()
 
 	newHeightInfo = &NewHeightInfo{
-		Height:        1010,
+		Height:        1005,
 		TimeStamp:     T("2019-07-15T08:37:10Z"),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
 	hub.ConsumeMessage("commit", nil)
-	correct = `3: {"height":1010,"timestamp":"2019-07-15T08:37:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
-4: {"height":1010,"timestamp":"2019-07-15T08:37:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+	correct = `
+3: {"height":1005,"timestamp":"2019-07-15T08:37:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1005,"timestamp":"2019-07-15T08:37:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
 7: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563235270,"time_span":"1hour","market":"abc/cet"}
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563235270,"time_span":"1min","market":"abc/cet"}
 5: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563235270,"time_span":"1day","market":"abc/cet"}
@@ -779,15 +781,16 @@ func Test1(t *testing.T) {
 	subMan.clearPushList()
 
 	newHeightInfo = &NewHeightInfo{
-		Height:        1011,
+		Height:        1006,
 		TimeStamp:     T("2019-07-15T08:38:10Z"),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
 	hub.ConsumeMessage("commit", nil)
-	correct = `3: {"height":1011,"timestamp":"2019-07-15T08:38:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
-4: {"height":1011,"timestamp":"2019-07-15T08:38:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+	correct = `
+3: {"height":1006,"timestamp":"2019-07-15T08:38:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1006,"timestamp":"2019-07-15T08:38:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"0","unix_time":1563179830,"time_span":"1min","market":"abc/cet"}
 28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563179830,"time_span":"1min","market":"B:xyz/cet"}
 `
@@ -830,7 +833,7 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(notificationTx)
 	hub.ConsumeMessage("notify_tx", bytes)
 	newHeightInfo = &NewHeightInfo{
-		Height:        1012,
+		Height:        1007,
 		TimeStamp:     T("2019-07-15T08:39:10Z"),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
@@ -845,16 +848,17 @@ func Test1(t *testing.T) {
 		Side:        SELL,
 		MoneyLimit:  20,
 		TxPrice:     sdk.NewDec(3),
-		BlockHeight: 1003,
+		BlockHeight: 1007,
 	}
 	bytes, _ = json.Marshal(msgBancorTradeInfoForKafka)
 	hub.ConsumeMessage("bancor_trade", bytes)
 
 	hub.ConsumeMessage("commit", nil)
-	correct = `3: {"height":1012,"timestamp":"2019-07-15T08:39:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
-4: {"height":1012,"timestamp":"2019-07-15T08:39:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
-17: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":2,"side":2,"money_limit":20,"transaction_price":"3.000000000000000000","block_height":1003}
-18: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":2,"side":2,"money_limit":20,"transaction_price":"3.000000000000000000","block_height":1003}
+	correct = `
+3: {"height":1007,"timestamp":"2019-07-15T08:39:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1007,"timestamp":"2019-07-15T08:39:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+17: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":2,"side":2,"money_limit":20,"transaction_price":"3.000000000000000000","block_height":1007}
+18: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":2,"side":2,"money_limit":20,"transaction_price":"3.000000000000000000","block_height":1007}
 28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563179890,"time_span":"1min","market":"B:xyz/cet"}
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"0","unix_time":1563179890,"time_span":"1min","market":"abc/cet"}
 `
@@ -862,15 +866,16 @@ func Test1(t *testing.T) {
 	subMan.clearPushList()
 
 	newHeightInfo = &NewHeightInfo{
-		Height:        1013,
+		Height:        1008,
 		TimeStamp:     T("2019-07-15T08:40:10Z"),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
 	hub.ConsumeMessage("commit", nil)
-	correct = `3: {"height":1013,"timestamp":"2019-07-15T08:40:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
-4: {"height":1013,"timestamp":"2019-07-15T08:40:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+	correct = `
+3: {"height":1008,"timestamp":"2019-07-15T08:40:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1008,"timestamp":"2019-07-15T08:40:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
 27: [{"market":"B:xyz/cet","new":"3.000000000000000000","old":"2.000000000000000000","minute_in_day":320}]
 28: {"open":"3.000000000000000000","close":"3.000000000000000000","high":"3.000000000000000000","low":"3.000000000000000000","total":"2","unix_time":1563179950,"time_span":"1min","market":"B:xyz/cet"}
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"0","unix_time":1563179950,"time_span":"1min","market":"abc/cet"}

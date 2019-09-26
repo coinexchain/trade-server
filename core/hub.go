@@ -203,6 +203,9 @@ type Hub struct {
 	// interface to the subscribe functions
 	subMan SubscribeManager
 
+	currBlockHeight int64
+	skipHeight      bool
+
 	currBlockTime time.Time
 	lastBlockTime time.Time
 
@@ -323,6 +326,16 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 
 	hub.lastBlockTime = hub.currBlockTime
 	hub.currBlockTime = v.TimeStamp
+	if hub.currBlockHeight >= v.Height {
+		hub.skipHeight = true
+		hub.Log(fmt.Sprintf("Skipping Height %d<%d\n", hub.currBlockHeight, v.Height))
+	} else if hub.currBlockHeight+1 == v.Height {
+		hub.currBlockHeight = v.Height
+		hub.skipHeight = false
+	} else {
+		hub.skipHeight = true
+		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", hub.currBlockHeight, v.Height))
+	}
 	hub.beginForCandleSticks()
 }
 
@@ -1029,7 +1042,9 @@ func (hub *Hub) commit() {
 		hub.dumpFlag = false
 	}
 	hub.dbMutex.Lock()
-	hub.batch.WriteSync()
+	if !hub.skipHeight {
+		hub.batch.WriteSync()
+	}
 	hub.batch.Close()
 	hub.batch = hub.db.NewBatch()
 	hub.dbMutex.Unlock()
@@ -1335,12 +1350,13 @@ func (hub *Hub) QueryTxByHashID(hexHashID string) json.RawMessage {
 // for serialization and deserialization of Hub
 
 type HubForJSON struct {
-	Sid           int64              `json:"sid"`
-	CSMan         CandleStickManager `json:"csman"`
-	TickerMap     map[string]*Ticker
-	CurrBlockTime time.Time            `json:"curr_block_time"`
-	LastBlockTime time.Time            `json:"last_block_time"`
-	Markets       []*MarketInfoForJSON `json:"markets"`
+	Sid             int64                `json:"sid"`
+	CSMan           CandleStickManager   `json:"csman"`
+	TickerMap       map[string]*Ticker   `json:"ticker_map"`
+	CurrBlockHeight int64                `json:"curr_block_height"`
+	CurrBlockTime   time.Time            `json:"curr_block_time"`
+	LastBlockTime   time.Time            `json:"last_block_time"`
+	Markets         []*MarketInfoForJSON `json:"markets"`
 }
 
 type MarketInfoForJSON struct {
@@ -1353,6 +1369,7 @@ func (hub *Hub) Load(hub4j *HubForJSON) {
 	hub.sid = hub4j.Sid
 	hub.csMan = hub4j.CSMan
 	hub.tickerMap = hub4j.TickerMap
+	hub.currBlockHeight = hub4j.CurrBlockHeight
 	hub.currBlockTime = hub4j.CurrBlockTime
 	hub.lastBlockTime = hub4j.LastBlockTime
 
@@ -1376,6 +1393,7 @@ func (hub *Hub) Dump(hub4j *HubForJSON) {
 	hub4j.Sid = hub.sid
 	hub4j.CSMan = hub.csMan
 	hub4j.TickerMap = hub.tickerMap
+	hub4j.CurrBlockHeight = hub.currBlockHeight
 	hub4j.CurrBlockTime = hub.currBlockTime
 	hub4j.LastBlockTime = hub.lastBlockTime
 
