@@ -124,6 +124,8 @@ func Test1(t *testing.T) {
 	subMan := GetSubscribeManager(addr1, addr2)
 	hub := NewHub(db, subMan)
 	hub.currBlockHeight = 999
+	height := hub.QueryLatestHeight()
+	require.EqualValues(t, -1, height)
 
 	newHeightInfo := &NewHeightInfo{
 		Height:        1000,
@@ -908,6 +910,6 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(timesid)
 	assert.Equal(t, "[1563179890,44,1563179890,40]", string(bytes))
 
-	height := hub.QueryLatestHeight()
+	height = hub.QueryLatestHeight()
 	require.EqualValues(t, 1008, height)
 }
