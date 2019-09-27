@@ -340,14 +340,14 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 	latestHeight := hub.QueryLatestHeight()
 	if latestHeight >= v.Height {
 		hub.subMan.SetSkipOption(true)
-		hub.Log(fmt.Sprintf("Skipping Height %d<%d\n", latestHeight, v.Height))
+		hub.Log(fmt.Sprintf("Skipping Height websocket %d<%d\n", latestHeight, v.Height))
 	} else if latestHeight+1 == v.Height {
 		hub.subMan.SetSkipOption(false)
 	} else if latestHeight < 0 {
 		hub.subMan.SetSkipOption(false)
 	} else {
 		hub.subMan.SetSkipOption(true)
-		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", latestHeight, v.Height))
+		hub.Log(fmt.Sprintf("Invalid Height! websocket %d+1!=%d\n", latestHeight, v.Height))
 	}
 
 	if hub.skipHeight {
