@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -79,6 +80,11 @@ func int64ToBigEndianBytes(n int64) []byte {
 	var b [8]byte
 	binary.BigEndian.PutUint64(b[:], uint64(n))
 	return b[:]
+}
+
+func BigEndianBytesToInt64(bz []byte) int64 {
+	val := binary.BigEndian.Uint64(bz)
+	return int64(val)
 }
 
 // Following are some functions to generate keys to access the KVStore
@@ -209,6 +215,8 @@ type Hub struct {
 	currBlockTime time.Time
 	lastBlockTime time.Time
 
+	skipPushed bool
+
 	// cache for NotificationSlash
 	slashSlice []*NotificationSlash
 
@@ -273,7 +281,7 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 	if msgType == "height_info" {
 		hub.handleNewHeightInfo(bz)
 		return
-	} else if hub.skipHeight {
+	} else if hub.skipHeight || hub.skipPushed {
 		return
 	}
 	switch msgType {
@@ -331,7 +339,20 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", hub.currBlockHeight, v.Height))
 	}
 
-	if hub.skipHeight {
+	latestHeight := hub.QueryLatestHeight()
+	if latestHeight >= v.Height {
+		hub.skipPushed = true
+		hub.Log(fmt.Sprintf("Skipping Height %d<%d\n", latestHeight, v.Height))
+	} else if latestHeight+1 == v.Height {
+		hub.skipPushed = false
+	} else if latestHeight < 0 {
+		hub.skipPushed = false
+	} else {
+		hub.skipPushed = true
+		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", latestHeight, v.Height))
+	}
+
+	if hub.skipHeight || hub.skipPushed {
 		return
 	}
 
@@ -395,6 +416,7 @@ func (hub *Hub) beginForCandleSticks() {
 			}
 			hub.subMan.PushCandleStick(target, bz)
 		}
+
 		// Save candle sticks to KVStore
 		key := hub.getCandleStickKey(cs.Market, GetSpanFromSpanStr(cs.TimeSpan))
 		if len(bz) == 0 {
@@ -448,6 +470,7 @@ func (hub *Hub) handleLockedCoinsMsg(bz []byte) {
 			hub.subMan.PushLockedSendMsg(c, bz)
 		}
 	}
+
 }
 
 func (hub *Hub) analyzeMessages(MsgTypes []string, TxJSON string) {
@@ -549,6 +572,7 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 		for _, target := range targets {
 			hub.subMan.PushIncome(target, bz)
 		}
+
 	}
 
 	tokensAndHash := make([]byte, 1, 60)
@@ -1073,6 +1097,27 @@ func (hub *Hub) QueryTickers(marketList []string) []*Ticker {
 	}
 	hub.tickerMapMutex.RUnlock()
 	return tickerList
+}
+
+func (hub *Hub) QueryLatestHeight() int64 {
+	end := append([]byte{BlockHeightByte}, int64ToBigEndianBytes(math.MaxInt64)...)
+	start := []byte{BlockHeightByte}
+	hub.dbMutex.RLock()
+	iter := hub.db.ReverseIterator(start, end)
+	defer func() {
+		iter.Close()
+		hub.dbMutex.RUnlock()
+	}()
+
+	var latestHeight int64
+	if iter.Valid() {
+		bz := iter.Key()[1:9]
+		latestHeight = BigEndianBytesToInt64(bz)
+	} else {
+		latestHeight = -1
+	}
+
+	return latestHeight
 }
 
 func (hub *Hub) QueryBlockTime(height int64, count int) []int64 {

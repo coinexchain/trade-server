@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -906,4 +907,7 @@ func Test1(t *testing.T) {
 	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
 	assert.Equal(t, "[1563179890,44,1563179890,40]", string(bytes))
+
+	height := hub.QueryLatestHeight()
+	require.EqualValues(t, 1008, height)
 }
