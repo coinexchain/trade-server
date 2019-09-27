@@ -38,7 +38,7 @@ func (w fileMsgWriter) WriteKV(k, v []byte) error {
 	if _, err := w.WriteCloser.Write(v); err != nil {
 		return err
 	}
-	if _, err := w.WriteCloser.Write([]byte("\r\n")); err != nil {
+	if _, err := w.WriteCloser.Write([]byte("\n")); err != nil {
 		return err
 	}
 

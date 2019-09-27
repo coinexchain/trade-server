@@ -88,11 +88,10 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	}
 
 	var filePath string
-	backupToggle := svrConfig.GetDefault("backup-toggle", false).(bool)
-	if backupToggle {
+	if backupToggle := svrConfig.GetDefault("backup-toggle", false).(bool); backupToggle {
 		filePath = svrConfig.GetDefault("backup-file", "").(string)
-		if filePath == "" {
-			log.Fatal("backup data filePath is null")
+		if len(filePath) == 0 {
+			log.Fatal("backup data filePath is empty")
 		}
 	}
 	consumer := NewConsumer(strings.Split(addrs, ","), DexTopic, filePath, &hub)
@@ -130,7 +129,7 @@ func (ts *TradeSever) Stop() {
 	ctx, cancel := context.WithTimeout(context.Background(), WaitTimeout*time.Second)
 	defer cancel()
 	if err := ts.httpSvr.Shutdown(ctx); err != nil {
-		log.WithError(err).Fatal("http server shutdown failed")
+		log.WithError(err).Error("http server shutdown failed")
 	}
 
 	// stop hub (before closing consumer)

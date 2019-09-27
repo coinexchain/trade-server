@@ -26,9 +26,8 @@ func NewConsumer(addrs []string, topic string, writeConfig string, hub *core.Hub
 		log.WithError(err).Fatal("create consumer error")
 	}
 	var writer MsgWriter
-	if writeConfig != "" {
-		writer, err = NewFileMsgWriter(writeConfig)
-		if err != nil {
+	if len(writeConfig) != 0 {
+		if writer, err = NewFileMsgWriter(writeConfig); err != nil {
 			log.WithError(err).Fatal("create writer error")
 		}
 	}
@@ -85,7 +84,7 @@ func (tc *TradeConsumer) Consume() {
 					offset = msg.Offset
 					if tc.writer != nil {
 						if err := tc.writer.WriteKV(msg.Key, msg.Value); err != nil {
-							log.WithError(err).Errorf("write file failed")
+							log.WithError(err).Error("write file failed")
 						}
 					}
 					log.WithFields(log.Fields{"key": string(msg.Key), "value": string(msg.Value), "offset": offset}).Debug("consume message")
@@ -103,11 +102,11 @@ func (tc *TradeConsumer) Close() {
 	close(tc.quitChan)
 	<-tc.stopChan
 	if err := tc.Consumer.Close(); err != nil {
-		log.WithError(err).Fatal("consumer close")
+		log.WithError(err).Error("consumer close failed")
 	}
 	if tc.writer != nil {
 		if err := tc.writer.Close(); err != nil {
-			log.WithError(err).Fatal("file close failed")
+			log.WithError(err).Error("file close failed")
 		}
 	}
 
