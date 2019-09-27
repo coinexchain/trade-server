@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
+	"github.com/lestrrat/go-file-rotatelogs"
 	"github.com/pelletier/go-toml"
+	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,21 +33,41 @@ func InitLog(svrConfig *toml.Tree) error {
 			return err
 		}
 	}
-	file, err := os.OpenFile(logDir+"/"+FileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Print(err)
-		return err
-	}
+
+	var formatter logrus.Formatter
 	if format == JSONFormat {
-		logrus.SetFormatter(&logrus.JSONFormatter{CallerPrettyfier: callerPrettyfier})
+		formatter = &logrus.JSONFormatter{CallerPrettyfier: callerPrettyfier}
 	} else {
-		logrus.SetFormatter(&PlainFormatter{})
+		formatter = &PlainFormatter{}
 	}
+	logrus.SetFormatter(formatter)
 	logrus.SetReportCaller(true)
 	logrus.SetLevel(getLogLevel(level))
-	logrus.SetOutput(file)
+	logrus.AddHook(newRotateHook(logDir, FileName, 24*time.Hour, formatter))
 
 	return nil
+}
+
+func newRotateHook(logPath string, logFileName string, rotationTime time.Duration, formatter logrus.Formatter) *lfshook.LfsHook {
+	absPath, _ := filepath.Abs(logPath)
+	baseLogPath := path.Join(absPath, logFileName)
+	writer, err := rotatelogs.New(
+		baseLogPath+".%Y-%m-%d",
+		rotatelogs.WithLinkName(baseLogPath),
+		rotatelogs.WithRotationTime(rotationTime),
+	)
+	if err != nil {
+		fmt.Printf("config local file system logger error: %v", err)
+	}
+
+	return lfshook.NewHook(lfshook.WriterMap{
+		logrus.DebugLevel: writer,
+		logrus.InfoLevel:  writer,
+		logrus.WarnLevel:  writer,
+		logrus.ErrorLevel: writer,
+		logrus.FatalLevel: writer,
+		logrus.PanicLevel: writer,
+	}, formatter)
 }
 
 func getLogLevel(level string) logrus.Level {
