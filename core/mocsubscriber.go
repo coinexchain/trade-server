@@ -240,6 +240,9 @@ func (sm *MocSubscribeManager) ClearPushInfoList() {
 	sm.PushList = sm.PushList[:0]
 }
 
+func (sm *MocSubscribeManager) SetSkipOption(isSkip bool) {
+}
+
 func (sm *MocSubscribeManager) GetSlashSubscribeInfo() []Subscriber {
 	return sm.SlashSubscribeInfo
 }

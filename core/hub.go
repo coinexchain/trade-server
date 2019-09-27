@@ -215,8 +215,6 @@ type Hub struct {
 	currBlockTime time.Time
 	lastBlockTime time.Time
 
-	skipPushed bool
-
 	// cache for NotificationSlash
 	slashSlice []*NotificationSlash
 
@@ -281,7 +279,7 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 	if msgType == "height_info" {
 		hub.handleNewHeightInfo(bz)
 		return
-	} else if hub.skipHeight || hub.skipPushed {
+	} else if hub.skipHeight {
 		return
 	}
 	switch msgType {
@@ -341,18 +339,18 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 
 	latestHeight := hub.QueryLatestHeight()
 	if latestHeight >= v.Height {
-		hub.skipPushed = true
+		hub.subMan.SetSkipOption(true)
 		hub.Log(fmt.Sprintf("Skipping Height %d<%d\n", latestHeight, v.Height))
 	} else if latestHeight+1 == v.Height {
-		hub.skipPushed = false
+		hub.subMan.SetSkipOption(false)
 	} else if latestHeight < 0 {
-		hub.skipPushed = false
+		hub.subMan.SetSkipOption(false)
 	} else {
-		hub.skipPushed = true
+		hub.subMan.SetSkipOption(true)
 		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", latestHeight, v.Height))
 	}
 
-	if hub.skipHeight || hub.skipPushed {
+	if hub.skipHeight {
 		return
 	}
 
