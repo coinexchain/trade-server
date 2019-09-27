@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -79,6 +80,11 @@ func int64ToBigEndianBytes(n int64) []byte {
 	var b [8]byte
 	binary.BigEndian.PutUint64(b[:], uint64(n))
 	return b[:]
+}
+
+func BigEndianBytesToInt64(bz []byte) int64 {
+	val := binary.BigEndian.Uint64(bz)
+	return int64(val)
 }
 
 // Following are some functions to generate keys to access the KVStore
@@ -203,6 +209,9 @@ type Hub struct {
 	// interface to the subscribe functions
 	subMan SubscribeManager
 
+	currBlockHeight int64
+	skipHeight      bool
+
 	currBlockTime time.Time
 	lastBlockTime time.Time
 
@@ -267,9 +276,13 @@ func (hub *Hub) Log(s string) {
 var _ Consumer = &Hub{}
 
 func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
-	switch msgType {
-	case "height_info":
+	if msgType == "height_info" {
 		hub.handleNewHeightInfo(bz)
+		return
+	} else if hub.skipHeight {
+		return
+	}
+	switch msgType {
 	case "notify_slash":
 		hub.handleNotificationSlash(bz)
 	case "notify_tx":
@@ -312,11 +325,39 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 		hub.Log("Error in Unmarshal NewHeightInfo")
 		return
 	}
+
+	if hub.currBlockHeight >= v.Height {
+		hub.skipHeight = true
+		hub.Log(fmt.Sprintf("Skipping Height %d<%d\n", hub.currBlockHeight, v.Height))
+	} else if hub.currBlockHeight+1 == v.Height {
+		hub.currBlockHeight = v.Height
+		hub.skipHeight = false
+	} else {
+		hub.skipHeight = true
+		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", hub.currBlockHeight, v.Height))
+	}
+
+	latestHeight := hub.QueryLatestHeight()
+	if latestHeight >= v.Height {
+		hub.subMan.SetSkipOption(true)
+		hub.Log(fmt.Sprintf("Skipping Height websocket %d<%d\n", latestHeight, v.Height))
+	} else if latestHeight+1 == v.Height {
+		hub.subMan.SetSkipOption(false)
+	} else if latestHeight < 0 {
+		hub.subMan.SetSkipOption(false)
+	} else {
+		hub.subMan.SetSkipOption(true)
+		hub.Log(fmt.Sprintf("Invalid Height! websocket %d+1!=%d\n", latestHeight, v.Height))
+	}
+
+	if hub.skipHeight {
+		return
+	}
+
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b[:], uint64(v.TimeStamp.Unix()))
 	key := append([]byte{BlockHeightByte}, int64ToBigEndianBytes(v.Height)...)
 	hub.batch.Set(key, b)
-
 	for _, ss := range hub.subMan.GetHeightSubscribeInfo() {
 		hub.subMan.PushHeight(ss, bz)
 	}
@@ -373,6 +414,7 @@ func (hub *Hub) beginForCandleSticks() {
 			}
 			hub.subMan.PushCandleStick(target, bz)
 		}
+
 		// Save candle sticks to KVStore
 		key := hub.getCandleStickKey(cs.Market, GetSpanFromSpanStr(cs.TimeSpan))
 		if len(bz) == 0 {
@@ -426,6 +468,7 @@ func (hub *Hub) handleLockedCoinsMsg(bz []byte) {
 			hub.subMan.PushLockedSendMsg(c, bz)
 		}
 	}
+
 }
 
 func (hub *Hub) analyzeMessages(MsgTypes []string, TxJSON string) {
@@ -527,6 +570,7 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 		for _, target := range targets {
 			hub.subMan.PushIncome(target, bz)
 		}
+
 	}
 
 	tokensAndHash := make([]byte, 1, 60)
@@ -753,9 +797,11 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 	key := hub.getFillOrderKey(accAndSeq[0])
 	hub.batch.Set(key, bz)
 	hub.sid++
-	key = hub.getDealKey(v.TradingPair)
-	hub.batch.Set(key, bz)
-	hub.sid++
+	if v.Side == SELL {
+		key = hub.getDealKey(v.TradingPair)
+		hub.batch.Set(key, bz)
+		hub.sid++
+	}
 	//Push to subscribers
 	info := hub.subMan.GetOrderSubscribeInfo()
 	targets, ok := info[accAndSeq[0]]
@@ -764,18 +810,22 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 			hub.subMan.PushFillOrder(target, bz)
 		}
 	}
-	info = hub.subMan.GetDealSubscribeInfo()
-	targets, ok = info[v.TradingPair]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushDeal(target, bz)
+	if v.Side == SELL {
+		info = hub.subMan.GetDealSubscribeInfo()
+		targets, ok = info[v.TradingPair]
+		if ok {
+			for _, target := range targets {
+				hub.subMan.PushDeal(target, bz)
+			}
 		}
 	}
 	//Update candle sticks
-	csRec := hub.csMan.GetRecord(v.TradingPair)
-	if csRec != nil {
-		price := sdk.NewDec(v.CurrMoney).QuoInt64(v.CurrStock)
-		csRec.Update(hub.currBlockTime, price, v.CurrStock)
+	if v.Side == SELL {
+		csRec := hub.csMan.GetRecord(v.TradingPair)
+		if csRec != nil {
+			price := sdk.NewDec(v.CurrMoney).QuoInt64(v.CurrStock)
+			csRec.Update(hub.currBlockTime, price, v.CurrStock)
+		}
 	}
 	//Update depth info
 	triman, ok := hub.managersMap[v.TradingPair]
@@ -1023,7 +1073,9 @@ func (hub *Hub) commit() {
 		hub.dumpFlag = false
 	}
 	hub.dbMutex.Lock()
-	hub.batch.WriteSync()
+	if !hub.skipHeight {
+		hub.batch.WriteSync()
+	}
 	hub.batch.Close()
 	hub.batch = hub.db.NewBatch()
 	hub.dbMutex.Unlock()
@@ -1043,6 +1095,27 @@ func (hub *Hub) QueryTickers(marketList []string) []*Ticker {
 	}
 	hub.tickerMapMutex.RUnlock()
 	return tickerList
+}
+
+func (hub *Hub) QueryLatestHeight() int64 {
+	end := append([]byte{BlockHeightByte}, int64ToBigEndianBytes(math.MaxInt64)...)
+	start := []byte{BlockHeightByte}
+	hub.dbMutex.RLock()
+	iter := hub.db.ReverseIterator(start, end)
+	defer func() {
+		iter.Close()
+		hub.dbMutex.RUnlock()
+	}()
+
+	var latestHeight int64
+	if iter.Valid() {
+		bz := iter.Key()[1:9]
+		latestHeight = BigEndianBytesToInt64(bz)
+	} else {
+		latestHeight = -1
+	}
+
+	return latestHeight
 }
 
 func (hub *Hub) QueryBlockTime(height int64, count int) []int64 {
@@ -1329,12 +1402,13 @@ func (hub *Hub) QueryTxByHashID(hexHashID string) json.RawMessage {
 // for serialization and deserialization of Hub
 
 type HubForJSON struct {
-	Sid           int64              `json:"sid"`
-	CSMan         CandleStickManager `json:"csman"`
-	TickerMap     map[string]*Ticker
-	CurrBlockTime time.Time            `json:"curr_block_time"`
-	LastBlockTime time.Time            `json:"last_block_time"`
-	Markets       []*MarketInfoForJSON `json:"markets"`
+	Sid             int64                `json:"sid"`
+	CSMan           CandleStickManager   `json:"csman"`
+	TickerMap       map[string]*Ticker   `json:"ticker_map"`
+	CurrBlockHeight int64                `json:"curr_block_height"`
+	CurrBlockTime   time.Time            `json:"curr_block_time"`
+	LastBlockTime   time.Time            `json:"last_block_time"`
+	Markets         []*MarketInfoForJSON `json:"markets"`
 }
 
 type MarketInfoForJSON struct {
@@ -1347,6 +1421,7 @@ func (hub *Hub) Load(hub4j *HubForJSON) {
 	hub.sid = hub4j.Sid
 	hub.csMan = hub4j.CSMan
 	hub.tickerMap = hub4j.TickerMap
+	hub.currBlockHeight = hub4j.CurrBlockHeight
 	hub.currBlockTime = hub4j.CurrBlockTime
 	hub.lastBlockTime = hub4j.LastBlockTime
 
@@ -1370,6 +1445,7 @@ func (hub *Hub) Dump(hub4j *HubForJSON) {
 	hub4j.Sid = hub.sid
 	hub4j.CSMan = hub.csMan
 	hub4j.TickerMap = hub.tickerMap
+	hub4j.CurrBlockHeight = hub.currBlockHeight
 	hub4j.CurrBlockTime = hub.currBlockTime
 	hub4j.LastBlockTime = hub.lastBlockTime
 

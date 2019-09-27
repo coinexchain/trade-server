@@ -103,6 +103,8 @@ type SubscribeManager interface {
 	PushUnlock(subscriber Subscriber, info []byte)
 	PushTx(subscriber Subscriber, info []byte)
 	PushComment(subscriber Subscriber, info []byte)
+
+	SetSkipOption(isSkip bool)
 }
 
 type Consumer interface {

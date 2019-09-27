@@ -36,7 +36,7 @@ type Conn struct {
 }
 
 func NewConn(c *websocket.Conn) *Conn {
-	c.SetPongHandler(func(appData string) error {
+	c.SetPingHandler(func(appData string) error {
 		return c.WriteMessage(websocket.TextMessage, []byte(appData))
 	})
 	return &Conn{
@@ -48,6 +48,7 @@ func NewConn(c *websocket.Conn) *Conn {
 type WebsocketManager struct {
 	sync.RWMutex
 
+	SkipPushed     bool
 	connWithTopics map[*Conn]map[string]struct{} // conn --> topics
 	topicAndConns  map[string]map[*Conn]struct{}
 }
@@ -57,6 +58,10 @@ func NewWebSocketManager() *WebsocketManager {
 		topicAndConns:  make(map[string]map[*Conn]struct{}),
 		connWithTopics: make(map[*Conn]map[string]struct{}),
 	}
+}
+
+func (w *WebsocketManager) SetSkipOption(isSkip bool) {
+	w.SkipPushed = isSkip
 }
 
 func (w *WebsocketManager) AddConn(c *Conn) {
@@ -139,14 +144,10 @@ func (w *WebsocketManager) RemoveSubscribeConn(subscriptionTopic string, c *Conn
 		if _, ok := conns[c]; ok {
 			if len(params) != 0 {
 				if len(params) == 1 {
-					if _, ok := c.topicWithParams[topic][params[0]]; ok {
-						delete(c.topicWithParams[topic], params[0])
-					}
+					delete(c.topicWithParams[topic], params[0])
 				} else {
 					tmpVal := strings.Join(params, SeparateArgu)
-					if _, ok := c.topicWithParams[topic][tmpVal]; ok {
-						delete(c.topicWithParams[topic], tmpVal)
-					}
+					delete(c.topicWithParams[topic], tmpVal)
 				}
 				if len(c.topicWithParams[topic]) == 0 {
 					delete(conns, c)
@@ -292,7 +293,7 @@ func queryOrderAndPush(hub *Hub, c *Conn, account string, depth int) error {
 	if len(data) != len(tags) {
 		return errors.Errorf("The number of orders and tags is not equal")
 	}
-	for i := range data {
+	for i := len(data) - 1; i >= 0; i-- {
 		var msg []byte
 		if tags[i] == CreateOrderEndByte {
 			msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", CreateOrderKey, string(data[i])))
@@ -501,24 +502,23 @@ func (w *WebsocketManager) GetLockedSubscribeInfo() map[string][]Subscriber {
 
 // Push msgs----------------------------
 func (w *WebsocketManager) sendEncodeMsg(subscriber Subscriber, typeKey string, info []byte) {
-	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", typeKey, string(info)))
-	if err := subscriber.WriteMsg(msg); err != nil {
-		log.Errorf(err.Error())
-		s := subscriber.(ImplSubscriber)
-		if err = w.CloseConn(s.Conn); err != nil {
-			log.Error(err)
+	if !w.SkipPushed {
+		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", typeKey, string(info)))
+		if err := subscriber.WriteMsg(msg); err != nil {
+			log.Errorf(err.Error())
+			s := subscriber.(ImplSubscriber)
+			if err = w.CloseConn(s.Conn); err != nil {
+				log.Error(err)
+			}
 		}
 	}
 }
-
 func (w *WebsocketManager) PushLockedSendMsg(subscriber Subscriber, info []byte) {
 	w.sendEncodeMsg(subscriber, LockedKey, info)
 }
-
 func (w *WebsocketManager) PushSlash(subscriber Subscriber, info []byte) {
 	w.sendEncodeMsg(subscriber, SlashKey, info)
 }
-
 func (w *WebsocketManager) PushHeight(subscriber Subscriber, info []byte) {
 	w.sendEncodeMsg(subscriber, BlockInfoKey, info)
 }
