@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -912,4 +913,86 @@ func Test1(t *testing.T) {
 
 	height = hub.QueryLatestHeight()
 	require.EqualValues(t, 1008, height)
+}
+
+func TestDumpOffset(t *testing.T) {
+	acc1, _ := simpleAddr("00001")
+	acc2, _ := simpleAddr("00002")
+	addr1 := acc1.String()
+	addr2 := acc2.String()
+
+	db := dbm.NewMemDB()
+	subMan := GetSubscribeManager(addr1, addr2)
+	hub := NewHub(db, subMan)
+
+	// offset % 1000 != 0 && last dumptime < 10min
+	hub.lastDumpTime = time.Now().Add(-1 * time.Minute)
+	hub.UpdateOffset(0, 1)
+	require.EqualValues(t, false, hub.dumpFlag)
+	newHeightInfo := &NewHeightInfo{
+		Height:        1,
+		TimeStamp:     T("2019-07-15T08:40:10Z"),
+		LastBlockHash: []byte("01234567890123456789"),
+	}
+	bytes, _ := json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+	hub.ConsumeMessage("commit", nil)
+	offset := hub.LoadOffset(0)
+	require.EqualValues(t, 0, offset)
+
+	// offset % 1000 == 0 && last dumptime < 10min
+	hub.lastDumpTime = time.Now().Add(-1 * time.Minute)
+	hub.UpdateOffset(0, 1000)
+	require.EqualValues(t, false, hub.dumpFlag)
+	newHeightInfo.Height++
+	bytes, _ = json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+	hub.ConsumeMessage("commit", nil)
+	offset = hub.LoadOffset(0)
+	require.EqualValues(t, 0, offset)
+
+	// offset % 1000 == 0 && last dumptime > 10min
+	hub.lastDumpTime = time.Now().Add(-11 * time.Minute)
+	hub.UpdateOffset(0, 1000)
+	require.EqualValues(t, true, hub.dumpFlag)
+	newHeightInfo.Height++
+	bytes, _ = json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+	hub4j := &HubForJSON{}
+	hub.Dump(hub4j)
+	dumpData, _ := json.Marshal(hub4j)
+	hub.ConsumeMessage("commit", nil)
+	offset = hub.LoadOffset(0)
+	loadData := hub.LoadDumpData()
+	require.EqualValues(t, 1000, offset)
+	require.EqualValues(t, dumpData, loadData)
+
+	// offset % 1000 != 0 && last dumptime > 10min
+	hub.lastDumpTime = time.Now().Add(-11 * time.Minute)
+	hub.UpdateOffset(0, 1001)
+	require.EqualValues(t, false, hub.dumpFlag)
+	newHeightInfo.Height++
+	bytes, _ = json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+	hub.ConsumeMessage("commit", nil)
+	offset = hub.LoadOffset(0)
+	require.EqualValues(t, 1000, offset)
+
+	// close
+	hub.lastDumpTime = time.Now().Add(-1 * time.Minute)
+	hub.UpdateOffset(0, 1002)
+	require.EqualValues(t, false, hub.dumpFlag)
+	go func() {
+		hub.Close()
+	}()
+	time.Sleep(time.Second)
+	require.EqualValues(t, true, hub.dumpFlag)
+	newHeightInfo.Height++
+	bytes, _ = json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+	hub.ConsumeMessage("commit", nil)
+	offset = hub.LoadOffset(0)
+	require.EqualValues(t, 1002, offset)
+	time.Sleep(2 * time.Second)
+	require.EqualValues(t, true, hub.stopped)
 }
