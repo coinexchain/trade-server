@@ -979,20 +979,20 @@ func TestDumpOffset(t *testing.T) {
 	require.EqualValues(t, 1000, offset)
 
 	// close
-	hub.lastDumpTime = time.Now().Add(-1 * time.Minute)
-	hub.UpdateOffset(0, 1002)
-	require.EqualValues(t, false, hub.dumpFlag)
-	go func() {
-		hub.Close()
-	}()
-	time.Sleep(time.Second)
-	require.EqualValues(t, true, hub.dumpFlag)
-	newHeightInfo.Height++
-	bytes, _ = json.Marshal(newHeightInfo)
-	hub.ConsumeMessage("height_info", bytes)
-	hub.ConsumeMessage("commit", nil)
-	offset = hub.LoadOffset(0)
-	require.EqualValues(t, 1002, offset)
-	time.Sleep(2 * time.Second)
-	require.EqualValues(t, true, hub.stopped)
+	//hub.lastDumpTime = time.Now().Add(-1 * time.Minute)
+	//hub.UpdateOffset(0, 1002)
+	//require.EqualValues(t, false, hub.dumpFlag)
+	//go func() {
+	//	hub.Close()
+	//}()
+	//time.Sleep(time.Second)
+	//require.EqualValues(t, true, hub.dumpFlag)
+	//newHeightInfo.Height++
+	//bytes, _ = json.Marshal(newHeightInfo)
+	//hub.ConsumeMessage("height_info", bytes)
+	//hub.ConsumeMessage("commit", nil)
+	//offset = hub.LoadOffset(0)
+	//require.EqualValues(t, 1002, offset)
+	//time.Sleep(2 * time.Second)
+	//require.EqualValues(t, true, hub.stopped)
 }
