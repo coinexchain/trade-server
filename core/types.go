@@ -38,6 +38,16 @@ type Ticker struct {
 	MinuteInDay       int     `json:"minute_in_day"`
 }
 
+type XTicker struct {
+	Market            string  `json:"market"`
+	NewPrice          sdk.Dec `json:"new"`
+	OldPriceOneDayAgo sdk.Dec `json:"old"`
+	MinuteInDay       int     `json:"minute_in_day"`
+	HighPrice         sdk.Dec `json:"high"`
+	LowPrice          sdk.Dec `json:"low"`
+	TotalDeal         sdk.Int `json:"volume"`
+}
+
 type Donation struct {
 	Sender string `json:"sender"`
 	Amount string `json:"amount"`

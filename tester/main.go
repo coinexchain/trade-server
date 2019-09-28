@@ -293,7 +293,7 @@ func testDepth(pointsSets [][]core.PricePoint) {
 		for _, point := range points {
 			impMan.DeltaChange(point.Price, point.Amount)
 		}
-		ppMap := impMan.EndBlock()
+		ppMap, _ := impMan.EndBlock()
 
 		cL := make([]string, 0, len(changes))
 		for s := range changes {
@@ -434,6 +434,135 @@ func testTicker(priceList []sdk.Dec) {
 	}
 }
 
+//==========================================
+
+func getRandPriceAndAmountList(size int, seed int64, step int32, priceRange int32, amountRange int32) ([]sdk.Dec, []sdk.Int) {
+	r := rand.New(rand.NewSource(seed))
+	priceList := make([]sdk.Dec, size)
+	amountList := make([]sdk.Int, size)
+	var stripe int
+	for i := 0; i < size; i += stripe {
+		p := sdk.NewDec(int64(r.Int31n(priceRange)) + 1)
+		stripe = int(r.Int31n(step))
+		if i+stripe >= size {
+			stripe = size - i
+		}
+		for j := 0; j < stripe; j++ {
+			priceList[i+j] = p
+		}
+		a := sdk.NewInt(int64(r.Int31n(amountRange)))
+		amountList[i] = a
+		for j := 1; j < stripe; j++ {
+			amountList[i+j] = sdk.ZeroInt()
+		}
+	}
+	return priceList, amountList
+}
+
+func findXTickers(priceList []sdk.Dec, amountList []sdk.Int) ([]core.XTicker, []int) {
+	resPos := make([]int, 0, 1000)
+	res := make([]core.XTicker, 0, 1000)
+	if len(priceList) <= core.MinuteNumInDay {
+		panic("priceList too small!")
+	}
+	for i := core.MinuteNumInDay; i < len(priceList); i++ {
+		j := i - core.MinuteNumInDay
+		totalAmount := sdk.ZeroInt()
+		highPrice := sdk.ZeroDec()
+		for k := j + 1; k <= i; k++ {
+			totalAmount = totalAmount.Add(amountList[k])
+			//if i == 1440 && !amountList[k].IsZero() {
+			//	fmt.Printf("Amount: %d %s %s\n", k, totalAmount, amountList[k])
+			//}
+			//if i == 1933 {
+			//	fmt.Printf("HighPrice: %d %s %s\n", k, priceList[k], highPrice)
+			//}
+			if !amountList[k].IsZero() && priceList[k].GT(highPrice) {
+				highPrice = priceList[k]
+			}
+		}
+		lowPrice := highPrice
+		for k := j + 1; k <= i; k++ {
+			//if i == 8505 {
+			//	fmt.Printf("LowPrice: %d %s %s\n", k, priceList[k], lowPrice)
+			//}
+			if !amountList[k].IsZero() && priceList[k].LT(lowPrice) {
+				lowPrice = priceList[k]
+			}
+		}
+		resPos = append(resPos, i)
+		res = append(res, core.XTicker{
+			NewPrice:          priceList[i],
+			OldPriceOneDayAgo: priceList[j],
+			HighPrice:         highPrice,
+			LowPrice:          lowPrice,
+			TotalDeal:         totalAmount,
+			Market:            "",
+		})
+	}
+	return res, resPos
+}
+
+func testXTicker(priceList []sdk.Dec, amountList []sdk.Int) {
+	fmt.Printf("Begin testXTicker\n")
+	refXTickers, refIdxList := findXTickers(priceList, amountList)
+	tkMan := core.DefaultXTickerManager("")
+	for i := 0; i < core.MinuteNumInDay; i++ {
+		tkMan.UpdateNewestPrice(priceList[i], i, amountList[i])
+	}
+	impXTickers := make([]core.XTicker, 0, 1000)
+	impIdxList := make([]int, 0, 1000)
+	//target := 8505
+	//for i := target-core.MinuteNumInDay; i <= target; i++ {
+	//	fmt.Printf("%% %d %d p: %s a: %s\n", i, i%core.MinuteNumInDay, priceList[i], amountList[i])
+	//}
+	for i := core.MinuteNumInDay; i < len(priceList); i++ {
+		j := i % core.MinuteNumInDay
+		tkMan.UpdateNewestPrice(priceList[i], j, amountList[i])
+		ticker := tkMan.GetXTicker(j)
+		if ticker != nil {
+			impXTickers = append(impXTickers, *ticker)
+			impIdxList = append(impIdxList, i)
+		}
+	}
+	for i := 0; i < len(refXTickers) && i < len(impXTickers); i++ {
+		if !refXTickers[i].NewPrice.Equal(impXTickers[i].NewPrice) {
+			panic("NewPrice not equal")
+		}
+		if !refXTickers[i].OldPriceOneDayAgo.Equal(impXTickers[i].OldPriceOneDayAgo) {
+			panic("OldPriceOneDayAgo not equal")
+		}
+		if !refXTickers[i].TotalDeal.Equal(impXTickers[i].TotalDeal) {
+			fmt.Printf("Ref %d: %d %d %s %s\n", i, refIdxList[i], refIdxList[i]-core.MinuteNumInDay, refXTickers[i].NewPrice, refXTickers[i].TotalDeal)
+			fmt.Printf("Imp %d: %d %d %s %s\n", i, impIdxList[i], impIdxList[i]-core.MinuteNumInDay, impXTickers[i].NewPrice, impXTickers[i].TotalDeal)
+			panic("TotalDeal not equal")
+		}
+		if !refXTickers[i].TotalDeal.IsZero() && !refXTickers[i].HighPrice.Equal(impXTickers[i].HighPrice) {
+			fmt.Printf("Ref %d: %d %d %s %s\n", i, refIdxList[i], refIdxList[i]-core.MinuteNumInDay, refXTickers[i].NewPrice, refXTickers[i].HighPrice)
+			fmt.Printf("Imp %d: %d %d %s %s\n", i, impIdxList[i], impIdxList[i]-core.MinuteNumInDay, impXTickers[i].NewPrice, impXTickers[i].HighPrice)
+			panic("HighPrice not equal")
+		}
+		if !refXTickers[i].TotalDeal.IsZero() && !refXTickers[i].LowPrice.Equal(impXTickers[i].LowPrice) {
+			fmt.Printf("Ref %d: %d %d %s %s\n", i, refIdxList[i], refIdxList[i]-core.MinuteNumInDay, refXTickers[i].NewPrice, refXTickers[i].LowPrice)
+			fmt.Printf("Imp %d: %d %d %s %s\n", i, impIdxList[i], impIdxList[i]-core.MinuteNumInDay, impXTickers[i].NewPrice, impXTickers[i].LowPrice)
+			panic("LowPrice not equal")
+		}
+	}
+	for i := 0; i < len(refIdxList) && i < len(impIdxList); i++ {
+		if refIdxList[i] != impIdxList[i] {
+			panic("Idx not equal")
+		}
+	}
+	if len(refXTickers) != len(impXTickers) {
+		panic("length not equal")
+	}
+	if len(refIdxList) != len(impIdxList) {
+		panic("length not equal")
+	}
+}
+
+//----------------------------------------
+
 func toStr(payload []json.RawMessage) string {
 	out := make([]string, len(payload))
 	for i := 0; i < len(out); i++ {
@@ -508,6 +637,28 @@ func main() {
 		return
 	}
 	fmt.Printf("Now run random test\n")
+	//                                                         seed  step priceRange amountRange
+	pList, aList := getRandPriceAndAmountList(core.MinuteNumInDay*7, 0, 50, 1000, 100)
+	testXTicker(pList, aList)
+	pList, aList = getRandPriceAndAmountList(core.MinuteNumInDay*7, 5, 16, 200, 100)
+	testXTicker(pList, aList)
+	pList, aList = getRandPriceAndAmountList(core.MinuteNumInDay*7, 10, 150, 400, 100)
+	testXTicker(pList, aList)
+	pList, aList = getRandPriceAndAmountList(core.MinuteNumInDay*7, 11, 30, 400, 100)
+	testXTicker(pList, aList)
+	pList, aList = getRandPriceAndAmountList(core.MinuteNumInDay*7, 12, 20, 300, 100)
+	testXTicker(pList, aList)
+	pList, aList = getRandPriceAndAmountList(core.MinuteNumInDay*7, 13, 120, 300, 100)
+	testXTicker(pList, aList)
+	pList, aList = getRandPriceAndAmountList(core.MinuteNumInDay*7, 14, 920, 300, 100)
+	testXTicker(pList, aList)
+	pList, aList = getRandPriceAndAmountList(core.MinuteNumInDay*7, 15, 920, 300, 100)
+	testXTicker(pList, aList)
+	pList, aList = getRandPriceAndAmountList(core.MinuteNumInDay*177, 16, 20, 50, 100)
+	testXTicker(pList, aList)
+	pList, aList = getRandPriceAndAmountList(core.MinuteNumInDay*177, 17, 20, 50, 100)
+	testXTicker(pList, aList)
+
 	//                                                  seed  step priceRange
 	testTicker(getRandPriceList(core.MinuteNumInDay*7, 0, 50, 1000))
 	testTicker(getRandPriceList(core.MinuteNumInDay*7, 5, 16, 200))
