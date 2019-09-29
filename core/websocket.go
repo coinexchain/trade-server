@@ -88,7 +88,7 @@ func (w *WebsocketManager) CloseConn(c *Conn) error {
 	return c.Close()
 }
 
-func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, depth int, c *Conn, hub *Hub) error {
+func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, count int, c *Conn, hub *Hub) error {
 	w.Lock()
 	defer w.Unlock()
 	values := strings.Split(subscriptionTopic, SeparateArgu)
@@ -103,7 +103,7 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, depth int,
 		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
 	}
 
-	if err := PushFullInformation(subscriptionTopic, depth, c, hub); err != nil {
+	if err := PushFullInformation(subscriptionTopic, count, c, hub); err != nil {
 		return err
 	}
 
@@ -211,23 +211,23 @@ func checkTopicValid(topic string, params []string) bool {
 	}
 }
 
-func getCount(depth int) int {
-	depth = limitCount(depth)
-	if depth == 0 {
-		depth = 10
+func getCount(count int) int {
+	count = limitCount(count)
+	if count == 0 {
+		count = 10
 	}
-	return depth
+	return count
 }
 
-func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub) error {
+func PushFullInformation(subscriptionTopic string, count int, c *Conn, hub *Hub) error {
 	values := strings.Split(subscriptionTopic, SeparateArgu)
 	topic, params := values[0], values[1:]
-	depth = getCount(depth)
+	count = getCount(count)
 
 	var err error
 	type queryFunc func(string, int64, int64, int) ([]json.RawMessage, []int64)
 	queryAndPushFunc := func(typeKey string, param string, qf queryFunc) error {
-		data, _ := qf(param, hub.currBlockTime.Unix(), hub.sid, depth)
+		data, _ := qf(param, hub.currBlockTime.Unix(), hub.sid, count)
 		for _, v := range data {
 			msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", typeKey, string(v)))
 			err = c.WriteMessage(websocket.TextMessage, msg)
@@ -244,13 +244,13 @@ func PushFullInformation(subscriptionTopic string, depth int, c *Conn, hub *Hub)
 
 	switch topic {
 	case SlashKey:
-		err = querySlashAndPush(hub, c, depth)
+		err = querySlashAndPush(hub, c, count)
 	case KlineKey:
-		err = queryKlineAndpush(hub, c, params, depth)
+		err = queryKlineAndpush(hub, c, params, count)
 	case DepthKey:
-		err = queryDepthAndPush(hub, c, params[0], depthLevel, depth)
+		err = queryDepthAndPush(hub, c, params[0], depthLevel, count)
 	case OrderKey:
-		err = queryOrderAndPush(hub, c, params[0], depth)
+		err = queryOrderAndPush(hub, c, params[0], count)
 	case TickerKey:
 		err = queryTickerAndPush(hub, c, params[0])
 	case TxKey:
@@ -288,8 +288,8 @@ func queryTickerAndPush(hub *Hub, c *Conn, market string) error {
 	return err
 }
 
-func queryOrderAndPush(hub *Hub, c *Conn, account string, depth int) error {
-	data, tags, _ := hub.QueryOrder(account, hub.currBlockTime.Unix(), hub.sid, depth)
+func queryOrderAndPush(hub *Hub, c *Conn, account string, count int) error {
+	data, tags, _ := hub.QueryOrder(account, hub.currBlockTime.Unix(), hub.sid, count)
 	if len(data) != len(tags) {
 		return errors.Errorf("The number of orders and tags is not equal")
 	}
@@ -346,8 +346,8 @@ func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, count int
 	return nil
 }
 
-func queryKlineAndpush(hub *Hub, c *Conn, params []string, depth int) error {
-	candleBz := hub.QueryCandleStick(params[0], GetSpanFromSpanStr(params[1]), hub.currBlockTime.Unix(), hub.sid, depth)
+func queryKlineAndpush(hub *Hub, c *Conn, params []string, count int) error {
+	candleBz := hub.QueryCandleStick(params[0], GetSpanFromSpanStr(params[1]), hub.currBlockTime.Unix(), hub.sid, count)
 	for _, v := range candleBz {
 		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", KlineKey, string(v)))
 		err := c.WriteMessage(websocket.TextMessage, msg)
@@ -358,8 +358,8 @@ func queryKlineAndpush(hub *Hub, c *Conn, params []string, depth int) error {
 	return nil
 }
 
-func querySlashAndPush(hub *Hub, c *Conn, depth int) error {
-	data, _ := hub.QuerySlash(hub.currBlockTime.Unix(), hub.sid, depth)
+func querySlashAndPush(hub *Hub, c *Conn, count int) error {
+	data, _ := hub.QuerySlash(hub.currBlockTime.Unix(), hub.sid, count)
 	for _, v := range data {
 		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", SlashKey, string(v)))
 		err := c.WriteMessage(websocket.TextMessage, msg)
