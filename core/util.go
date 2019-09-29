@@ -373,11 +373,7 @@ func updateAmount(m map[string]*PricePoint, point *PricePoint, mulDec sdk.Dec, i
 	if isBuy {
 		price = point.Price.Mul(mulDec).TruncateDec()
 	}
-	if mulDec.GT(sdk.ZeroDec()) {
-		price = price.Quo(mulDec)
-	} else if mulDec.LT(sdk.ZeroDec()) {
-		price = price.Mul(mulDec)
-	}
+	price = price.Quo(mulDec)
 	s := string(DecToBigEndianBytes(price))
 	if val, ok := m[s]; ok {
 		val.Amount = val.Amount.Add(point.Amount)
