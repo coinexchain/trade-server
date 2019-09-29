@@ -341,9 +341,7 @@ func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, count int
 		return err
 	}
 
-	hub.AddLevel(market, level)
-
-	return nil
+	return hub.AddLevel(market, level)
 }
 
 func queryKlineAndpush(hub *Hub, c *Conn, params []string, count int) error {

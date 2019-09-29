@@ -272,11 +272,11 @@ func (manager *CandleStickManager) GetRecord(Market string) *CandleStickRecord {
 
 // Manager for the depth information of one side of the order book: sell or buy
 type DepthManager struct {
-	ppMap   *treemap.Map //map[string]*PricePoint
-	Updated map[string]*PricePoint
-	Side    string
-	Levels []string
-	MulDecs []sdk.Dec
+	ppMap      *treemap.Map //map[string]*PricePoint
+	Updated    map[string]*PricePoint
+	Side       string
+	Levels     []string
+	MulDecs    []sdk.Dec
 	LevelDepth map[string]map[string]*PricePoint
 }
 
@@ -315,11 +315,11 @@ func (dm *DepthManager) DumpPricePoints() []*PricePoint {
 
 func DefaultDepthManager(side string) *DepthManager {
 	dm := &DepthManager{
-		ppMap:   treemap.NewWithStringComparator(),
-		Updated: make(map[string]*PricePoint),
-		Side:    side,
-		Levels:  make([]string, 0, 20),
-		MulDecs: make([]sdk.Dec, 0, 20),
+		ppMap:      treemap.NewWithStringComparator(),
+		Updated:    make(map[string]*PricePoint),
+		Side:       side,
+		Levels:     make([]string, 0, 20),
+		MulDecs:    make([]sdk.Dec, 0, 20),
 		LevelDepth: make(map[string]map[string]*PricePoint, 20),
 	}
 	return dm
@@ -365,6 +365,11 @@ func (dm *DepthManager) EndBlock() (map[string]*PricePoint, map[string]map[strin
 
 func updateAmount(m map[string]*PricePoint, point *PricePoint, mulDec sdk.Dec) {
 	price := point.Price.Mul(mulDec).TruncateDec()
+	if mulDec.GT(sdk.ZeroDec()) {
+		price = price.Quo(mulDec)
+	} else if mulDec.LT(sdk.ZeroDec()) {
+		price = price.Mul(mulDec)
+	}
 	s := string(DecToBigEndianBytes(price))
 	if val, ok := m[s]; ok {
 		val.Amount = val.Amount.Add(point.Amount)
@@ -382,7 +387,6 @@ func mergePrice(updated []*PricePoint, level string) map[string]*PricePoint {
 		return nil
 	}
 	mulDec := sdk.OneDec().QuoTruncate(p)
-
 	depth := make(map[string]*PricePoint)
 	for _, point := range updated {
 		updateAmount(depth, point, mulDec)

@@ -5,12 +5,12 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"strings"
 	"sync"
 	"time"
-	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	log "github.com/sirupsen/logrus"
@@ -1159,7 +1159,7 @@ func (hub *Hub) AddLevel(market, level string) error {
 	}
 	tripleMan := hub.managersMap[market]
 	err := tripleMan.sell.AddLevel(level)
-	if err!=nil {
+	if err != nil {
 		return err
 	}
 	return tripleMan.buy.AddLevel(level)

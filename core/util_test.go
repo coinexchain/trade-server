@@ -1,10 +1,12 @@
 package core
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
+	"fmt"
 	"testing"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBaseCandleStick(t *testing.T) {
@@ -195,5 +197,52 @@ func TestDepthManager(t *testing.T) {
 	ppMap, _ := dm.EndBlock()
 	for _, pp := range ppMap {
 		require.Equal(t, &PricePoint{sdk.NewDec(80), sdk.NewInt(70)}, pp)
+	}
+}
+
+func TestMergePrice(t *testing.T) {
+	update := make([]*PricePoint, 2)
+	price, _ := sdk.NewDecFromStr("100.81562324")
+	update[0] = &PricePoint{
+		Price:  price,
+		Amount: sdk.NewInt(300),
+	}
+	fmt.Printf("price : %s\n", price.TruncateDec())
+	price, _ = sdk.NewDecFromStr("112.812866273")
+	update[1] = &PricePoint{
+		Price:  price,
+		Amount: sdk.NewInt(300),
+	}
+
+	levels := []string{"1", "10", "100", "1000", "0.1", "0.01", "0.001", "0.0001", "0.00001", "0.000001", "0.0000001", "0.00000001"}
+	correctStr := [][]string{
+		{"price : 100.000000000000000000, amount : 300", "price : 112.000000000000000000, amount : 300"}, // 1
+		{"price : 100.000000000000000000, amount : 300", "price : 110.000000000000000000, amount : 300"}, // 10
+		{"price : 100.000000000000000000, amount : 600"},                                                 // 100
+		{"price : 0.000000000000000000, amount : 600"},                                                   // 1000
+		{"price : 100.800000000000000000, amount : 300", "price : 112.800000000000000000, amount : 300"}, // 0.1
+		{"price : 100.810000000000000000, amount : 300", "price : 112.810000000000000000, amount : 300"}, // 0.01
+		{"price : 100.815000000000000000, amount : 300", "price : 112.812000000000000000, amount : 300"}, // 0.001
+		{"price : 100.815600000000000000, amount : 300", "price : 112.812800000000000000, amount : 300"}, // 0.0001
+		{"price : 100.815620000000000000, amount : 300", "price : 112.812860000000000000, amount : 300"}, // 0.00001
+		{"price : 100.815623000000000000, amount : 300", "price : 112.812866000000000000, amount : 300"}, // 0.000001
+		{"price : 100.815623200000000000, amount : 300", "price : 112.812866200000000000, amount : 300"}, // 0.0000001
+		{"price : 100.815623240000000000, amount : 300", "price : 112.812866270000000000, amount : 300"}, // 0.00000001
+	}
+
+	for i, lev := range levels {
+		ret := mergePrice(update, lev)
+		for _, point := range ret {
+			report := fmt.Sprintf("price : %s, amount : %s", point.Price, point.Amount)
+			if len(correctStr[i]) == 2 {
+				if report != correctStr[i][0] && report != correctStr[i][1] {
+					t.Errorf("actual : %s", report)
+				}
+			} else {
+				if report != correctStr[i][0] {
+					t.Errorf("actual : %s", report)
+				}
+			}
+		}
 	}
 }
