@@ -207,7 +207,6 @@ func TestMergePrice(t *testing.T) {
 		Price:  price,
 		Amount: sdk.NewInt(300),
 	}
-	fmt.Printf("price : %s\n", price.TruncateDec())
 	price, _ = sdk.NewDecFromStr("112.812866273")
 	update[1] = &PricePoint{
 		Price:  price,
@@ -231,7 +230,37 @@ func TestMergePrice(t *testing.T) {
 	}
 
 	for i, lev := range levels {
-		ret := mergePrice(update, lev)
+		ret := mergePrice(update, lev, true)
+		for _, point := range ret {
+			report := fmt.Sprintf("price : %s, amount : %s", point.Price, point.Amount)
+			if len(correctStr[i]) == 2 {
+				if report != correctStr[i][0] && report != correctStr[i][1] {
+					t.Errorf("actual : %s", report)
+				}
+			} else {
+				if report != correctStr[i][0] {
+					t.Errorf("actual : %s", report)
+				}
+			}
+		}
+	}
+
+	correctStr = [][]string{
+		{"price : 101.000000000000000000, amount : 300", "price : 113.000000000000000000, amount : 300"}, // 1
+		{"price : 110.000000000000000000, amount : 300", "price : 120.000000000000000000, amount : 300"}, // 10
+		{"price : 200.000000000000000000, amount : 600"},                                                 // 100
+		{"price : 1000.000000000000000000, amount : 600"},                                                // 1000
+		{"price : 100.900000000000000000, amount : 300", "price : 112.900000000000000000, amount : 300"}, // 0.1
+		{"price : 100.820000000000000000, amount : 300", "price : 112.820000000000000000, amount : 300"}, // 0.01
+		{"price : 100.816000000000000000, amount : 300", "price : 112.813000000000000000, amount : 300"}, // 0.001
+		{"price : 100.815700000000000000, amount : 300", "price : 112.812900000000000000, amount : 300"}, // 0.0001
+		{"price : 100.815630000000000000, amount : 300", "price : 112.812870000000000000, amount : 300"}, // 0.00001
+		{"price : 100.815624000000000000, amount : 300", "price : 112.812867000000000000, amount : 300"}, // 0.000001
+		{"price : 100.815623300000000000, amount : 300", "price : 112.812866300000000000, amount : 300"}, // 0.0000001
+		{"price : 100.815623240000000000, amount : 300", "price : 112.812866280000000000, amount : 300"}, // 0.00000001
+	}
+	for i, lev := range levels {
+		ret := mergePrice(update, lev, false)
 		for _, point := range ret {
 			report := fmt.Sprintf("price : %s, amount : %s", point.Price, point.Amount)
 			if len(correctStr[i]) == 2 {

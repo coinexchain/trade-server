@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -347,8 +348,12 @@ func (dm *DepthManager) DeltaChange(price sdk.Dec, amount sdk.Int) {
 	//}
 	dm.Updated[s] = pp
 
+	isBuy := true
+	if dm.Side == "sell" {
+		isBuy = false
+	}
 	for i, lev := range dm.Levels {
-		updateAmount(dm.LevelDepth[lev], &PricePoint{Price: price, Amount: amount}, dm.MulDecs[i])
+		updateAmount(dm.LevelDepth[lev], &PricePoint{Price: price, Amount: amount}, dm.MulDecs[i], isBuy)
 	}
 }
 
@@ -363,8 +368,11 @@ func (dm *DepthManager) EndBlock() (map[string]*PricePoint, map[string]map[strin
 	return oldUpdated, oldLevelDepth
 }
 
-func updateAmount(m map[string]*PricePoint, point *PricePoint, mulDec sdk.Dec) {
-	price := point.Price.Mul(mulDec).TruncateDec()
+func updateAmount(m map[string]*PricePoint, point *PricePoint, mulDec sdk.Dec, isBuy bool) {
+	price := point.Price.Mul(mulDec).Ceil().TruncateDec()
+	if isBuy {
+		price = point.Price.Mul(mulDec).TruncateDec()
+	}
 	if mulDec.GT(sdk.ZeroDec()) {
 		price = price.Quo(mulDec)
 	} else if mulDec.LT(sdk.ZeroDec()) {
@@ -381,7 +389,7 @@ func updateAmount(m map[string]*PricePoint, point *PricePoint, mulDec sdk.Dec) {
 	}
 }
 
-func mergePrice(updated []*PricePoint, level string) map[string]*PricePoint {
+func mergePrice(updated []*PricePoint, level string, isBuy bool) map[string]*PricePoint {
 	p, err := sdk.NewDecFromStr(level)
 	if err != nil {
 		return nil
@@ -389,7 +397,7 @@ func mergePrice(updated []*PricePoint, level string) map[string]*PricePoint {
 	mulDec := sdk.OneDec().QuoTruncate(p)
 	depth := make(map[string]*PricePoint)
 	for _, point := range updated {
-		updateAmount(depth, point, mulDec)
+		updateAmount(depth, point, mulDec, isBuy)
 	}
 	return depth
 }
@@ -399,6 +407,9 @@ func (dm *DepthManager) GetLowest(n int) []*PricePoint {
 	res := make([]*PricePoint, 0, n)
 	iter := dm.ppMap.Iterator()
 	iter.Begin()
+	if n == 0 {
+		n = math.MaxInt64
+	}
 	for i := 0; i < n; i++ {
 		if ok := iter.Next(); !ok {
 			break
@@ -413,6 +424,9 @@ func (dm *DepthManager) GetHighest(n int) []*PricePoint {
 	res := make([]*PricePoint, 0, n)
 	iter := dm.ppMap.Iterator()
 	iter.End()
+	if n == 0 {
+		n = math.MaxInt64
+	}
 	for i := 0; i < n; i++ {
 		if ok := iter.Prev(); !ok {
 			break

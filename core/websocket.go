@@ -327,8 +327,8 @@ func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, count int
 		return c.WriteMessage(websocket.TextMessage, msg)
 	}
 
-	sellLevel := mergePrice(sell, level)
-	buyLevel := mergePrice(buy, level)
+	sellLevel := mergePrice(sell, level, false)
+	buyLevel := mergePrice(buy, level, true)
 	levelSell := encodeDepthLevel(market, sellLevel, false)
 	levelBuy := encodeDepthLevel(market, buyLevel, true)
 
