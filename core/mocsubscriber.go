@@ -155,8 +155,8 @@ func GetDepthSubscribeManeger() *MocSubscribeManager {
 	res.PushList = make([]pushInfo, 0, 100)
 	res.DepthSubscribeInfo = make(map[string][]Subscriber)
 	res.DepthSubscribeInfo["abc/cet"] = make([]Subscriber, 2)
-	res.DepthSubscribeInfo["abc/cet"][0] = NewDepthSubscriber(8, "10")
-	res.DepthSubscribeInfo["abc/cet"][1] = NewDepthSubscriber(9, "1")
+	res.DepthSubscribeInfo["abc/cet"][0] = NewDepthSubscriber(8, "all")
+	res.DepthSubscribeInfo["abc/cet"][1] = NewDepthSubscriber(9, "all")
 
 	return res
 }

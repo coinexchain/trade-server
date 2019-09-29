@@ -276,8 +276,14 @@ func encodeDepth(market string, depth map[string]*PricePoint, buy bool) []byte {
 
 	detail := DepthDetails{TradingPair: market}
 	if buy {
+		sort.Slice(values, func(i, j int) bool {
+			return values[i].Price.GT(values[j].Price)
+		})
 		detail.Bids = values
 	} else {
+		sort.Slice(values, func(i, j int) bool {
+			return values[i].Price.LT(values[j].Price)
+		})
 		detail.Asks = values
 	}
 
@@ -288,7 +294,7 @@ func encodeDepth(market string, depth map[string]*PricePoint, buy bool) []byte {
 	return bz
 }
 
-func encodeDepthLevels(market string, depths map[string]map[sdk.Dec]sdk.Int, buy bool) map[string][]byte {
+func encodeDepthLevels(market string, depths map[string]map[string]*PricePoint, buy bool) map[string][]byte {
 	if len(depths) == 0 {
 		return nil
 	}
@@ -299,13 +305,13 @@ func encodeDepthLevels(market string, depths map[string]map[sdk.Dec]sdk.Int, buy
 	return rets
 }
 
-func encodeDepthLevel(market string, depth map[sdk.Dec]sdk.Int, buy bool) []byte {
+func encodeDepthLevel(market string, depth map[string]*PricePoint, buy bool) []byte {
 	values := make([]*PricePoint, 0, len(depth))
-	for p, a := range depth {
-		values = append(values, &PricePoint{Price: p, Amount: a})
+	for _, p := range depth {
+		values = append(values, p)
 	}
 	sort.Slice(values, func(i, j int) bool {
-		return values[i].Price.GTE(values[j].Price)
+		return values[i].Price.GT(values[j].Price)
 	})
 
 	detail := DepthDetails{TradingPair: market}

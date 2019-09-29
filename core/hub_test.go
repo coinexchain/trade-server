@@ -82,10 +82,10 @@ func TestDepthLevel(t *testing.T) {
 	bytes, _ = json.Marshal(createOrderInfo)
 	hub.ConsumeMessage("create_order_info", bytes)
 	correct := `
-8: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"400"},{"p":"10.000000000000000000","a":"300"}],"asks":null}
+8: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"400"},{"p":"3.000000000000000000","a":"300"}],"asks":null}
 8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"12.000000000000000000","a":"300"}]}
-9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"12.000000000000000000","a":"300"}]}
 9: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"400"},{"p":"3.000000000000000000","a":"300"}],"asks":null}
+9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"12.000000000000000000","a":"300"}]}
 `
 	hub.ConsumeMessage("commit", nil)
 	subMan.compareResult(t, correct)
@@ -107,7 +107,7 @@ func TestDepthLevel(t *testing.T) {
 	bytes, _ = json.Marshal(cancelOrderInfo)
 	hub.ConsumeMessage("del_order_info", bytes)
 	correct = `
-8: {"trading_pair":"abc/cet","bids":[{"p":"10.000000000000000000","a":"0"}],"asks":null}
+8: {"trading_pair":"abc/cet","bids":[{"p":"3.000000000000000000","a":"0"}],"asks":null}
 9: {"trading_pair":"abc/cet","bids":[{"p":"3.000000000000000000","a":"0"}],"asks":null}
 `
 	hub.ConsumeMessage("commit", nil)

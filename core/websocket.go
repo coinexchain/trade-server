@@ -310,9 +310,9 @@ func queryOrderAndPush(hub *Hub, c *Conn, account string, depth int) error {
 	return nil
 }
 
-func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, depth int) error {
+func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, count int) error {
 	var msg []byte
-	sell, buy := hub.QueryDepth(market, depth)
+	sell, buy := hub.QueryDepth(market, count)
 	if level == "all" {
 		depRes := DepthDetails{
 			TradingPair: market,
@@ -327,22 +327,21 @@ func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, depth int
 		return c.WriteMessage(websocket.TextMessage, msg)
 	}
 
-	sellLevels := mergePrice(sell)
-	buyLevels := mergePrice(buy)
-	levelBuys := encodeDepthLevels(market, buyLevels, true)
-	levelSells := encodeDepthLevels(market, sellLevels, false)
-	if v, ok := levelSells[level]; ok && len(v) != 0 {
-		msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthKey, string(v)))
-		if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
-			return err
-		}
+	sellLevel := mergePrice(sell, level)
+	buyLevel := mergePrice(buy, level)
+	levelSell := encodeDepthLevel(market, sellLevel, false)
+	levelBuy := encodeDepthLevel(market, buyLevel, true)
+
+	msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthKey, string(levelSell)))
+	if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
+		return err
 	}
-	if v, ok := levelBuys[level]; ok && len(v) != 0 {
-		msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthKey, string(v)))
-		if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
-			return err
-		}
+	msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthKey, string(levelBuy)))
+	if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
+		return err
 	}
+
+	hub.AddLevel(market, level)
 
 	return nil
 }

@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -276,6 +275,26 @@ type DepthManager struct {
 	ppMap   *treemap.Map //map[string]*PricePoint
 	Updated map[string]*PricePoint
 	Side    string
+	Levels []string
+	MulDecs []sdk.Dec
+	LevelDepth map[string]map[string]*PricePoint
+}
+
+func (dm *DepthManager) AddLevel(levelStr string) error {
+	for _, lvl := range dm.Levels {
+		//Return if already added
+		if lvl == levelStr {
+			return nil
+		}
+	}
+	p, err := sdk.NewDecFromStr(levelStr)
+	if err != nil {
+		return err
+	}
+	dm.MulDecs = append(dm.MulDecs, sdk.OneDec().QuoTruncate(p))
+	dm.Levels = append(dm.Levels, levelStr)
+	dm.LevelDepth[levelStr] = make(map[string]*PricePoint)
+	return nil
 }
 
 func (dm *DepthManager) Size() int {
@@ -295,11 +314,15 @@ func (dm *DepthManager) DumpPricePoints() []*PricePoint {
 }
 
 func DefaultDepthManager(side string) *DepthManager {
-	return &DepthManager{
+	dm := &DepthManager{
 		ppMap:   treemap.NewWithStringComparator(),
 		Updated: make(map[string]*PricePoint),
 		Side:    side,
+		Levels:  make([]string, 0, 20),
+		MulDecs: make([]sdk.Dec, 0, 20),
+		LevelDepth: make(map[string]map[string]*PricePoint, 20),
 	}
+	return dm
 }
 
 // positive amount for increment, negative amount for decrement
@@ -312,76 +335,59 @@ func (dm *DepthManager) DeltaChange(price sdk.Dec, amount sdk.Int) {
 	} else {
 		pp = ptr.(*PricePoint)
 	}
-	tmp := pp.Amount
+	//tmp := pp.Amount
 	pp.Amount = pp.Amount.Add(amount)
 	if pp.Amount.IsZero() {
 		dm.ppMap.Remove(s)
 	} else {
 		dm.ppMap.Put(s, pp)
 	}
-	if "8.800000000000000000" == price.String() && "buy" == dm.Side {
-		fmt.Printf("== %s Price: %s amount: %s %s => %s\n", dm.Side, price.String(), amount.String(), tmp.String(), pp.Amount.String())
-	}
+	//if "8.800000000000000000" == price.String() && "buy" == dm.Side {
+	//	fmt.Printf("== %s Price: %s amount: %s %s => %s\n", dm.Side, price.String(), amount.String(), tmp.String(), pp.Amount.String())
+	//}
 	dm.Updated[s] = pp
+
+	for i, lev := range dm.Levels {
+		updateAmount(dm.LevelDepth[lev], &PricePoint{Price: price, Amount: amount}, dm.MulDecs[i])
+	}
 }
 
 // returns the changed PricePoints of last block. Clear dm.Updated for the next block
-func (dm *DepthManager) EndBlock() (map[string]*PricePoint, map[string]map[sdk.Dec]sdk.Int) {
-	ret := dm.Updated
-	points := make([]*PricePoint, 0, len(ret))
-	for _, v := range ret {
-		points = append(points, v)
-	}
-	merRet := mergePrice(points)
+func (dm *DepthManager) EndBlock() (map[string]*PricePoint, map[string]map[string]*PricePoint) {
+	oldUpdated, oldLevelDepth := dm.Updated, dm.LevelDepth
 	dm.Updated = make(map[string]*PricePoint)
-
-	return ret, merRet
+	dm.LevelDepth = make(map[string]map[string]*PricePoint, len(dm.Levels))
+	for _, lev := range dm.Levels {
+		dm.LevelDepth[lev] = make(map[string]*PricePoint)
+	}
+	return oldUpdated, oldLevelDepth
 }
 
-var levels = [11]string{"0.00000001", "0.0000001", "0.000001", "0.00001", "0.0001", "0.001", "0.01", "0.1", "1", "10", "100"}
-var DepthLevel []sdk.Dec
-
-func init() {
-	DepthLevel = make([]sdk.Dec, 0, 11)
-	for _, level := range levels {
-		p, err := sdk.NewDecFromStr(level)
-		if err != nil {
-			panic(err)
+func updateAmount(m map[string]*PricePoint, point *PricePoint, mulDec sdk.Dec) {
+	price := point.Price.Mul(mulDec).TruncateDec()
+	s := string(DecToBigEndianBytes(price))
+	if val, ok := m[s]; ok {
+		val.Amount = val.Amount.Add(point.Amount)
+	} else {
+		m[s] = &PricePoint{
+			Price:  price,
+			Amount: point.Amount,
 		}
-		DepthLevel = append(DepthLevel, p)
 	}
 }
 
-func mergePrice(update []*PricePoint) map[string]map[sdk.Dec]sdk.Int {
-	if len(update) == 0 {
+func mergePrice(updated []*PricePoint, level string) map[string]*PricePoint {
+	p, err := sdk.NewDecFromStr(level)
+	if err != nil {
 		return nil
 	}
-	levelDepth := make(map[string]map[sdk.Dec]sdk.Int, len(levels))
-	for _, lev := range levels {
-		levelDepth[lev] = make(map[sdk.Dec]sdk.Int)
-	}
-	for _, point := range update {
-		for i, lev := range DepthLevel {
-			if point == nil {
-				panic("null")
-			}
+	mulDec := sdk.OneDec().QuoTruncate(p)
 
-			if point.Price.GTE(lev) {
-				if val, ok := levelDepth[levels[i]][point.Price]; ok {
-					levelDepth[levels[i]][point.Price] = val.Add(point.Amount)
-				} else {
-					levelDepth[levels[i]][point.Price] = point.Amount
-				}
-			} else {
-				if val, ok := levelDepth[levels[i]][lev]; ok {
-					levelDepth[levels[i]][lev] = val.Add(point.Amount)
-				} else {
-					levelDepth[levels[i]][lev] = point.Amount
-				}
-			}
-		}
+	depth := make(map[string]*PricePoint)
+	for _, point := range updated {
+		updateAmount(depth, point, mulDec)
 	}
-	return levelDepth
+	return depth
 }
 
 // Returns the lowest n PricePoints

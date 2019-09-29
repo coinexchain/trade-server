@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	log "github.com/sirupsen/logrus"
@@ -1150,6 +1151,18 @@ func (hub *Hub) QueryDepth(market string, count int) (sell []*PricePoint, buy []
 	buy = tripleMan.buy.GetHighest(count)
 	hub.depthMutex.RUnlock()
 	return
+}
+
+func (hub *Hub) AddLevel(market, level string) error {
+	if !hub.HasMarket(market) {
+		return errors.New("No such market")
+	}
+	tripleMan := hub.managersMap[market]
+	err := tripleMan.sell.AddLevel(level)
+	if err!=nil {
+		return err
+	}
+	return tripleMan.buy.AddLevel(level)
 }
 
 func (hub *Hub) QueryCandleStick(market string, timespan byte, time int64, sid int64, count int) []json.RawMessage {
