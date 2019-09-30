@@ -303,6 +303,9 @@ func (dm *DepthManager) Size() int {
 }
 
 func (dm *DepthManager) DumpPricePoints() []*PricePoint {
+	if dm == nil {
+		return nil
+	}
 	size := dm.ppMap.Size()
 	pps := make([]*PricePoint, size)
 	iter := dm.ppMap.Iterator()

@@ -42,7 +42,7 @@ func main() {
 	op := OpCommand{
 		Op: "subscribe",
 		Args: []string{
-			// "blockinfo",
+			"blockinfo",
 			// "slash",
 			// "send_lock_coins:coinex1rafnyd9j9gc9cwu5q5uflefpdn62awyl7rvh8t",
 			// "depth:abc/cet:all",

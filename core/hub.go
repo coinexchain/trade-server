@@ -234,20 +234,21 @@ type Hub struct {
 
 func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
 	return Hub{
-		db:            db,
-		batch:         db.NewBatch(),
-		subMan:        subMan,
-		managersMap:   make(map[string]TripleManager),
-		csMan:         NewCandleStickManager(nil),
-		currBlockTime: time.Unix(0, 0),
-		lastBlockTime: time.Unix(0, 0),
-		tickerMap:     make(map[string]*Ticker),
-		slashSlice:    make([]*NotificationSlash, 0, 10),
-		partition:     0,
-		offset:        0,
-		dumpFlag:      false,
-		lastDumpTime:  time.Now(),
-		stopped:       false,
+		db:             db,
+		batch:          db.NewBatch(),
+		subMan:         subMan,
+		managersMap:    make(map[string]TripleManager),
+		csMan:          NewCandleStickManager(nil),
+		currBlockTime:  time.Unix(0, 0),
+		lastBlockTime:  time.Unix(0, 0),
+		tickerMap:      make(map[string]*Ticker),
+		slashSlice:     make([]*NotificationSlash, 0, 10),
+		partition:      0,
+		offset:         0,
+		dumpFlag:       false,
+		lastDumpTime:   time.Now(),
+		stopped:        false,
+		stableHubState: &HubForJSON{},
 	}
 }
 
@@ -329,7 +330,7 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 		hub.Log("Error in Unmarshal NewHeightInfo")
 		return
 	}
-	hub.newHeightNum += 1
+	hub.newHeightNum++
 	if hub.newHeightNum > 1 {
 		hub.Load(hub.stableHubState)
 	}
@@ -1074,6 +1075,7 @@ func (hub *Hub) commit() {
 		return
 	}
 	hub.Dump(hub.stableHubState)
+	hub.newHeightNum--
 	hub.commitForSlash()
 	hub.commitForTicker()
 	hub.commitForDepth()
