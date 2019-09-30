@@ -369,7 +369,7 @@ func (dm *DepthManager) EndBlock() (map[string]*PricePoint, map[string]map[strin
 }
 
 func updateAmount(m map[string]*PricePoint, point *PricePoint, mulDec sdk.Dec, isBuy bool) {
-	price := point.Price.Mul(mulDec).Ceil().TruncateDec()
+	price := point.Price.Mul(mulDec).Ceil()
 	if isBuy {
 		price = point.Price.Mul(mulDec).TruncateDec()
 	}
