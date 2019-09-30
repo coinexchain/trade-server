@@ -211,6 +211,7 @@ type Hub struct {
 	subMan SubscribeManager
 
 	currBlockHeight int64
+	newHeightNum    int
 	skipHeight      bool
 
 	currBlockTime time.Time
@@ -225,7 +226,8 @@ type Hub struct {
 	dumpFlag     bool
 	lastDumpTime time.Time
 
-	stopped bool
+	stableHubState *HubForJSON
+	stopped        bool
 
 	currTxHashID string
 }
@@ -277,6 +279,7 @@ func (hub *Hub) Log(s string) {
 var _ Consumer = &Hub{}
 
 func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
+	// fmt.Printf("msgType : %s, values : %s\n", msgType, string(bz))
 	if msgType == "height_info" {
 		hub.handleNewHeightInfo(bz)
 		return
@@ -325,6 +328,10 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 	if err != nil {
 		hub.Log("Error in Unmarshal NewHeightInfo")
 		return
+	}
+	hub.newHeightNum += 1
+	if hub.newHeightNum > 1 {
+		hub.Load(hub.stableHubState)
 	}
 
 	if hub.currBlockHeight >= v.Height {
@@ -1066,6 +1073,7 @@ func (hub *Hub) commit() {
 	if hub.stopped {
 		return
 	}
+	hub.Dump(hub.stableHubState)
 	hub.commitForSlash()
 	hub.commitForTicker()
 	hub.commitForDepth()
@@ -1452,6 +1460,7 @@ func (hub *Hub) Load(hub4j *HubForJSON) {
 		}
 		hub.managersMap[info.TkMan.Market] = triman
 	}
+	hub.stableHubState = hub4j
 }
 
 func (hub *Hub) Dump(hub4j *HubForJSON) {
