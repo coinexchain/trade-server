@@ -190,6 +190,11 @@ type TripleManager struct {
 	tkm  *TickerManager
 }
 
+type msgEntry struct {
+	msgType string
+	bz      []byte
+}
+
 type Hub struct {
 	// the serial ID for a KV pair in KVStore
 	sid int64
@@ -210,8 +215,8 @@ type Hub struct {
 	// interface to the subscribe functions
 	subMan SubscribeManager
 
+	msgEntryList    []msgEntry
 	currBlockHeight int64
-	newHeightNum    int
 	skipHeight      bool
 
 	currBlockTime time.Time
@@ -226,29 +231,28 @@ type Hub struct {
 	dumpFlag     bool
 	lastDumpTime time.Time
 
-	stableHubState *HubForJSON
-	stopped        bool
+	stopped bool
 
 	currTxHashID string
 }
 
 func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
 	return Hub{
-		db:             db,
-		batch:          db.NewBatch(),
-		subMan:         subMan,
-		managersMap:    make(map[string]TripleManager),
-		csMan:          NewCandleStickManager(nil),
-		currBlockTime:  time.Unix(0, 0),
-		lastBlockTime:  time.Unix(0, 0),
-		tickerMap:      make(map[string]*Ticker),
-		slashSlice:     make([]*NotificationSlash, 0, 10),
-		partition:      0,
-		offset:         0,
-		dumpFlag:       false,
-		lastDumpTime:   time.Now(),
-		stopped:        false,
-		stableHubState: &HubForJSON{},
+		db:            db,
+		batch:         db.NewBatch(),
+		subMan:        subMan,
+		managersMap:   make(map[string]TripleManager),
+		csMan:         NewCandleStickManager(nil),
+		currBlockTime: time.Unix(0, 0),
+		lastBlockTime: time.Unix(0, 0),
+		tickerMap:     make(map[string]*Ticker),
+		slashSlice:    make([]*NotificationSlash, 0, 10),
+		partition:     0,
+		offset:        0,
+		dumpFlag:      false,
+		lastDumpTime:  time.Now(),
+		stopped:       false,
+		msgEntryList:  make([]msgEntry, 0, 1000),
 	}
 }
 
@@ -282,57 +286,66 @@ var _ Consumer = &Hub{}
 func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 	// fmt.Printf("msgType : %s, values : %s\n", msgType, string(bz))
 	if msgType == "height_info" {
-		hub.handleNewHeightInfo(bz)
-		return
-	} else if hub.skipHeight {
+		hub.prehandleNewHeightInfo(bz)
+	}
+	if hub.skipHeight {
 		return
 	}
-	switch msgType {
-	case "notify_slash":
-		hub.handleNotificationSlash(bz)
-	case "notify_tx":
-		hub.handleNotificationTx(bz)
-	case "begin_redelegation":
-		hub.handleNotificationBeginRedelegation(bz)
-	case "begin_unbonding":
-		hub.handleNotificationBeginUnbonding(bz)
-	case "complete_redelegation":
-		hub.handleNotificationCompleteRedelegation(bz)
-	case "complete_unbonding":
-		hub.handleNotificationCompleteUnbonding(bz)
-	case "notify_unlock":
-		hub.handleNotificationUnlock(bz)
-	case "token_comment":
-		hub.handleTokenComment(bz)
-	case "create_order_info":
-		hub.handleCreateOrderInfo(bz)
-	case "fill_order_info":
-		hub.handleFillOrderInfo(bz)
-	case "del_order_info":
-		hub.handleCancelOrderInfo(bz)
-	case "bancor_trade":
-		hub.handleMsgBancorTradeInfoForKafka(bz)
-	case "bancor_info":
-		hub.handleMsgBancorInfoForKafka(bz)
-	case "commit":
-		hub.commit()
-	case "send_lock_coins":
-		hub.handleLockedCoinsMsg(bz)
-	default:
-		hub.Log(fmt.Sprintf("Unknown Message Type:%s", msgType))
+
+	hub.msgEntryList = append(hub.msgEntryList, msgEntry{msgType: msgType, bz: bz})
+
+	if msgType != "commit" {
+		return
 	}
+
+	for _, entry := range hub.msgEntryList {
+		switch entry.msgType {
+		case "height_info":
+			hub.handleNewHeightInfo(entry.bz)
+		case "notify_slash":
+			hub.handleNotificationSlash(entry.bz)
+		case "notify_tx":
+			hub.handleNotificationTx(entry.bz)
+		case "begin_redelegation":
+			hub.handleNotificationBeginRedelegation(entry.bz)
+		case "begin_unbonding":
+			hub.handleNotificationBeginUnbonding(entry.bz)
+		case "complete_redelegation":
+			hub.handleNotificationCompleteRedelegation(entry.bz)
+		case "complete_unbonding":
+			hub.handleNotificationCompleteUnbonding(entry.bz)
+		case "notify_unlock":
+			hub.handleNotificationUnlock(entry.bz)
+		case "token_comment":
+			hub.handleTokenComment(entry.bz)
+		case "create_order_info":
+			hub.handleCreateOrderInfo(entry.bz)
+		case "fill_order_info":
+			hub.handleFillOrderInfo(entry.bz)
+		case "del_order_info":
+			hub.handleCancelOrderInfo(entry.bz)
+		case "bancor_trade":
+			hub.handleMsgBancorTradeInfoForKafka(entry.bz)
+		case "bancor_info":
+			hub.handleMsgBancorInfoForKafka(entry.bz)
+		case "commit":
+			hub.commit()
+		case "send_lock_coins":
+			hub.handleLockedCoinsMsg(entry.bz)
+		default:
+			hub.Log(fmt.Sprintf("Unknown Message Type:%s", msgType))
+		}
+	}
+
+	hub.msgEntryList = hub.msgEntryList[:0]
 }
 
-func (hub *Hub) handleNewHeightInfo(bz []byte) {
+func (hub *Hub) prehandleNewHeightInfo(bz []byte) {
 	var v NewHeightInfo
 	err := json.Unmarshal(bz, &v)
 	if err != nil {
 		hub.Log("Error in Unmarshal NewHeightInfo")
 		return
-	}
-	hub.newHeightNum++
-	if hub.newHeightNum > 1 {
-		hub.Load(hub.stableHubState)
 	}
 
 	if hub.currBlockHeight >= v.Height {
@@ -344,6 +357,17 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 	} else {
 		hub.skipHeight = true
 		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", hub.currBlockHeight, v.Height))
+	}
+
+	hub.msgEntryList = hub.msgEntryList[:0]
+}
+
+func (hub *Hub) handleNewHeightInfo(bz []byte) {
+	var v NewHeightInfo
+	err := json.Unmarshal(bz, &v)
+	if err != nil {
+		hub.Log("Error in Unmarshal NewHeightInfo")
+		return
 	}
 
 	latestHeight := hub.QueryLatestHeight()
@@ -1074,8 +1098,6 @@ func (hub *Hub) commit() {
 	if hub.stopped {
 		return
 	}
-	hub.Dump(hub.stableHubState)
-	hub.newHeightNum--
 	hub.commitForSlash()
 	hub.commitForTicker()
 	hub.commitForDepth()
@@ -1462,7 +1484,6 @@ func (hub *Hub) Load(hub4j *HubForJSON) {
 		}
 		hub.managersMap[info.TkMan.Market] = triman
 	}
-	hub.stableHubState = hub4j
 }
 
 func (hub *Hub) Dump(hub4j *HubForJSON) {
