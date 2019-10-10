@@ -24,38 +24,40 @@ func main() {
 	}
 	defer c.Close()
 
+	var data interface{}
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
 		for {
-
 			_, message, err := c.ReadMessage()
 			if err != nil {
 				log.Println("read:", err)
 				return
 			}
 			log.Printf("recv: %s", message)
-
+			if err := json.Unmarshal(message, &data); err != nil{
+				panic(err)
+			}
 		}
 	}()
 
 	op := OpCommand{
 		Op: "subscribe",
 		Args: []string{
-			"blockinfo",
-			// "slash",
-			// "send_lock_coins:coinex1rafnyd9j9gc9cwu5q5uflefpdn62awyl7rvh8t",
-			// "depth:abc/cet:all",
+			// "blockinfo",
+			"slash",
+			"send_lock_coins:coinex1rafnyd9j9gc9cwu5q5uflefpdn62awyl7rvh8t",
+			"depth:abc/cet:all",
 			// "depth:abc/cet:10",
-			// "bancor-trade:coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly",
-			// "unlock:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
+			"bancor-trade:coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly",
+			"unlock:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
 			// "unlock:coinex1kc2nguz9xfttfpav4drldh2w96xyzrnqss9scw",
 			// "ticker:abc/cet",
 			// "deal:abc/cet",
 			// "comment:cet",
 			"order:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
 			// "kline:abc/cet:1min",
-			// "txs:coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg",
+			"txs:coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg",
 			// "txs:coinex1avmxlmztzxap20hawpc85h3uzj3277ja88wec2",
 			// "txs:coinex1j0awxx9lf32y235esjkwvs8h36whqj7f699f8z",
 			// "txs:coinex1zyvvtlp2k2guuetqu3w06qxrr8w07f03s56kyj",
@@ -63,7 +65,7 @@ func main() {
 			// "redelegation:coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg",
 			// "unbonding:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
 		},
-		Depth: 2,
+		Depth: 30,
 	}
 
 	bz, err := json.Marshal(op)

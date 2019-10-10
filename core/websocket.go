@@ -219,6 +219,22 @@ func getCount(count int) int {
 	return count
 }
 
+func groupOfDataPacket(topic string, data []json.RawMessage)[]byte  {
+	bz  := make([]byte, 0, len(data))
+	bz = append(bz, []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":[", topic))...)
+	for _, v := range data {
+		bz = append(bz, []byte(v)...)
+		bz = append(bz, []byte(",")...)
+	}
+	if len(data) > 0{
+		bz[len(bz) -1] = byte(']')
+		bz = append(bz, []byte("}")...)
+	}else {
+		bz = append(bz, []byte("]}")...)
+	}
+	return bz
+}
+
 func PushFullInformation(subscriptionTopic string, count int, c *Conn, hub *Hub) error {
 	values := strings.Split(subscriptionTopic, SeparateArgu)
 	topic, params := values[0], values[1:]
@@ -228,12 +244,10 @@ func PushFullInformation(subscriptionTopic string, count int, c *Conn, hub *Hub)
 	type queryFunc func(string, int64, int64, int) ([]json.RawMessage, []int64)
 	queryAndPushFunc := func(typeKey string, param string, qf queryFunc) error {
 		data, _ := qf(param, hub.currBlockTime.Unix(), hub.sid, count)
-		for _, v := range data {
-			msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", typeKey, string(v)))
-			err = c.WriteMessage(websocket.TextMessage, msg)
-			if err != nil {
-				return err
-			}
+		bz  := groupOfDataPacket(typeKey, data)
+		err = c.WriteMessage(websocket.TextMessage, bz)
+		if err != nil {
+			return err
 		}
 		return nil
 	}
@@ -293,20 +307,34 @@ func queryOrderAndPush(hub *Hub, c *Conn, account string, count int) error {
 	if len(data) != len(tags) {
 		return errors.Errorf("The number of orders and tags is not equal")
 	}
+	createData := make([]json.RawMessage, 0, len(data)/2)
+	fillData := make([]json.RawMessage, 0, len(data)/2)
+	cancelData := make([]json.RawMessage, 0, len(data)/2)
 	for i := len(data) - 1; i >= 0; i-- {
-		var msg []byte
 		if tags[i] == CreateOrderEndByte {
-			msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", CreateOrderKey, string(data[i])))
+			createData = append(createData, data[i])
 		} else if tags[i] == FillOrderEndByte {
-			msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", FillOrderKey, string(data[i])))
+			fillData = append(fillData, data[i])
 		} else if tags[i] == CancelOrderEndByte {
-			msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", CancelOrderKey, string(data[i])))
-		}
-		err := c.WriteMessage(websocket.TextMessage, msg)
-		if err != nil {
-			return err
+			cancelData = append(cancelData, data[i])
 		}
 	}
+	bz := groupOfDataPacket(CreateOrderKey, createData)
+	err := c.WriteMessage(websocket.TextMessage, bz)
+	if err != nil {
+		return err
+	}
+	bz = groupOfDataPacket(FillOrderKey, fillData)
+	err = c.WriteMessage(websocket.TextMessage, bz)
+	if err != nil {
+		return err
+	}
+	bz = groupOfDataPacket(CancelOrderKey, cancelData)
+	err = c.WriteMessage(websocket.TextMessage, bz)
+	if err != nil {
+		return err
+	}
+	
 	return nil
 }
 
@@ -346,24 +374,20 @@ func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, count int
 
 func queryKlineAndpush(hub *Hub, c *Conn, params []string, count int) error {
 	candleBz := hub.QueryCandleStick(params[0], GetSpanFromSpanStr(params[1]), hub.currBlockTime.Unix(), hub.sid, count)
-	for _, v := range candleBz {
-		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", KlineKey, string(v)))
-		err := c.WriteMessage(websocket.TextMessage, msg)
-		if err != nil {
-			return err
-		}
+	bz  := groupOfDataPacket(KlineKey, candleBz)
+	err := c.WriteMessage(websocket.TextMessage, bz)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
 func querySlashAndPush(hub *Hub, c *Conn, count int) error {
 	data, _ := hub.QuerySlash(hub.currBlockTime.Unix(), hub.sid, count)
-	for _, v := range data {
-		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", SlashKey, string(v)))
-		err := c.WriteMessage(websocket.TextMessage, msg)
-		if err != nil {
-			return err
-		}
+	bz  := groupOfDataPacket(SlashKey, data)
+	err := c.WriteMessage(websocket.TextMessage, bz)
+	if err != nil {
+		return err
 	}
 	return nil
 }
