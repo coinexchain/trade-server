@@ -219,17 +219,17 @@ func getCount(count int) int {
 	return count
 }
 
-func groupOfDataPacket(topic string, data []json.RawMessage)[]byte  {
-	bz  := make([]byte, 0, len(data))
+func groupOfDataPacket(topic string, data []json.RawMessage) []byte {
+	bz := make([]byte, 0, len(data))
 	bz = append(bz, []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":[", topic))...)
 	for _, v := range data {
 		bz = append(bz, []byte(v)...)
 		bz = append(bz, []byte(",")...)
 	}
-	if len(data) > 0{
-		bz[len(bz) -1] = byte(']')
+	if len(data) > 0 {
+		bz[len(bz)-1] = byte(']')
 		bz = append(bz, []byte("}")...)
-	}else {
+	} else {
 		bz = append(bz, []byte("]}")...)
 	}
 	return bz
@@ -244,7 +244,7 @@ func PushFullInformation(subscriptionTopic string, count int, c *Conn, hub *Hub)
 	type queryFunc func(string, int64, int64, int) ([]json.RawMessage, []int64)
 	queryAndPushFunc := func(typeKey string, param string, qf queryFunc) error {
 		data, _ := qf(param, hub.currBlockTime.Unix(), hub.sid, count)
-		bz  := groupOfDataPacket(typeKey, data)
+		bz := groupOfDataPacket(typeKey, data)
 		err = c.WriteMessage(websocket.TextMessage, bz)
 		if err != nil {
 			return err
@@ -298,7 +298,7 @@ func queryTickerAndPush(hub *Hub, c *Conn, market string) error {
 		return err
 	}
 	err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("{\"type\":\"%s\","+
-		" \"payload\":%s}", OrderKey, string(baseData))))
+		" \"payload\":%s}", TickerKey, string(baseData))))
 	return err
 }
 
@@ -334,7 +334,7 @@ func queryOrderAndPush(hub *Hub, c *Conn, account string, count int) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -374,7 +374,7 @@ func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, count int
 
 func queryKlineAndpush(hub *Hub, c *Conn, params []string, count int) error {
 	candleBz := hub.QueryCandleStick(params[0], GetSpanFromSpanStr(params[1]), hub.currBlockTime.Unix(), hub.sid, count)
-	bz  := groupOfDataPacket(KlineKey, candleBz)
+	bz := groupOfDataPacket(KlineKey, candleBz)
 	err := c.WriteMessage(websocket.TextMessage, bz)
 	if err != nil {
 		return err
@@ -384,7 +384,7 @@ func queryKlineAndpush(hub *Hub, c *Conn, params []string, count int) error {
 
 func querySlashAndPush(hub *Hub, c *Conn, count int) error {
 	data, _ := hub.QuerySlash(hub.currBlockTime.Unix(), hub.sid, count)
-	bz  := groupOfDataPacket(SlashKey, data)
+	bz := groupOfDataPacket(SlashKey, data)
 	err := c.WriteMessage(websocket.TextMessage, bz)
 	if err != nil {
 		return err
