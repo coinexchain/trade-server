@@ -151,7 +151,7 @@ func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, t 
 	res := make([]CandleStick, 0, 3)
 	lastTime := csr.LastUpdateTime.Unix()
 	if isNewMinute && lastTime != 0 {
-		cs := csr.newCandleStick(csr.MinuteCS[csr.LastUpdateTime.Minute()], t.Unix(), Minute)
+		cs := csr.newCandleStick(csr.MinuteCS[csr.LastUpdateTime.UTC().Minute()], t.Unix(), Minute)
 		if !cs.TotalDeal.IsZero() && csr.LastUpdateTime.Unix() != csr.LastMinuteCSTime {
 			res = append(res, cs)
 			csr.LastMinuteCSTime = csr.LastUpdateTime.Unix()
@@ -170,8 +170,8 @@ func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, t 
 		}
 	}
 	if isNewHour && lastTime != 0 {
-		csr.HourCS[csr.LastUpdateTime.Hour()] = merge(csr.MinuteCS[:])
-		cs := csr.newCandleStick(csr.HourCS[csr.LastUpdateTime.Hour()], t.Unix(), Hour)
+		csr.HourCS[csr.LastUpdateTime.UTC().Hour()] = merge(csr.MinuteCS[:])
+		cs := csr.newCandleStick(csr.HourCS[csr.LastUpdateTime.UTC().Hour()], t.Unix(), Hour)
 		if !cs.TotalDeal.IsZero() && csr.LastUpdateTime.Unix() != csr.LastHourCSTime {
 			res = append(res, cs)
 			csr.LastHourCSTime = csr.LastUpdateTime.Unix()
@@ -224,7 +224,7 @@ func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, t 
 }
 
 func (csr *CandleStickRecord) Update(t time.Time, price sdk.Dec, amount int64) {
-	csr.MinuteCS[t.Minute()].update(price, amount)
+	csr.MinuteCS[t.UTC().Minute()].update(price, amount)
 	csr.LastUpdateTime = t
 }
 
@@ -250,9 +250,9 @@ func (manager *CandleStickManager) AddMarket(market string) {
 
 func (manager *CandleStickManager) NewBlock(t time.Time) []CandleStick {
 	res := make([]CandleStick, 0, 100)
-	isNewDay := t.Day() != manager.LastBlockTime.Day() || t.Unix()-manager.LastBlockTime.Unix() > 60*60*24
-	isNewHour := t.Hour() != manager.LastBlockTime.Hour() || t.Unix()-manager.LastBlockTime.Unix() > 60*60
-	isNewMinute := t.Minute() != manager.LastBlockTime.Minute() || t.Unix()-manager.LastBlockTime.Unix() > 60
+	isNewDay := t.UTC().Day() != manager.LastBlockTime.UTC().Day() || t.Unix()-manager.LastBlockTime.Unix() > 60*60*24
+	isNewHour := t.UTC().Hour() != manager.LastBlockTime.UTC().Hour() || t.Unix()-manager.LastBlockTime.Unix() > 60*60
+	isNewMinute := t.UTC().Minute() != manager.LastBlockTime.UTC().Minute() || t.Unix()-manager.LastBlockTime.Unix() > 60
 	for _, csr := range manager.CsrMap {
 		csSlice := csr.newBlock(isNewDay, isNewHour, isNewMinute, manager.LastBlockTime)
 		res = append(res, csSlice...)

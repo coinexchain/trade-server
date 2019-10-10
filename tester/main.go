@@ -74,7 +74,7 @@ func (csMan *CandleStickMan) scanForMinutes(recList []dealRec) {
 	var currIdx int
 	for currIdx = 1; currIdx < len(recList); currIdx++ {
 		currTime := time.Unix(recList[currIdx].time, 0)
-		if currTime.Minute() != lastTime.Minute() {
+		if currTime.UTC().Minute() != lastTime.UTC().Minute() {
 			cs := getCandleStick(recList[lastIdx:currIdx], core.MinuteStr)
 			csMan.MinuteList = append(csMan.MinuteList, cs)
 			lastIdx = currIdx
@@ -93,7 +93,7 @@ func (csMan *CandleStickMan) scanForHours(recList []dealRec) {
 	var currIdx int
 	for currIdx = 1; currIdx < len(recList); currIdx++ {
 		currTime := time.Unix(recList[currIdx].time, 0)
-		if currTime.Hour() != lastTime.Hour() {
+		if currTime.UTC().Hour() != lastTime.UTC().Hour() {
 			cs := getCandleStick(recList[lastIdx:currIdx], core.HourStr)
 			csMan.HourList = append(csMan.HourList, cs)
 			lastIdx = currIdx

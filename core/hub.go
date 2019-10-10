@@ -406,7 +406,7 @@ func (hub *Hub) beginForCandleSticks() {
 	var targets []Subscriber
 	sym := ""
 	var ok bool
-	currMinute := hub.currBlockTime.Hour() * hub.currBlockTime.Minute()
+	currMinute := hub.currBlockTime.UTC().Hour() * hub.currBlockTime.UTC().Minute()
 	for _, cs := range candleSticks {
 		//if cs.Market=="hffp/cet" {
 		//	fmt.Printf("= %v %s\n", cs, time.Unix(cs.EndingUnixTime, 0).UTC().Format(time.RFC3339))
@@ -1012,11 +1012,11 @@ func (hub *Hub) commitForSlash() {
 
 func (hub *Hub) commitForTicker() {
 	tkMap := make(map[string]*Ticker)
-	isNewMinute := hub.currBlockTime.Minute() != hub.lastBlockTime.Minute() || hub.currBlockTime.Unix()-hub.lastBlockTime.Unix() > 60
+	isNewMinute := hub.currBlockTime.UTC().Minute() != hub.lastBlockTime.UTC().Minute() || hub.currBlockTime.Unix()-hub.lastBlockTime.Unix() > 60
 	if !isNewMinute {
 		return
 	}
-	currMinute := hub.currBlockTime.Hour() * hub.currBlockTime.Minute()
+	currMinute := hub.currBlockTime.UTC().Hour() * hub.currBlockTime.UTC().Minute()
 	for _, triman := range hub.managersMap {
 		if ticker := triman.tkm.GetTicker(currMinute); ticker != nil {
 			tkMap[ticker.Market] = ticker
