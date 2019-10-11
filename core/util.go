@@ -170,13 +170,18 @@ func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, t 
 		}
 	}
 	if isNewHour && lastTime != 0 {
-		csr.HourCS[csr.LastUpdateTime.UTC().Hour()] = merge(csr.MinuteCS[:])
-		cs := csr.newCandleStick(csr.HourCS[csr.LastUpdateTime.UTC().Hour()], t.Unix(), Hour)
-		if !cs.TotalDeal.IsZero() && csr.LastUpdateTime.Unix() != csr.LastHourCSTime {
-			res = append(res, cs)
-			csr.LastHourCSTime = csr.LastUpdateTime.Unix()
-			csr.LastHourPrice = cs.ClosePrice
-		} else {
+		gotResult := false
+		if csr.LastUpdateTime.Unix() != csr.LastHourCSTime {
+			csr.HourCS[csr.LastUpdateTime.UTC().Hour()] = merge(csr.MinuteCS[:])
+			cs := csr.newCandleStick(csr.HourCS[csr.LastUpdateTime.UTC().Hour()], t.Unix(), Hour)
+			if !cs.TotalDeal.IsZero() {
+				res = append(res, cs)
+				csr.LastHourCSTime = csr.LastUpdateTime.Unix()
+				csr.LastHourPrice = cs.ClosePrice
+				gotResult = true
+			}
+		}
+		if !gotResult {
 			res = append(res, CandleStick{
 				OpenPrice:      csr.LastHourPrice,
 				ClosePrice:     csr.LastHourPrice,
@@ -190,13 +195,18 @@ func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, t 
 		}
 	}
 	if isNewDay && lastTime != 0 {
-		dayCS := merge(csr.HourCS[:])
-		cs := csr.newCandleStick(dayCS, t.Unix(), Day)
-		if !cs.TotalDeal.IsZero() && csr.LastUpdateTime.Unix() != csr.LastDayCSTime {
-			res = append(res, cs)
-			csr.LastDayCSTime = csr.LastUpdateTime.Unix()
-			csr.LastDayPrice = cs.ClosePrice
-		} else {
+		gotResult := false
+		if csr.LastUpdateTime.Unix() != csr.LastDayCSTime {
+			dayCS := merge(csr.HourCS[:])
+			cs := csr.newCandleStick(dayCS, t.Unix(), Day)
+			if !cs.TotalDeal.IsZero() {
+				res = append(res, cs)
+				csr.LastDayCSTime = csr.LastUpdateTime.Unix()
+				csr.LastDayPrice = cs.ClosePrice
+				gotResult = true
+			}
+		}
+		if !gotResult {
 			res = append(res, CandleStick{
 				OpenPrice:      csr.LastDayPrice,
 				ClosePrice:     csr.LastDayPrice,

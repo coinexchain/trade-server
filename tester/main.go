@@ -113,7 +113,7 @@ func (csMan *CandleStickMan) scanForDays(recList []dealRec) {
 	var currIdx int
 	for currIdx = 1; currIdx < len(recList); currIdx++ {
 		currTime := time.Unix(recList[currIdx].time, 0)
-		if currTime.Day() != lastTime.Day() {
+		if currTime.UTC().Day() != lastTime.UTC().Day() {
 			cs := getCandleStick(recList[lastIdx:currIdx], core.DayStr)
 			csMan.DayList = append(csMan.DayList, cs)
 			lastIdx = currIdx
@@ -180,17 +180,18 @@ func testCandleStick(recList []dealRec) {
 			impDList = append(impDList, cs)
 		}
 	}
-	compareCandleSticks(refMan.MinuteList, impMList)
-	compareCandleSticks(refMan.HourList, impHList)
-	compareCandleSticks(refMan.DayList, impDList)
+	compareCandleSticks(refMan.MinuteList, impMList, "minute")
+	compareCandleSticks(refMan.HourList, impHList, "hour")
+	compareCandleSticks(refMan.DayList, impDList, "day")
 }
 
-func compareCandleSticks(ref, imp []core.CandleStick) {
+func compareCandleSticks(ref, imp []core.CandleStick, span string) {
 	for i := 0; i < len(ref) && i < len(imp); i++ {
 		if ref[i].OpenPrice != imp[i].OpenPrice {
 			panic("OpenPrice mismatch")
 		}
 		if ref[i].ClosePrice != imp[i].ClosePrice {
+			fmt.Printf("S %s E: %d  %s %s\n", span, ref[i].EndingUnixTime, ref[i].ClosePrice, imp[i].ClosePrice)
 			panic("ClosePrice mismatch")
 		}
 		if ref[i].HighPrice != imp[i].HighPrice {
@@ -600,6 +601,9 @@ func simulateKafkaInput() {
 		if counter%10000 == 0 {
 			println("==========", counter)
 		}
+		if counter > 400000 {
+			break
+		}
 		line := scanner.Text()
 		divIdx := strings.Index(line, "#")
 		msgType := line[:divIdx]
@@ -662,6 +666,18 @@ func main() {
 		return
 	}
 	fmt.Printf("Now run random test\n")
+	//                                  size    seed    timeStep
+	testCandleStick(getRandDealRecList(50000, 0, 40))
+	testCandleStick(getRandDealRecList(90000, 1, 20))
+	testCandleStick(getRandDealRecList(90000, 2, 90))
+	testCandleStick(getRandDealRecList(90000, 3, 50))
+	testCandleStick(getRandDealRecList(90000, 4, 150))
+	testCandleStick(getRandDealRecList(90000, 15, 10))
+	testCandleStick(getRandDealRecList(990000, 25, 30))
+	testCandleStick(getRandDealRecList(990000, 27, 20))
+	testCandleStick(getRandDealRecList(990000, 28, 25))
+	testCandleStick(getRandDealRecList(990000, 29, 27))
+
 	//                                                         seed  step priceRange amountRange
 	pList, aList := getRandPriceAndAmountList(core.MinuteNumInDay*7, 0, 50, 1000, 100)
 	testXTicker(pList, aList)
@@ -695,18 +711,6 @@ func main() {
 	testTicker(getRandPriceList(core.MinuteNumInDay*7, 15, 920, 300))
 	testTicker(getRandPriceList(core.MinuteNumInDay*177, 16, 20, 50))
 	testTicker(getRandPriceList(core.MinuteNumInDay*177, 17, 20, 50))
-
-	//                                  size    seed    timeStep
-	testCandleStick(getRandDealRecList(50000, 0, 40))
-	testCandleStick(getRandDealRecList(90000, 1, 20))
-	testCandleStick(getRandDealRecList(90000, 2, 90))
-	testCandleStick(getRandDealRecList(90000, 3, 50))
-	testCandleStick(getRandDealRecList(90000, 4, 150))
-	testCandleStick(getRandDealRecList(90000, 15, 10))
-	testCandleStick(getRandDealRecList(990000, 25, 30))
-	testCandleStick(getRandDealRecList(990000, 27, 20))
-	testCandleStick(getRandDealRecList(990000, 28, 25))
-	testCandleStick(getRandDealRecList(990000, 29, 27))
 
 	//                               count   sizeLimit seed  priceRange amountRange
 	testDepth(getRandPricePointsSets(100, 20, 0, 100, 20))
