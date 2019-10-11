@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -468,8 +469,9 @@ func DefaultTickerManager(Market string) *TickerManager {
 // Flush the cached NewestPrice and NewestMinute to PriceList,
 // and assign currPrice to NewestPrice, currMinute to NewestMinute
 func (tm *TickerManager) UpdateNewestPrice(currPrice sdk.Dec, currMinute int) {
+	//fmt.Printf("@@ %s: %s %d\n", tm.Market, currPrice, currMinute)
 	if currMinute >= MinuteNumInDay || currMinute < 0 {
-		panic("Minute too large")
+		panic(fmt.Sprintf("Minute not Valid: %d", currMinute))
 	}
 	if !tm.Initialized {
 		tm.Initialized = true
@@ -505,7 +507,7 @@ func (tm *TickerManager) GetTicker(currMinute int) *Ticker {
 		return nil
 	}
 	if currMinute >= MinuteNumInDay || currMinute < 0 {
-		panic("Minute too large")
+		panic(fmt.Sprintf("Minute not Valid: %d", currMinute))
 	}
 	lastMinute := currMinute - 1
 	if lastMinute < 0 {

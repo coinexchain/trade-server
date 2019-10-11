@@ -601,9 +601,9 @@ func simulateKafkaInput() {
 		if counter%10000 == 0 {
 			println("==========", counter)
 		}
-		if counter > 400000 {
-			break
-		}
+		//if counter > 400000 {
+		//	break
+		//}
 		line := scanner.Text()
 		divIdx := strings.Index(line, "#")
 		msgType := line[:divIdx]
@@ -637,22 +637,27 @@ func simulateKafkaInput() {
 	//	fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
 	//}
 
-	t := T("2020-09-29T08:02:06.647266Z").Unix()
-	msgList, timesid := hub.QueryDeal("abc/cet", t, 0, 1024)
-	for i, msg := range msgList {
-		fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
-	}
-	msgList = hub.QueryCandleStick("abc/cet", core.Minute, t, 0, 1024)
-	for _, msg := range msgList {
-		fmt.Printf("== %s\n", string(msg))
-	}
-	msgList = hub.QueryCandleStick("abc/cet", core.Hour, t, 0, 1024)
-	for _, msg := range msgList {
-		fmt.Printf("== %s\n", string(msg))
-	}
-	msgList = hub.QueryCandleStick("abc/cet", core.Day, t, 0, 1024)
-	for _, msg := range msgList {
-		fmt.Printf("== %s\n", string(msg))
+	//t := T("2020-09-29T08:02:06.647266Z").Unix()
+	//msgList, timesid := hub.QueryDeal("abc/cet", t, 0, 1024)
+	//for i, msg := range msgList {
+	//	fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
+	//}
+	//msgList = hub.QueryCandleStick("abc/cet", core.Minute, t, 0, 1024)
+	//for _, msg := range msgList {
+	//	fmt.Printf("== %s\n", string(msg))
+	//}
+	//msgList = hub.QueryCandleStick("abc/cet", core.Hour, t, 0, 1024)
+	//for _, msg := range msgList {
+	//	fmt.Printf("== %s\n", string(msg))
+	//}
+	//msgList = hub.QueryCandleStick("abc/cet", core.Day, t, 0, 1024)
+	//for _, msg := range msgList {
+	//	fmt.Printf("== %s\n", string(msg))
+	//}
+
+	tickers := hub.QueryTickers([]string{"abc/cet", "hffp/cet", "game/cet", "hffp1/cet", "ddc/cet", "ift/cet", "ktt/cet"})
+	for _, ticker := range tickers {
+		fmt.Printf("== %v\n", ticker)
 	}
 }
 
