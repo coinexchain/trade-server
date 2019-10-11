@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"strings"
 	"sync"
 	"time"
@@ -57,6 +56,7 @@ const (
 	BlockHeightByte  = byte(0x20)
 	DetailByte       = byte(0x22)
 	SlashByte        = byte(0x24)
+	LatestHeightByte = byte(0x26)
 	RedelegationByte = byte(0x30)
 	UnbondingByte    = byte(0x32)
 	UnlockByte       = byte(0x34)
@@ -333,7 +333,7 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 		case "send_lock_coins":
 			hub.handleLockedCoinsMsg(entry.bz)
 		default:
-			hub.Log(fmt.Sprintf("Unknown Message Type:%s", msgType))
+			hub.Log(fmt.Sprintf("Unknown Message Type:%s", entry.msgType))
 		}
 	}
 
@@ -357,6 +357,7 @@ func (hub *Hub) prehandleNewHeightInfo(bz []byte) {
 	} else {
 		hub.skipHeight = true
 		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", hub.currBlockHeight, v.Height))
+		panic("here")
 	}
 
 	hub.msgEntryList = hub.msgEntryList[:0]
@@ -383,14 +384,12 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 		hub.Log(fmt.Sprintf("Invalid Height! websocket %d+1!=%d\n", latestHeight, v.Height))
 	}
 
-	if hub.skipHeight {
-		return
-	}
-
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b[:], uint64(v.TimeStamp.Unix()))
-	key := append([]byte{BlockHeightByte}, int64ToBigEndianBytes(v.Height)...)
+	heightBytes := int64ToBigEndianBytes(v.Height)
+	key := append([]byte{BlockHeightByte}, heightBytes...)
 	hub.batch.Set(key, b)
+	hub.batch.Set([]byte{LatestHeightByte}, heightBytes)
 	for _, ss := range hub.subMan.GetHeightSubscribeInfo() {
 		hub.subMan.PushHeight(ss, bz)
 	}
@@ -1106,9 +1105,7 @@ func (hub *Hub) commit() {
 		hub.dumpFlag = false
 	}
 	hub.dbMutex.Lock()
-	if !hub.skipHeight {
-		hub.batch.WriteSync()
-	}
+	hub.batch.WriteSync()
 	hub.batch.Close()
 	hub.batch = hub.db.NewBatch()
 	hub.dbMutex.Unlock()
@@ -1131,24 +1128,11 @@ func (hub *Hub) QueryTickers(marketList []string) []*Ticker {
 }
 
 func (hub *Hub) QueryLatestHeight() int64 {
-	end := append([]byte{BlockHeightByte}, int64ToBigEndianBytes(math.MaxInt64)...)
-	start := []byte{BlockHeightByte}
-	hub.dbMutex.RLock()
-	iter := hub.db.ReverseIterator(start, end)
-	defer func() {
-		iter.Close()
-		hub.dbMutex.RUnlock()
-	}()
-
-	var latestHeight int64
-	if iter.Valid() {
-		bz := iter.Key()[1:9]
-		latestHeight = BigEndianBytesToInt64(bz)
-	} else {
-		latestHeight = -1
+	bz := hub.db.Get([]byte{LatestHeightByte})
+	if len(bz) == 0 {
+		return 0
 	}
-
-	return latestHeight
+	return BigEndianBytesToInt64(bz)
 }
 
 func (hub *Hub) QueryBlockTime(height int64, count int) []int64 {

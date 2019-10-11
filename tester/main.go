@@ -15,6 +15,7 @@ import (
 
 	"github.com/coinexchain/trade-server/core"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/pkg/profile"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -580,6 +581,8 @@ func T(s string) time.Time {
 }
 
 func simulateKafkaInput() {
+	defer profile.Start().Stop()
+	println("Args[0]: ", os.Args[0])
 	file, err := os.Open(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
@@ -591,7 +594,12 @@ func simulateKafkaInput() {
 	hub := core.NewHub(db, subMan)
 
 	scanner := bufio.NewScanner(file)
+	counter := int64(0)
 	for scanner.Scan() {
+		counter++
+		if counter%10000 == 0 {
+			println("==========", counter)
+		}
 		line := scanner.Text()
 		divIdx := strings.Index(line, "#")
 		msgType := line[:divIdx]
@@ -612,19 +620,36 @@ func simulateKafkaInput() {
 	//data = hub.QueryCandleStick("hffp/cet", core.Day, unixTime, 0, 1000)
 	//fmt.Printf("here %s %d\n", toStr(data), unixTime)
 
-	t := T("2020-09-29T08:02:06.647266Z").Unix()
-	acc := "coinex1wt8remcgk6v03q4337p2nm9l9r98tyejed4s6l"
-	msgList, timesid := hub.QueryIncomeAboutToken("cet", acc, t, 0, 1024)
-	for i, msg := range msgList {
-		fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
-	}
-	fmt.Printf("------------------------\n")
-	acc = "coinex1qampszmdkpuyrsg620sdldmhxuha6mrrj87y9c"
-	msgList, timesid = hub.QueryTxAboutToken("cet", acc, t, 0, 1024)
-	for i, msg := range msgList {
-		fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
-	}
+	//t := T("2020-09-29T08:02:06.647266Z").Unix()
+	//acc := "coinex1wt8remcgk6v03q4337p2nm9l9r98tyejed4s6l"
+	//msgList, timesid := hub.QueryIncomeAboutToken("cet", acc, t, 0, 1024)
+	//for i, msg := range msgList {
+	//	fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
+	//}
+	//fmt.Printf("------------------------\n")
+	//acc = "coinex1qampszmdkpuyrsg620sdldmhxuha6mrrj87y9c"
+	//msgList, timesid = hub.QueryTxAboutToken("cet", acc, t, 0, 1024)
+	//for i, msg := range msgList {
+	//	fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
+	//}
 
+	t := T("2020-09-29T08:02:06.647266Z").Unix()
+	msgList, timesid := hub.QueryDeal("abc/cet", t, 0, 1024)
+	for i, msg := range msgList {
+		fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
+	}
+	msgList = hub.QueryCandleStick("abc/cet", core.Minute, t, 0, 1024)
+	for _, msg := range msgList {
+		fmt.Printf("== %s\n", string(msg))
+	}
+	msgList = hub.QueryCandleStick("abc/cet", core.Hour, t, 0, 1024)
+	for _, msg := range msgList {
+		fmt.Printf("== %s\n", string(msg))
+	}
+	msgList = hub.QueryCandleStick("abc/cet", core.Day, t, 0, 1024)
+	for _, msg := range msgList {
+		fmt.Printf("== %s\n", string(msg))
+	}
 }
 
 func main() {

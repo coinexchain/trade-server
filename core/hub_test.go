@@ -126,7 +126,7 @@ func Test1(t *testing.T) {
 	hub := NewHub(db, subMan)
 	hub.currBlockHeight = 999
 	height := hub.QueryLatestHeight()
-	require.EqualValues(t, -1, height)
+	require.EqualValues(t, 0, height)
 
 	newHeightInfo := &NewHeightInfo{
 		Height:        1000,

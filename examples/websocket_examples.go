@@ -35,7 +35,7 @@ func main() {
 				return
 			}
 			log.Printf("recv: %s", message)
-			if err := json.Unmarshal(message, &data); err != nil{
+			if err := json.Unmarshal(message, &data); err != nil {
 				panic(err)
 			}
 		}
