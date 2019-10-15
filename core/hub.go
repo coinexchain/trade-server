@@ -855,8 +855,7 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 	if v.Side == SELL {
 		csRec := hub.csMan.GetRecord(v.TradingPair)
 		if csRec != nil {
-			price := sdk.NewDec(v.CurrMoney).QuoInt64(v.CurrStock)
-			csRec.Update(hub.currBlockTime, price, v.CurrStock)
+			csRec.Update(hub.currBlockTime, v.FillPrice, v.CurrStock)
 		}
 	}
 	//Update depth info

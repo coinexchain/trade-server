@@ -87,6 +87,7 @@ type FillOrderInfo struct {
 	DealMoney int64 `json:"deal_money"`
 	CurrStock int64 `json:"curr_stock"`
 	CurrMoney int64 `json:"curr_money"`
+	FillPrice sdk.Dec `json:"fill_price"`
 }
 
 type CancelOrderInfo struct {
