@@ -222,6 +222,8 @@ type Hub struct {
 	currBlockTime time.Time
 	lastBlockTime time.Time
 
+	blocksInterval int64
+
 	// cache for NotificationSlash
 	slashSlice []*NotificationSlash
 
@@ -236,23 +238,24 @@ type Hub struct {
 	currTxHashID string
 }
 
-func NewHub(db dbm.DB, subMan SubscribeManager) Hub {
+func NewHub(db dbm.DB, subMan SubscribeManager, interval int64) Hub {
 	return Hub{
-		db:            db,
-		batch:         db.NewBatch(),
-		subMan:        subMan,
-		managersMap:   make(map[string]TripleManager),
-		csMan:         NewCandleStickManager(nil),
-		currBlockTime: time.Unix(0, 0),
-		lastBlockTime: time.Unix(0, 0),
-		tickerMap:     make(map[string]*Ticker),
-		slashSlice:    make([]*NotificationSlash, 0, 10),
-		partition:     0,
-		offset:        0,
-		dumpFlag:      false,
-		lastDumpTime:  time.Now(),
-		stopped:       false,
-		msgEntryList:  make([]msgEntry, 0, 1000),
+		db:             db,
+		batch:          db.NewBatch(),
+		subMan:         subMan,
+		managersMap:    make(map[string]TripleManager),
+		csMan:          NewCandleStickManager(nil),
+		currBlockTime:  time.Unix(0, 0),
+		lastBlockTime:  time.Unix(0, 0),
+		tickerMap:      make(map[string]*Ticker),
+		slashSlice:     make([]*NotificationSlash, 0, 10),
+		partition:      0,
+		offset:         0,
+		dumpFlag:       false,
+		lastDumpTime:   time.Now(),
+		stopped:        false,
+		msgEntryList:   make([]msgEntry, 0, 1000),
+		blocksInterval: interval,
 	}
 }
 
@@ -293,6 +296,12 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 	}
 
 	hub.msgEntryList = append(hub.msgEntryList, msgEntry{msgType: msgType, bz: bz})
+	// if msgType == "fill_order_info" {
+	// 	fmt.Printf("trade-server have received fillOrderInfo, time : %d\n", time.Now().Second())
+	// }
+	// if msgType == "height_info" {
+	// 	fmt.Printf("trade-server received newBlockInfo, time : %d\n", time.Now().Second())
+	// }
 
 	if msgType != "commit" {
 		return
@@ -1055,14 +1064,25 @@ func (hub *Hub) commitForDepth() {
 		if strings.HasPrefix(market, "B:") {
 			continue
 		}
-		depthDeltaSell, mergeDeltaSell := triman.sell.EndBlock()
-		depthDeltaBuy, mergeDeltaBuy := triman.buy.EndBlock()
-		if len(depthDeltaSell) == 0 && len(depthDeltaBuy) == 0 {
-			continue
-		}
+
 		info := hub.subMan.GetDepthSubscribeInfo()
 		targets, ok := info[market]
 		if !ok {
+			continue
+		}
+		if hub.currBlockHeight%hub.blocksInterval == 0 {
+			hub.depthMutex.Unlock()
+			for _, target := range targets {
+				level := target.Detail().(string)
+				queryDepthAndPush(hub, target.GetConn(), market, level, 0)
+			}
+			hub.depthMutex.Lock()
+			return
+		}
+
+		depthDeltaSell, mergeDeltaSell := triman.sell.EndBlock()
+		depthDeltaBuy, mergeDeltaBuy := triman.buy.EndBlock()
+		if len(depthDeltaSell) == 0 && len(depthDeltaBuy) == 0 {
 			continue
 		}
 
@@ -1087,6 +1107,7 @@ func (hub *Hub) commitForDepth() {
 				if len(levelSells[level]) != 0 {
 					hub.subMan.PushDepthSell(target, levelSells[level])
 				}
+
 			}
 		}
 	}

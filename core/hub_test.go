@@ -30,7 +30,15 @@ func TestDepthLevel(t *testing.T) {
 	addr1 := acc1.String()
 	db := dbm.NewMemDB()
 	subMan := GetDepthSubscribeManeger()
-	hub := NewHub(db, subMan)
+	hub := NewHub(db, subMan, 99999)
+	hub.currBlockHeight = 999
+	newHeightInfo := &NewHeightInfo{
+		Height:        1000,
+		TimeStamp:     T("2019-07-15T08:07:10Z"),
+		LastBlockHash: []byte("01234567890123456789"),
+	}
+	bytes, _ := json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
 
 	createOrderInfo := &CreateOrderInfo{
 		OrderID:     addr1 + "-1",
@@ -46,7 +54,7 @@ func TestDepthLevel(t *testing.T) {
 		FrozenFee:   1,
 		Freeze:      10,
 	}
-	bytes, _ := json.Marshal(createOrderInfo)
+	bytes, _ = json.Marshal(createOrderInfo)
 	hub.ConsumeMessage("create_order_info", bytes)
 
 	createOrderInfo = &CreateOrderInfo{
@@ -124,7 +132,7 @@ func Test1(t *testing.T) {
 
 	db := dbm.NewMemDB()
 	subMan := GetSubscribeManager(addr1, addr2)
-	hub := NewHub(db, subMan)
+	hub := NewHub(db, subMan, 999999)
 	hub.currBlockHeight = 999
 	height := hub.QueryLatestHeight()
 	require.EqualValues(t, 0, height)
@@ -272,7 +280,7 @@ func Test1(t *testing.T) {
 	hub.Dump(hub4j)
 	bz, err := json.Marshal(hub4j)
 	assert.Equal(t, nil, err)
-	hub = NewHub(db, subMan)
+	hub = NewHub(db, subMan, 999999)
 	hub4jo := &HubForJSON{}
 	err = json.Unmarshal(bz, hub4jo)
 	assert.Equal(t, nil, err)
@@ -864,7 +872,7 @@ func TestDumpOffset(t *testing.T) {
 
 	db := dbm.NewMemDB()
 	subMan := GetSubscribeManager(addr1, addr2)
-	hub := NewHub(db, subMan)
+	hub := NewHub(db, subMan, 99999)
 
 	// offset % 1000 != 0 && last dumptime < 10min
 	hub.lastDumpTime = time.Now().Add(-1 * time.Minute)

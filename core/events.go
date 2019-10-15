@@ -6,6 +6,8 @@ const (
 	TickerKey       = "ticker"
 	KlineKey        = "kline"
 	DepthKey        = "depth"
+	DepthDelta      = "depth_delta"
+	DepthFull       = "depth_full"
 	DealKey         = "deal"
 	BancorKey       = "bancor"
 	BancorTradeKey  = "bancor-trade"

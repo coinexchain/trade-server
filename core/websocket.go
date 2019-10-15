@@ -30,6 +30,10 @@ func (i ImplSubscriber) WriteMsg(v []byte) error {
 	return i.WriteMessage(websocket.TextMessage, v)
 }
 
+func (i ImplSubscriber) GetConn() *Conn {
+	return i.Conn
+}
+
 type Conn struct {
 	*websocket.Conn
 	topicWithParams map[string]map[string]struct{} // topic --> params
@@ -351,7 +355,10 @@ func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, count int
 		if err != nil {
 			return err
 		}
-		msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthKey, string(bz)))
+		msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(bz)))
+		if c == nil {
+			return nil
+		}
 		return c.WriteMessage(websocket.TextMessage, msg)
 	}
 
@@ -360,11 +367,11 @@ func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, count int
 	levelSell := encodeDepthLevel(market, sellLevel, false)
 	levelBuy := encodeDepthLevel(market, buyLevel, true)
 
-	msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthKey, string(levelSell)))
+	msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(levelSell)))
 	if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
 		return err
 	}
-	msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthKey, string(levelBuy)))
+	msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(levelBuy)))
 	if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
 		return err
 	}
@@ -552,10 +559,10 @@ func (w *WebsocketManager) PushTicker(subscriber Subscriber, t []*Ticker) {
 	w.sendEncodeMsg(subscriber, TickerKey, payload)
 }
 func (w *WebsocketManager) PushDepthSell(subscriber Subscriber, delta []byte) {
-	w.sendEncodeMsg(subscriber, DepthKey, delta)
+	w.sendEncodeMsg(subscriber, DepthDelta, delta)
 }
 func (w *WebsocketManager) PushDepthBuy(subscriber Subscriber, delta []byte) {
-	w.sendEncodeMsg(subscriber, DepthKey, delta)
+	w.sendEncodeMsg(subscriber, DepthDelta, delta)
 }
 func (w *WebsocketManager) PushCandleStick(subscriber Subscriber, info []byte) {
 	w.sendEncodeMsg(subscriber, KlineKey, info)

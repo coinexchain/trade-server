@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -61,6 +62,7 @@ type PricePoint struct {
 type Subscriber interface {
 	Detail() interface{}
 	WriteMsg([]byte) error
+	GetConn() *Conn
 }
 
 type SubscribeManager interface {

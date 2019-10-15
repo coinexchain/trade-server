@@ -22,6 +22,10 @@ func (s *PlainSubscriber) WriteMsg([]byte) error {
 	return nil
 }
 
+func (s *PlainSubscriber) GetConn() *Conn {
+	return nil
+}
+
 type TickerSubscriber struct {
 	PlainSubscriber
 	Markets map[string]struct{}
@@ -32,6 +36,10 @@ func (s *TickerSubscriber) Detail() interface{} {
 }
 
 func (s *TickerSubscriber) WriteMsg([]byte) error {
+	return nil
+}
+
+func (s *TickerSubscriber) GetConn() *Conn {
 	return nil
 }
 
@@ -55,6 +63,10 @@ func (s *CandleStickSubscriber) WriteMsg([]byte) error {
 	return nil
 }
 
+func (s *CandleStickSubscriber) GetConn() *Conn {
+	return nil
+}
+
 func NewCandleStickSubscriber(id int64, timespan string) *CandleStickSubscriber {
 	return &CandleStickSubscriber{
 		PlainSubscriber: PlainSubscriber{ID: id},
@@ -72,6 +84,10 @@ func (s *DepthSubscriber) Detail() interface{} {
 }
 
 func (s *DepthSubscriber) WriteMsg([]byte) error {
+	return nil
+}
+
+func (s *DepthSubscriber) GetConn() *Conn {
 	return nil
 }
 
