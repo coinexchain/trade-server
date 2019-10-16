@@ -1048,7 +1048,7 @@ func (hub *Hub) pushDepthFull() {
 	if hub.currBlockHeight%hub.blocksInterval != 0 {
 		return
 	}
-	for market, triman := range hub.managersMap {
+	for market, _ := range hub.managersMap {
 		if strings.HasPrefix(market, "B:") {
 			continue
 		}
@@ -1075,12 +1075,6 @@ func (hub *Hub) commitForDepth() {
 			continue
 		}
 
-		info := hub.subMan.GetDepthSubscribeInfo()
-		targets, ok := info[market]
-		if !ok {
-			continue
-		}
-
 		depthDeltaSell, mergeDeltaSell := triman.sell.EndBlock()
 		depthDeltaBuy, mergeDeltaBuy := triman.buy.EndBlock()
 		if len(depthDeltaSell) == 0 && len(depthDeltaBuy) == 0 {
@@ -1095,6 +1089,12 @@ func (hub *Hub) commitForDepth() {
 					hub.currBlockHeight, lowestPP[0].Price, highestPP[0].Price)
 				hub.Log(s)
 			}
+		}
+
+		info := hub.subMan.GetDepthSubscribeInfo()
+		targets, ok := info[market]
+		if !ok {
+			continue
 		}
 
 		buyBz := encodeDepth(market, depthDeltaBuy, true)
