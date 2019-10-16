@@ -188,6 +188,9 @@ type TripleManager struct {
 	sell *DepthManager
 	buy  *DepthManager
 	tkm  *TickerManager
+
+	isChangedInCurrBlock bool
+	mutex                sync.RWMutex
 }
 
 type msgEntry struct {
@@ -204,12 +207,11 @@ type Hub struct {
 	// Mutex to protect shared storage and variables
 	dbMutex        sync.RWMutex
 	tickerMapMutex sync.RWMutex
-	depthMutex     sync.RWMutex
 
 	csMan CandleStickManager
 
 	// Updating logic and query logic share these variables
-	managersMap map[string]TripleManager
+	managersMap map[string]*TripleManager
 	tickerMap   map[string]*Ticker
 
 	// interface to the subscribe functions
@@ -243,7 +245,7 @@ func NewHub(db dbm.DB, subMan SubscribeManager, interval int64) Hub {
 		db:             db,
 		batch:          db.NewBatch(),
 		subMan:         subMan,
-		managersMap:    make(map[string]TripleManager),
+		managersMap:    make(map[string]*TripleManager),
 		csMan:          NewCandleStickManager(nil),
 		currBlockTime:  time.Unix(0, 0),
 		lastBlockTime:  time.Unix(0, 0),
@@ -266,11 +268,11 @@ func (hub *Hub) HasMarket(market string) bool {
 
 func (hub *Hub) AddMarket(market string) {
 	if strings.HasPrefix(market, "B:") {
-		hub.managersMap[market] = TripleManager{
+		hub.managersMap[market] = &TripleManager{
 			tkm: DefaultTickerManager(market),
 		}
 	} else {
-		hub.managersMap[market] = TripleManager{
+		hub.managersMap[market] = &TripleManager{
 			sell: DefaultDepthManager("sell"),
 			buy:  DefaultDepthManager("buy"),
 			tkm:  DefaultTickerManager(market),
@@ -287,6 +289,7 @@ func (hub *Hub) Log(s string) {
 var _ Consumer = &Hub{}
 
 func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
+
 	// fmt.Printf("msgType : %s, values : %s\n", msgType, string(bz))
 	if msgType == "height_info" {
 		hub.prehandleNewHeightInfo(bz)
@@ -307,7 +310,6 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 		return
 	}
 
-	hub.depthMutex.Lock()
 	for _, entry := range hub.msgEntryList {
 		switch entry.msgType {
 		case "height_info":
@@ -411,7 +413,7 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 
 func (hub *Hub) beginForCandleSticks() {
 	candleSticks := hub.csMan.NewBlock(hub.currBlockTime)
-	var triman TripleManager
+	var triman *TripleManager
 	var targets []Subscriber
 	sym := ""
 	var ok bool
@@ -807,6 +809,10 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 	}
 	amount := sdk.NewInt(v.Quantity)
 
+	if !triman.isChangedInCurrBlock {
+		triman.mutex.Lock()
+		triman.isChangedInCurrBlock = true
+	}
 	if v.Side == SELL {
 		triman.sell.DeltaChange(v.Price, amount)
 	} else {
@@ -869,6 +875,10 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 	if !ok {
 		return
 	}
+	if !triman.isChangedInCurrBlock {
+		triman.mutex.Lock()
+		triman.isChangedInCurrBlock = true
+	}
 	negStock := sdk.NewInt(-v.CurrStock)
 	if v.Side == SELL {
 		triman.sell.DeltaChange(v.Price, negStock)
@@ -904,6 +914,10 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 	triman, ok := hub.managersMap[v.TradingPair]
 	if !ok {
 		return
+	}
+	if !triman.isChangedInCurrBlock {
+		triman.mutex.Lock()
+		triman.isChangedInCurrBlock = true
 	}
 	negStock := sdk.NewInt(-v.LeftStock)
 	if v.Side == SELL {
@@ -1067,11 +1081,15 @@ func (hub *Hub) pushDepthFull() {
 }
 
 func (hub *Hub) commitForDepth() {
-	defer func() {
-		hub.depthMutex.Unlock()
-	}()
 	for market, triman := range hub.managersMap {
 		if strings.HasPrefix(market, "B:") {
+			continue
+		}
+
+		if triman.isChangedInCurrBlock {
+			triman.isChangedInCurrBlock = false
+			triman.mutex.Unlock()
+		} else {
 			continue
 		}
 
@@ -1194,10 +1212,10 @@ func (hub *Hub) QueryDepth(market string, count int) (sell []*PricePoint, buy []
 		return
 	}
 	tripleMan := hub.managersMap[market]
-	hub.depthMutex.RLock()
+	tripleMan.mutex.RLock()
 	sell = tripleMan.sell.GetLowest(count)
 	buy = tripleMan.buy.GetHighest(count)
-	hub.depthMutex.RUnlock()
+	tripleMan.mutex.RUnlock()
 	return
 }
 
@@ -1487,7 +1505,7 @@ func (hub *Hub) Load(hub4j *HubForJSON) {
 	hub.lastBlockTime = hub4j.LastBlockTime
 
 	for _, info := range hub4j.Markets {
-		triman := TripleManager{
+		triman := &TripleManager{
 			sell: DefaultDepthManager("sell"),
 			buy:  DefaultDepthManager("buy"),
 			tkm:  info.TkMan,
