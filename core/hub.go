@@ -1048,7 +1048,7 @@ func (hub *Hub) pushDepthFull() {
 	if hub.currBlockHeight%hub.blocksInterval != 0 {
 		return
 	}
-	for market, _ := range hub.managersMap {
+	for market := range hub.managersMap {
 		if strings.HasPrefix(market, "B:") {
 			continue
 		}
