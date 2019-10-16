@@ -1086,6 +1086,16 @@ func (hub *Hub) commitForDepth() {
 			continue
 		}
 
+		lowestPP := triman.sell.GetLowest(1)
+		highestPP := triman.buy.GetLowest(1)
+		if len(lowestPP) != 0 && len(highestPP) != 0 {
+			if lowestPP[0].Price.LTE(highestPP[0].Price) {
+				s := fmt.Sprintf("Error! %d sel_low:%s buy_high:%s\n",
+					hub.currBlockHeight, lowestPP[0].Price, highestPP[0].Price)
+				hub.Log(s)
+			}
+		}
+
 		buyBz := encodeDepth(market, depthDeltaBuy, true)
 		sellBz := encodeDepth(market, depthDeltaSell, false)
 		levelBuys := encodeDepthLevels(market, mergeDeltaBuy, true)
