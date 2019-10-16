@@ -307,6 +307,7 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 		return
 	}
 
+	hub.depthMutex.Lock()
 	for _, entry := range hub.msgEntryList {
 		switch entry.msgType {
 		case "height_info":
@@ -805,10 +806,6 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 		return
 	}
 	amount := sdk.NewInt(v.Quantity)
-	hub.depthMutex.Lock()
-	defer func() {
-		hub.depthMutex.Unlock()
-	}()
 
 	if v.Side == SELL {
 		triman.sell.DeltaChange(v.Price, amount)
@@ -873,10 +870,6 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 		return
 	}
 	negStock := sdk.NewInt(-v.CurrStock)
-	hub.depthMutex.Lock()
-	defer func() {
-		hub.depthMutex.Unlock()
-	}()
 	if v.Side == SELL {
 		triman.sell.DeltaChange(v.Price, negStock)
 	} else {
@@ -913,10 +906,6 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 		return
 	}
 	negStock := sdk.NewInt(-v.LeftStock)
-	hub.depthMutex.Lock()
-	defer func() {
-		hub.depthMutex.Unlock()
-	}()
 	if v.Side == SELL {
 		triman.sell.DeltaChange(v.Price, negStock)
 	} else {
@@ -1055,8 +1044,29 @@ func (hub *Hub) commitForTicker() {
 	hub.tickerMapMutex.Unlock()
 }
 
+func (hub *Hub) pushDepthFull() {
+	if hub.currBlockHeight%hub.blocksInterval != 0 {
+		return
+	}
+	for market, triman := range hub.managersMap {
+		if strings.HasPrefix(market, "B:") {
+			continue
+		}
+
+		info := hub.subMan.GetDepthSubscribeInfo()
+		targets, ok := info[market]
+		if !ok {
+			continue
+		}
+
+		for _, target := range targets {
+			level := target.Detail().(string)
+			queryDepthAndPush(hub, target.GetConn(), market, level, 0)
+		}
+	}
+}
+
 func (hub *Hub) commitForDepth() {
-	hub.depthMutex.Lock()
 	defer func() {
 		hub.depthMutex.Unlock()
 	}()
@@ -1069,15 +1079,6 @@ func (hub *Hub) commitForDepth() {
 		targets, ok := info[market]
 		if !ok {
 			continue
-		}
-		if hub.currBlockHeight%hub.blocksInterval == 0 {
-			hub.depthMutex.Unlock()
-			for _, target := range targets {
-				level := target.Detail().(string)
-				queryDepthAndPush(hub, target.GetConn(), market, level, 0)
-			}
-			hub.depthMutex.Lock()
-			return
 		}
 
 		depthDeltaSell, mergeDeltaSell := triman.sell.EndBlock()
@@ -1130,6 +1131,7 @@ func (hub *Hub) commit() {
 	hub.commitForSlash()
 	hub.commitForTicker()
 	hub.commitForDepth()
+	hub.pushDepthFull()
 	if hub.dumpFlag {
 		hub.commitForDump()
 		hub.dumpFlag = false
