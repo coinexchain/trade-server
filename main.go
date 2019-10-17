@@ -17,12 +17,16 @@ var (
 	newFlag *flag.FlagSet
 	help    bool
 	cfgFile string
+	version bool
 )
+
+const ReleaseVersion = "v0.0.2"
 
 func init() {
 	newFlag = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	newFlag.BoolVar(&help, "h", false, "display this help")
 	newFlag.StringVar(&cfgFile, "c", "config.toml", "config file")
+	newFlag.BoolVar(&version, "v", false, "show the trade-server version")
 	newFlag.Usage = usage
 }
 
@@ -30,6 +34,10 @@ func main() {
 	_ = newFlag.Parse(os.Args[1:])
 	if help {
 		newFlag.Usage()
+		return
+	}
+	if version {
+		fmt.Println(ReleaseVersion)
 		return
 	}
 
