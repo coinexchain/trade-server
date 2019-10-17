@@ -1124,17 +1124,17 @@ func (hub *Hub) commitForDepth() {
 			level := target.Detail().(string)
 			if level == "all" {
 				if len(depthDeltaSell) != 0 {
-					hub.subMan.PushDepthSell(target, sellBz)
+					hub.subMan.PushDepthWithChange(target, sellBz) // depth_change
 				}
 				if len(depthDeltaBuy) != 0 {
-					hub.subMan.PushDepthBuy(target, buyBz)
+					hub.subMan.PushDepthWithChange(target, buyBz) // depth_change
 				}
 			} else {
 				if len(levelBuys[level]) != 0 {
-					hub.subMan.PushDepthSell(target, levelBuys[level])
+					hub.subMan.PushDepthWithDelta(target, levelBuys[level])
 				}
 				if len(levelSells[level]) != 0 {
-					hub.subMan.PushDepthSell(target, levelSells[level])
+					hub.subMan.PushDepthWithDelta(target, levelSells[level])
 				}
 
 			}

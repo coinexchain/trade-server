@@ -7,6 +7,7 @@ const (
 	KlineKey        = "kline"
 	DepthKey        = "depth"
 	DepthDelta      = "depth_delta"
+	DepthChange     = "depth_change"
 	DepthFull       = "depth_full"
 	DealKey         = "deal"
 	BancorKey       = "bancor"

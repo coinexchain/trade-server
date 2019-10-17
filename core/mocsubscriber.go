@@ -320,10 +320,10 @@ func (sm *MocSubscribeManager) PushTicker(subscriber Subscriber, t []*Ticker) {
 	info, _ := json.Marshal(t)
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
-func (sm *MocSubscribeManager) PushDepthSell(subscriber Subscriber, info []byte) {
+func (sm *MocSubscribeManager) PushDepthWithChange(subscriber Subscriber, info []byte) {
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
-func (sm *MocSubscribeManager) PushDepthBuy(subscriber Subscriber, info []byte) {
+func (sm *MocSubscribeManager) PushDepthWithDelta(subscriber Subscriber, info []byte) {
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushCandleStick(subscriber Subscriber, info []byte) {

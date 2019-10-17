@@ -558,10 +558,10 @@ func (w *WebsocketManager) PushTicker(subscriber Subscriber, t []*Ticker) {
 	}
 	w.sendEncodeMsg(subscriber, TickerKey, payload)
 }
-func (w *WebsocketManager) PushDepthSell(subscriber Subscriber, delta []byte) {
-	w.sendEncodeMsg(subscriber, DepthDelta, delta)
+func (w *WebsocketManager) PushDepthWithChange(subscriber Subscriber, info []byte) {
+	w.sendEncodeMsg(subscriber, DepthChange, info)
 }
-func (w *WebsocketManager) PushDepthBuy(subscriber Subscriber, delta []byte) {
+func (w *WebsocketManager) PushDepthWithDelta(subscriber Subscriber, delta []byte) {
 	w.sendEncodeMsg(subscriber, DepthDelta, delta)
 }
 func (w *WebsocketManager) PushCandleStick(subscriber Subscriber, info []byte) {
