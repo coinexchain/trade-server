@@ -55,7 +55,7 @@
 应答：
 
 ```
-{"type":"deal", "payload":{"order_id":"coinex1c87uzudwwrgjmq5zude7k0s5t7r8cl6333v6uv-12524","trading_pair":"sdu1/cet","height":4421,"side":2,"price":"4.300000000000000000","left_stock":0,"freeze":0,"deal_stock":587912094,"deal_money":2939560470,"curr_stock":587912094,"curr_money":2939560470}}
+{"type":"deal", "payload":{"order_id":"coinex1c87uzudwwrgjmq5zude7k0s5t7r8cl6333v6uv-12524","trading_pair":"sdu1/cet","height":4421,"side":2,"price":"4.300000000000000000","left_stock":0,"freeze":0,"deal_stock":587912094,"deal_money":2939560470,"curr_stock":587912094,"curr_money":2939560470,"fill_price": "0.233"}}
 ```
 
 ## 订阅order信息
@@ -68,14 +68,14 @@
 
 ```
 // 订单创建
-{"type":"order", "payload":{"order_id":"coinex16ur229a4xkj9e0xu06nqge9c23y70g7sl5vj98-11678","sender":"coinex16ur229a4xkj9e0xu06nqge9c23y70g7sl5vj98","trading_pair":"sdu1/cet","order_type":2,"price":"3.100000000000000000","quantity":563125147,"side":2,"time_in_force":3,"feature_fee":0,"height":4422,"frozen_fee":2815626,"freeze":563125147}}
+{"type":"create_order", "payload":{"order_id":"coinex16ur229a4xkj9e0xu06nqge9c23y70g7sl5vj98-11678","sender":"coinex16ur229a4xkj9e0xu06nqge9c23y70g7sl5vj98","trading_pair":"sdu1/cet","order_type":2,"price":"3.100000000000000000","quantity":563125147,"side":2,"time_in_force":3,"feature_fee":0,"height":4422,"frozen_fee":2815626,"freeze":563125147}}
 
 // 订单成交
-{"type":"order", "payload":{"order_id":"coinex16ur229a4xkj9e0xu06nqge9c23y70g7sl5vj98-11667","trading_pair":"sdu1/cet","height":4421,"side":1,"price":"5.300000000000000000","left_stock":0,"freeze":174882868,"deal_stock":582942891,"deal_money":2914714455,"curr_stock":582942891,"curr_money":2914714455}}
+{"type":"fill_order", "payload":{"order_id":"coinex16ur229a4xkj9e0xu06nqge9c23y70g7sl5vj98-11667","trading_pair":"sdu1/cet","height":4421,"side":1,"price":"5.300000000000000000","left_stock":0,"freeze":174882868,"deal_stock":582942891,"deal_money":2914714455,"curr_stock":582942891,"curr_money":2914714455,"fill_price": "0.233"}}
 
 // 订单删除
 
-{"type":"order", "payload":{"order_id":"coinex16ur229a4xkj9e0xu06nqge9c23y70g7sl5vj98-11679","trading_pair":"sdu1/cet","height":4422,"side":1,"price":"7.000000000000000000","del_reason":"The order was fully filled","used_commission":2598017,"left_stock":0,"remain_amount":935285865,"deal_stock":519603258,"deal_money":2701936941}}
+{"type":"cancel_order", "payload":{"order_id":"coinex16ur229a4xkj9e0xu06nqge9c23y70g7sl5vj98-11679","trading_pair":"sdu1/cet","height":4422,"side":1,"price":"7.000000000000000000","del_reason":"The order was fully filled","used_commission":2598017,"left_stock":0,"remain_amount":935285865,"deal_stock":519603258,"deal_money":2701936941}}
 
 ```
 
@@ -97,11 +97,11 @@
 
 `kline:<trading-pair>:<level>`
 
-示例：`kline:sdu1/cet:16`
+示例：`kline:sdu1/cet:1min`
 
 应答：
 ```
-{"type":"kline", "payload":{"open":"5.199999998894717703","close":"4.899999999013645027","high":"5.300000000000000000","low":"4.899999991850623725","total":"507280335742","unix_time":1566220136,"time_span":16,"market":"sdu1/cet"}}
+{"type":"kline", "payload":{"open":"5.199999998894717703","close":"4.899999999013645027","high":"5.300000000000000000","low":"4.899999991850623725","total":"507280335742","unix_time":1566220136,"time_span":"1min","market":"sdu1/cet"}}
 ```
 
 ## 订阅bancor 信息

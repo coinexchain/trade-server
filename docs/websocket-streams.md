@@ -33,7 +33,7 @@ trader-server 是用来订阅实时数据的，一旦链接成功，会获取到
 
 当订阅的某个topic需要携带参数时，	可以使用`:`号分隔topic名称与它的参数；
 
-*	如：`kline:etc/cet:1m` ; 该topic的意思为：订阅 etc/cet的1分钟K线数据.
+*	如：`kline:etc/cet:1min` ; 该topic的意思为：订阅 etc/cet的1分钟K线数据.
 
 > [golang 客户端示例](https://github.com/coinexchain/trade-server/blob/master/examples/websocket_examples.go)
 
@@ -179,9 +179,9 @@ websocket的响应可能含有以下三种类型：
 
 获取交易对的指定精度的K线信息
 
-k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
+k线精度 : 当前支持 1min, 1hour, 1day
 
-**SubscriptionTopic** : `kline:<trading-pair>:<internal>`
+**SubscriptionTopic** : `kline:<trading-pair>:<1min>`
 
 **Response**:
 
@@ -261,7 +261,8 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
         "deal_stock": 773,			      // order deal stock
         "deal_money": 726,			      // order deal money
         "curr_stock": 8262,		              // curr stock
-        "curr_money": 7753			      // curr money 
+        "curr_money": 7753,			      // curr money 
+        "fill_price": "0.233"              // the order deal price
     }
 }
 
@@ -312,6 +313,7 @@ k线精度 : 当前支持 minute --> 16, hour --> 32, day --> 48
             "side":	1, 				// order side; BUY / SELL
             "price": "0.73", 			        // order price
             "freeze": 836382,			        // freeze sato.CET amount
+            "fill_price": "0.233",              // the order deal price
             "left_stock": 7753, 		        // order left stock
             "deal_stock": 773,			        // order deal stock
             "deal_money": 726,			        // order deal money
