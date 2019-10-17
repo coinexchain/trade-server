@@ -122,6 +122,20 @@ func TestDepthLevel(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	subMan.compareResult(t, correct)
 
+	hub.currBlockHeight = 99998
+	newHeightInfo = &NewHeightInfo{
+		Height:        99999,
+		TimeStamp:     T("2019-07-15T08:07:10Z"),
+		LastBlockHash: []byte("01234567890123456789"),
+	}
+	bytes, _ = json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+	hub.ConsumeMessage("commit", nil)
+
+	str := "{\"type\":\"depth_full\", \"payload\":{\"trading_pair\":\"abc/cet\",\"bids\":[{\"p\":\"15.000000000000000000\",\"a\":\"400\"}],\"asks\":[{\"p\":\"12.000000000000000000\",\"a\":\"300\"}]}}"
+	depthSub := subMan.DepthSubscribeInfo["abc/cet"][0].(*DepthSubscriber)
+	depthSub.CompareRet(t, []string{str})
+
 }
 
 func Test1(t *testing.T) {

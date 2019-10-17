@@ -1075,7 +1075,7 @@ func (hub *Hub) pushDepthFull() {
 
 		for _, target := range targets {
 			level := target.Detail().(string)
-			queryDepthAndPush(hub, target.GetConn(), market, level, 0)
+			queryDepthAndPush(hub, target, market, level, 0)
 		}
 	}
 }

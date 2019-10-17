@@ -107,7 +107,7 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, count int,
 		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
 	}
 
-	if err := PushFullInformation(subscriptionTopic, count, c, hub); err != nil {
+	if err := PushFullInformation(subscriptionTopic, count, ImplSubscriber{Conn: c}, hub); err != nil {
 		return err
 	}
 
@@ -239,7 +239,7 @@ func groupOfDataPacket(topic string, data []json.RawMessage) []byte {
 	return bz
 }
 
-func PushFullInformation(subscriptionTopic string, count int, c *Conn, hub *Hub) error {
+func PushFullInformation(subscriptionTopic string, count int, c Subscriber, hub *Hub) error {
 	values := strings.Split(subscriptionTopic, SeparateArgu)
 	topic, params := values[0], values[1:]
 	count = getCount(count)
@@ -249,7 +249,7 @@ func PushFullInformation(subscriptionTopic string, count int, c *Conn, hub *Hub)
 	queryAndPushFunc := func(typeKey string, param string, qf queryFunc) error {
 		data, _ := qf(param, hub.currBlockTime.Unix(), hub.sid, count)
 		bz := groupOfDataPacket(typeKey, data)
-		err = c.WriteMessage(websocket.TextMessage, bz)
+		err = c.WriteMsg(bz)
 		if err != nil {
 			return err
 		}
@@ -295,18 +295,18 @@ func PushFullInformation(subscriptionTopic string, count int, c *Conn, hub *Hub)
 	return err
 }
 
-func queryTickerAndPush(hub *Hub, c *Conn, market string) error {
+func queryTickerAndPush(hub *Hub, c Subscriber, market string) error {
 	tickers := hub.QueryTickers([]string{market})
 	baseData, err := json.Marshal(tickers)
 	if err != nil {
 		return err
 	}
-	err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("{\"type\":\"%s\","+
+	err = c.WriteMsg([]byte(fmt.Sprintf("{\"type\":\"%s\","+
 		" \"payload\":%s}", TickerKey, string(baseData))))
 	return err
 }
 
-func queryOrderAndPush(hub *Hub, c *Conn, account string, count int) error {
+func queryOrderAndPush(hub *Hub, c Subscriber, account string, count int) error {
 	data, tags, _ := hub.QueryOrder(account, hub.currBlockTime.Unix(), hub.sid, count)
 	if len(data) != len(tags) {
 		return errors.Errorf("The number of orders and tags is not equal")
@@ -324,17 +324,17 @@ func queryOrderAndPush(hub *Hub, c *Conn, account string, count int) error {
 		}
 	}
 	bz := groupOfDataPacket(CreateOrderKey, createData)
-	err := c.WriteMessage(websocket.TextMessage, bz)
+	err := c.WriteMsg(bz)
 	if err != nil {
 		return err
 	}
 	bz = groupOfDataPacket(FillOrderKey, fillData)
-	err = c.WriteMessage(websocket.TextMessage, bz)
+	err = c.WriteMsg(bz)
 	if err != nil {
 		return err
 	}
 	bz = groupOfDataPacket(CancelOrderKey, cancelData)
-	err = c.WriteMessage(websocket.TextMessage, bz)
+	err = c.WriteMsg(bz)
 	if err != nil {
 		return err
 	}
@@ -342,7 +342,7 @@ func queryOrderAndPush(hub *Hub, c *Conn, account string, count int) error {
 	return nil
 }
 
-func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, count int) error {
+func queryDepthAndPush(hub *Hub, c Subscriber, market string, level string, count int) error {
 	var msg []byte
 	sell, buy := hub.QueryDepth(market, count)
 	if level == "all" {
@@ -359,7 +359,7 @@ func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, count int
 		if c == nil {
 			return nil
 		}
-		return c.WriteMessage(websocket.TextMessage, msg)
+		return c.WriteMsg(msg)
 	}
 
 	sellLevel := mergePrice(sell, level, false)
@@ -368,31 +368,31 @@ func queryDepthAndPush(hub *Hub, c *Conn, market string, level string, count int
 	levelBuy := encodeDepthLevel(market, buyLevel, true)
 
 	msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(levelSell)))
-	if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
+	if err := c.WriteMsg(msg); err != nil {
 		return err
 	}
 	msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(levelBuy)))
-	if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
+	if err := c.WriteMsg(msg); err != nil {
 		return err
 	}
 
 	return hub.AddLevel(market, level)
 }
 
-func queryKlineAndpush(hub *Hub, c *Conn, params []string, count int) error {
+func queryKlineAndpush(hub *Hub, c Subscriber, params []string, count int) error {
 	candleBz := hub.QueryCandleStick(params[0], GetSpanFromSpanStr(params[1]), hub.currBlockTime.Unix(), hub.sid, count)
 	bz := groupOfDataPacket(KlineKey, candleBz)
-	err := c.WriteMessage(websocket.TextMessage, bz)
+	err := c.WriteMsg(bz)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func querySlashAndPush(hub *Hub, c *Conn, count int) error {
+func querySlashAndPush(hub *Hub, c Subscriber, count int) error {
 	data, _ := hub.QuerySlash(hub.currBlockTime.Unix(), hub.sid, count)
 	bz := groupOfDataPacket(SlashKey, data)
-	err := c.WriteMessage(websocket.TextMessage, bz)
+	err := c.WriteMsg(bz)
 	if err != nil {
 		return err
 	}
