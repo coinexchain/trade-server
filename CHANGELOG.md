@@ -60,7 +60,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### State Machine Breaking
 
 *   [#4](https://github.com/coinexchain/trade-server/issues/4) Modify the calculation method of order deal price in trade-server   
-*   []
+*   [#5](https://github.com/coinexchain/trade-server/issues/5) Modify the way depth data is updated to prevent REST queries from getting incomplete data
 
 ### Client Breaking Changes
 *   [#3](https://github.com/coinexchain/trade-server/issues/3) Add the function of push full amount of depth information periodically
