@@ -364,14 +364,8 @@ func queryDepthAndPush(hub *Hub, c Subscriber, market string, level string, coun
 
 	sellLevel := mergePrice(sell, level, false)
 	buyLevel := mergePrice(buy, level, true)
-	levelSell := encodeDepthLevel(market, sellLevel, false)
-	levelBuy := encodeDepthLevel(market, buyLevel, true)
-
-	msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(levelSell)))
-	if err := c.WriteMsg(msg); err != nil {
-		return err
-	}
-	msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(levelBuy)))
+	data := encodeDepthLevel(market, buyLevel, sellLevel)
+	msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(data)))
 	if err := c.WriteMsg(msg); err != nil {
 		return err
 	}

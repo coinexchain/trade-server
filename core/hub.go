@@ -1092,6 +1092,11 @@ func (hub *Hub) commitForDepth() {
 		} else {
 			continue
 		}
+		info := hub.subMan.GetDepthSubscribeInfo()
+		targets, ok := info[market]
+		if !ok {
+			continue
+		}
 
 		depthDeltaSell, mergeDeltaSell := triman.sell.EndBlock()
 		depthDeltaBuy, mergeDeltaBuy := triman.buy.EndBlock()
@@ -1109,34 +1114,16 @@ func (hub *Hub) commitForDepth() {
 			}
 		}
 
-		info := hub.subMan.GetDepthSubscribeInfo()
-		targets, ok := info[market]
-		if !ok {
-			continue
-		}
-
-		buyBz := encodeDepth(market, depthDeltaBuy, true)
-		sellBz := encodeDepth(market, depthDeltaSell, false)
-		levelBuys := encodeDepthLevels(market, mergeDeltaBuy, true)
-		levelSells := encodeDepthLevels(market, mergeDeltaSell, false)
-
+		data := encodeDepthLevel(market, depthDeltaBuy, depthDeltaSell)
+		levelsData := encodeDepthLevels(market, mergeDeltaBuy, mergeDeltaSell)
 		for _, target := range targets {
 			level := target.Detail().(string)
 			if level == "all" {
-				if len(depthDeltaSell) != 0 {
-					hub.subMan.PushDepthWithChange(target, sellBz) // depth_change
-				}
-				if len(depthDeltaBuy) != 0 {
-					hub.subMan.PushDepthWithChange(target, buyBz) // depth_change
-				}
+				hub.subMan.PushDepthWithChange(target, data)
 			} else {
-				if len(levelBuys[level]) != 0 {
-					hub.subMan.PushDepthWithDelta(target, levelBuys[level])
+				if levelsData != nil && len(levelsData[level]) != 0 {
+					hub.subMan.PushDepthWithDelta(target, levelsData[level])
 				}
-				if len(levelSells[level]) != 0 {
-					hub.subMan.PushDepthWithDelta(target, levelSells[level])
-				}
-
 			}
 		}
 	}

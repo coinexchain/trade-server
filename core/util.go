@@ -350,7 +350,7 @@ func (dm *DepthManager) DeltaChange(price sdk.Dec, amount sdk.Int) {
 	} else {
 		pp = ptr.(*PricePoint)
 	}
-	//tmp := pp.Amount
+	// tmp := pp.Amount
 	pp.Amount = pp.Amount.Add(amount)
 	if pp.Amount.IsZero() {
 		dm.ppMap.Remove(s)
@@ -358,7 +358,7 @@ func (dm *DepthManager) DeltaChange(price sdk.Dec, amount sdk.Int) {
 		dm.ppMap.Put(s, pp)
 	}
 	//if "8.800000000000000000" == price.String() && "buy" == dm.Side {
-	//	fmt.Printf("== %s Price: %s amount: %s %s => %s\n", dm.Side, price.String(), amount.String(), tmp.String(), pp.Amount.String())
+	// fmt.Printf("== %s Price: %s amount: %s %s => %s\n", dm.Side, price.String(), amount.String(), tmp.String(), pp.Amount.String())
 	//}
 	dm.Updated[s] = pp
 
