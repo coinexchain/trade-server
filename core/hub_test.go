@@ -91,10 +91,8 @@ func TestDepthLevel(t *testing.T) {
 	bytes, _ = json.Marshal(createOrderInfo)
 	hub.ConsumeMessage("create_order_info", bytes)
 	correct := `
-8: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"400"},{"p":"3.000000000000000000","a":"300"}],"asks":null}
-8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"12.000000000000000000","a":"300"}]}
-9: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"400"},{"p":"3.000000000000000000","a":"300"}],"asks":null}
-9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"12.000000000000000000","a":"300"}]}
+8: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"400"},{"p":"3.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"300"}]}
+9: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"400"},{"p":"3.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"300"}]}
 `
 	hub.ConsumeMessage("commit", nil)
 	subMan.compareResult(t, correct)
@@ -116,8 +114,8 @@ func TestDepthLevel(t *testing.T) {
 	bytes, _ = json.Marshal(cancelOrderInfo)
 	hub.ConsumeMessage("del_order_info", bytes)
 	correct = `
-8: {"trading_pair":"abc/cet","bids":[{"p":"3.000000000000000000","a":"0"}],"asks":null}
-9: {"trading_pair":"abc/cet","bids":[{"p":"3.000000000000000000","a":"0"}],"asks":null}
+8: {"trading_pair":"abc/cet","bids":[{"p":"3.000000000000000000","a":"0"}],"asks":[]}
+9: {"trading_pair":"abc/cet","bids":[{"p":"3.000000000000000000","a":"0"}],"asks":[]}
 `
 	hub.ConsumeMessage("commit", nil)
 	subMan.compareResult(t, correct)
@@ -282,10 +280,8 @@ func Test1(t *testing.T) {
 16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-2","sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","trading_pair":"abc/cet","order_type":2,"price":"100.000000000000000000","quantity":300,"side":1,"time_in_force":3,"feature_fee":1,"height":1001,"frozen_fee":1,"freeze":10}
 0: {"validator":"Val1","power":"30%","reason":"double_sign","jailed":true}
 1: {"validator":"Val1","power":"30%","reason":"double_sign","jailed":true}
-8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"300"}]}
-8: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"300"}],"asks":null}
-9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"300"}]}
-9: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"300"}],"asks":null}
+8: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"300"}],"asks":[{"p":"100.000000000000000000","a":"300"}]}
+9: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"300"}],"asks":[{"p":"100.000000000000000000","a":"300"}]}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -396,10 +392,8 @@ func Test1(t *testing.T) {
 16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":100,"deal_money":10,"curr_stock":100,"curr_money":10,"fill_price":"0.100000000000000000"}
 15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":1,"price":"100.000000000000000000","del_reason":"Manually cancel the order","used_commission":0,"left_stock":50,"remain_amount":0,"deal_stock":100,"deal_money":10}
 16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":1,"price":"100.000000000000000000","del_reason":"Manually cancel the order","used_commission":0,"left_stock":50,"remain_amount":0,"deal_stock":100,"deal_money":10}
-8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"200"}]}
-8: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":null}
-9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"200"}]}
-9: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":null}
+8: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":[{"p":"100.000000000000000000","a":"200"}]}
+9: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":[{"p":"100.000000000000000000","a":"200"}]}
 
 `
 	subMan.compareResult(t, correct)
@@ -661,8 +655,8 @@ func Test1(t *testing.T) {
 28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179350,"time_span":"1min","market":"B:xyz/cet"}
 15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25,"fill_price":"0.125000000000000000"}
 16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25,"fill_price":"0.125000000000000000"}
-8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}
-9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"100.000000000000000000","a":"0"}]}
+8: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"100.000000000000000000","a":"0"}]}
+9: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"100.000000000000000000","a":"0"}]}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -705,8 +699,8 @@ func Test1(t *testing.T) {
 15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"110.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25,"fill_price":"0.125000000000000000"}
 16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"110.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25,"fill_price":"0.125000000000000000"}
 0: [{"market":"abc/cet","new":"0.125000000000000000","old":"0.100000000000000000","minute_in_day":0}]
-8: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"110.000000000000000000","a":"-200"}]}
-9: {"trading_pair":"abc/cet","bids":null,"asks":[{"p":"110.000000000000000000","a":"-200"}]}
+8: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"110.000000000000000000","a":"-200"}]}
+9: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"110.000000000000000000","a":"-200"}]}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
