@@ -214,7 +214,7 @@ k线精度 : 当前支持 1min, 1hour, 1day
 
 ```json
 {
-    "type": "depth",
+    "type": "depth_change", // depth_delta, depth_full
     "payload": {
         "trading-pair": "ethsw/cet",
         "bids": [
@@ -235,6 +235,11 @@ k线精度 : 当前支持 1min, 1hour, 1day
 
 **支持的level ** : "0.00000001", "0.0000001", "0.000001", "0.00001", "0.0001", "0.001", "0.01", "0.1", "1", "10", "100", "all"
 
+**应答的type，含有三种类型** : depth_delta, depth_change, depth_full；详细描述如下:
+
+*   depth_change : 使用该应答替换掉客户端中价格相同的深度数据。
+*   depth_full : 使用该应答替换掉客户端所有的深度数据
+*   depth_delta : 增量的深度合并数据，需要客户端依据该应答，来计算指定价格的深度数据。
 
 
 **payload** : 参见`../swagger/swagger.yaml  /market/depths 请求应答`
