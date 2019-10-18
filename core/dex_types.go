@@ -182,8 +182,11 @@ type NotificationSlash struct {
 }
 
 type LockedCoin struct {
-	Coin       sdk.Coin `json:"coin"`
-	UnlockTime int64    `json:"unlock_time"`
+	Coin        sdk.Coin       `json:"coin"`
+	UnlockTime  int64          `json:"unlock_time"`
+	FromAddress sdk.AccAddress `json:"from_address,omitempty"`
+	Supervisor  sdk.AccAddress `json:"supervisor,omitempty"`
+	Reward      int64          `json:"reward,omitempty"`
 }
 type LockedCoins []LockedCoin
 
@@ -250,6 +253,8 @@ type LockedSendMsg struct {
 	ToAddress   string    `json:"to_address"`
 	Amount      sdk.Coins `json:"amount"`
 	UnlockTime  int64     `json:"unlock_time"`
+	Supervisor  string    `json:"supervisor,omitempty"`
+	Reward      int64     `json:"reward,omitempty"`
 
 	TxHash string `json:"tx_hash,omitempty"`
 }

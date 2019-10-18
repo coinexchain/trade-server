@@ -65,4 +65,5 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Client Breaking Changes
 *   [#3](https://github.com/coinexchain/trade-server/issues/3) Add the function of push full amount of depth information periodically
 *   [#4](https://github.com/coinexchain/trade-server/issues/4) Modify the calculation method of order deal price in trade-server
+*   [#6](https://github.com/coinexchain/trade-server/issues/6) Change LockedCoin type to keep consistent with cetd
 
