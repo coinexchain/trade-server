@@ -55,6 +55,30 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Bug Fixes
 
 
+## [v0.0.19] 
+
+### State Machine Breaking	### State Machine Breaking
+* [\#4979](https://github.com/cosmos/cosmos-sdk/issues/4979) Introduce a new `halt-time` config and	
+CLI option to the `start` command. When provided, an application will halt during `Commit` when the	
+block time is >= the `halt-time`.	
+
+
+### API Breaking Changes	
+* [\#4](https://github.com/coinexchain/trade-server/issues/4) Modify the calculation method of order deal price in trade-server   
+* [\#4979](https://github.com/cosmos/cosmos-sdk/issues/4979) Introduce a new `halt-time` config and	*   []
+CLI option to the `start` command. When provided, an application will halt during `Commit` when the	
+block time is >= the `halt-time`.	
+
+
+### Client Breaking Changes	
+### Client Breaking Changes
+* [\#4979](https://github.com/cosmos/cosmos-sdk/issues/4979) Introduce a new `halt-time` config and	
+* [\#3](https://github.com/coinexchain/trade-server/issues/3) Add the function of push full amount of depth information periodically
+CLI option to the `start` command. When provided, an application will halt during `Commit` when the	
+* [\#4](https://github.com/coinexchain/trade-server/issues/4) Modify the calculation method of order deal price in trade-server
+
+
+
 ## [v0.0.1] - example change log entries
 
 ### State Machine Breaking
