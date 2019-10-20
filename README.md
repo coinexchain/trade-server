@@ -6,3 +6,7 @@ DEX trade backend
 
 ## How to run trade-server
 [Getting Started](https://github.com/coinexchain/trade-server/blob/master/docs/trade-server-deploy.md)
+
+## Version adaptation
+
+Trade-server 0.0.2 version adapts [dex2004](https://github.com/coinexchain/dex/releases/tag/v0.0.17) blockchain.
