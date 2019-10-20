@@ -55,7 +55,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Bug Fixes
 
 
-## [v0.0.19] 
+## [v0.0.2] 
 
 ### State Machine Breaking	### State Machine Breaking
 * [\#4979](https://github.com/cosmos/cosmos-sdk/issues/4979) Introduce a new `halt-time` config and	
