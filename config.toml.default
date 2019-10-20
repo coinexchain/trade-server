@@ -21,3 +21,6 @@ log-dir = "log"
 log-level = "info"
 # log format: plain | json
 log-format = "plain"
+
+# websocket
+interval = 120

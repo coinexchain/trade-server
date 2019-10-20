@@ -22,6 +22,10 @@ func (s *PlainSubscriber) WriteMsg([]byte) error {
 	return nil
 }
 
+func (s *PlainSubscriber) GetConn() *Conn {
+	return nil
+}
+
 type TickerSubscriber struct {
 	PlainSubscriber
 	Markets map[string]struct{}
@@ -32,6 +36,10 @@ func (s *TickerSubscriber) Detail() interface{} {
 }
 
 func (s *TickerSubscriber) WriteMsg([]byte) error {
+	return nil
+}
+
+func (s *TickerSubscriber) GetConn() *Conn {
 	return nil
 }
 
@@ -55,6 +63,10 @@ func (s *CandleStickSubscriber) WriteMsg([]byte) error {
 	return nil
 }
 
+func (s *CandleStickSubscriber) GetConn() *Conn {
+	return nil
+}
+
 func NewCandleStickSubscriber(id int64, timespan string) *CandleStickSubscriber {
 	return &CandleStickSubscriber{
 		PlainSubscriber: PlainSubscriber{ID: id},
@@ -64,14 +76,28 @@ func NewCandleStickSubscriber(id int64, timespan string) *CandleStickSubscriber 
 
 type DepthSubscriber struct {
 	PlainSubscriber
-	level string
+	level    string
+	payloads []string
 }
 
 func (s *DepthSubscriber) Detail() interface{} {
 	return s.level
 }
 
-func (s *DepthSubscriber) WriteMsg([]byte) error {
+func (s *DepthSubscriber) WriteMsg(msg []byte) error {
+	s.payloads = append(s.payloads, string(msg))
+	return nil
+}
+
+func (s *DepthSubscriber) ClearMsg() {
+	s.payloads = s.payloads[:0]
+}
+
+func (s *DepthSubscriber) CompareRet(t *testing.T, actual []string) {
+	assert.EqualValues(t, s.payloads, actual)
+}
+
+func (s *DepthSubscriber) GetConn() *Conn {
 	return nil
 }
 
@@ -304,10 +330,10 @@ func (sm *MocSubscribeManager) PushTicker(subscriber Subscriber, t []*Ticker) {
 	info, _ := json.Marshal(t)
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
-func (sm *MocSubscribeManager) PushDepthSell(subscriber Subscriber, info []byte) {
+func (sm *MocSubscribeManager) PushDepthWithChange(subscriber Subscriber, info []byte) {
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
-func (sm *MocSubscribeManager) PushDepthBuy(subscriber Subscriber, info []byte) {
+func (sm *MocSubscribeManager) PushDepthWithDelta(subscriber Subscriber, info []byte) {
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushCandleStick(subscriber Subscriber, info []byte) {

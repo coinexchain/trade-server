@@ -81,12 +81,13 @@ type FillOrderInfo struct {
 	Price       sdk.Dec `json:"price"`
 
 	// These fields will change when order was filled/canceled.
-	LeftStock int64 `json:"left_stock"`
-	Freeze    int64 `json:"freeze"`
-	DealStock int64 `json:"deal_stock"`
-	DealMoney int64 `json:"deal_money"`
-	CurrStock int64 `json:"curr_stock"`
-	CurrMoney int64 `json:"curr_money"`
+	LeftStock int64   `json:"left_stock"`
+	Freeze    int64   `json:"freeze"`
+	DealStock int64   `json:"deal_stock"`
+	DealMoney int64   `json:"deal_money"`
+	CurrStock int64   `json:"curr_stock"`
+	CurrMoney int64   `json:"curr_money"`
+	FillPrice sdk.Dec `json:"fill_price"`
 }
 
 type CancelOrderInfo struct {
@@ -181,8 +182,11 @@ type NotificationSlash struct {
 }
 
 type LockedCoin struct {
-	Coin       sdk.Coin `json:"coin"`
-	UnlockTime int64    `json:"unlock_time"`
+	Coin        sdk.Coin       `json:"coin"`
+	UnlockTime  int64          `json:"unlock_time"`
+	FromAddress sdk.AccAddress `json:"from_address,omitempty"`
+	Supervisor  sdk.AccAddress `json:"supervisor,omitempty"`
+	Reward      int64          `json:"reward,omitempty"`
 }
 type LockedCoins []LockedCoin
 
@@ -249,6 +253,8 @@ type LockedSendMsg struct {
 	ToAddress   string    `json:"to_address"`
 	Amount      sdk.Coins `json:"amount"`
 	UnlockTime  int64     `json:"unlock_time"`
+	Supervisor  string    `json:"supervisor,omitempty"`
+	Reward      int64     `json:"reward,omitempty"`
 
 	TxHash string `json:"tx_hash,omitempty"`
 }
@@ -268,57 +274,48 @@ type DepthDetails struct {
 	Asks        []*PricePoint `json:"asks"`
 }
 
-func encodeDepth(market string, depth map[string]*PricePoint, buy bool) []byte {
-	values := make([]*PricePoint, 0, len(depth))
-	for _, p := range depth {
-		values = append(values, p)
-	}
-
-	detail := DepthDetails{TradingPair: market}
-	if buy {
-		sort.Slice(values, func(i, j int) bool {
-			return values[i].Price.GT(values[j].Price)
-		})
-		detail.Bids = values
-	} else {
-		sort.Slice(values, func(i, j int) bool {
-			return values[i].Price.LT(values[j].Price)
-		})
-		detail.Asks = values
-	}
-
-	bz, err := json.Marshal(detail)
-	if err != nil {
-		log.Error(err)
-	}
-	return bz
-}
-
-func encodeDepthLevels(market string, depths map[string]map[string]*PricePoint, buy bool) map[string][]byte {
-	if len(depths) == 0 {
+func encodeDepthLevels(market string, buyDepths map[string]map[string]*PricePoint, sellDepths map[string]map[string]*PricePoint) map[string][]byte {
+	if len(buyDepths) == 0 && len(sellDepths) == 0 {
 		return nil
 	}
 	rets := make(map[string][]byte)
-	for level, depth := range depths {
-		rets[level] = encodeDepthLevel(market, depth, buy)
+
+	for level, depth := range buyDepths {
+		sell, ok := sellDepths[level]
+		if !ok {
+			rets[level] = encodeDepthLevel(market, depth, nil)
+		} else {
+			rets[level] = encodeDepthLevel(market, depth, sell)
+		}
 	}
+
 	return rets
 }
 
-func encodeDepthLevel(market string, depth map[string]*PricePoint, buy bool) []byte {
-	values := make([]*PricePoint, 0, len(depth))
-	for _, p := range depth {
-		values = append(values, p)
+func encodeDepthLevel(market string, buyDepth map[string]*PricePoint, sellDepth map[string]*PricePoint) []byte {
+	buyValues := make([]*PricePoint, 0, len(buyDepth))
+	sellValues := make([]*PricePoint, 0, len(sellDepth))
+	for _, p := range buyDepth {
+		buyValues = append(buyValues, p)
 	}
-	sort.Slice(values, func(i, j int) bool {
-		return values[i].Price.GT(values[j].Price)
-	})
+	for _, p := range sellDepth {
+		sellValues = append(sellValues, p)
+	}
+	if len(buyValues) > 1 {
+		sort.Slice(buyValues, func(i, j int) bool {
+			return buyValues[i].Price.GT(buyValues[j].Price)
+		})
+	}
+	if len(sellValues) > 1 {
+		sort.Slice(sellValues, func(i, j int) bool {
+			return sellValues[i].Price.LT(sellValues[j].Price)
+		})
+	}
 
-	detail := DepthDetails{TradingPair: market}
-	if buy {
-		detail.Bids = values
-	} else {
-		detail.Asks = values
+	detail := DepthDetails{
+		TradingPair: market,
+		Bids:        buyValues,
+		Asks:        sellValues,
 	}
 
 	bz, err := json.Marshal(detail)

@@ -52,7 +52,9 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	if err != nil {
 		log.WithError(err).Fatal("open db fail")
 	}
-	hub := core.NewHub(db, wsManager)
+
+	interval := svrConfig.GetDefault("interval", int64(60)).(int64)
+	hub := core.NewHub(db, wsManager, interval)
 	restoreHub(&hub)
 
 	//https toggle

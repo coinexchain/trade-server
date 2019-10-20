@@ -55,64 +55,15 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Bug Fixes
 
 
-## [v0.0.2] 
-
-### State Machine Breaking	### State Machine Breaking
-* [\#4979](https://github.com/cosmos/cosmos-sdk/issues/4979) Introduce a new `halt-time` config and	
-CLI option to the `start` command. When provided, an application will halt during `Commit` when the	
-block time is >= the `halt-time`.	
-
-
-### API Breaking Changes	
-* [\#4](https://github.com/coinexchain/trade-server/issues/4) Modify the calculation method of order deal price in trade-server   
-* [\#4979](https://github.com/cosmos/cosmos-sdk/issues/4979) Introduce a new `halt-time` config and	*   []
-CLI option to the `start` command. When provided, an application will halt during `Commit` when the	
-block time is >= the `halt-time`.	
-
-
-### Client Breaking Changes	
-### Client Breaking Changes
-* [\#4979](https://github.com/cosmos/cosmos-sdk/issues/4979) Introduce a new `halt-time` config and	
-* [\#3](https://github.com/coinexchain/trade-server/issues/3) Add the function of push full amount of depth information periodically
-CLI option to the `start` command. When provided, an application will halt during `Commit` when the	
-* [\#4](https://github.com/coinexchain/trade-server/issues/4) Modify the calculation method of order deal price in trade-server
-
-
-
-## [v0.0.1] - example change log entries
+## [v0.0.2] - 2019.10.20 
 
 ### State Machine Breaking
-* [\#4979](https://github.com/cosmos/cosmos-sdk/issues/4979) Introduce a new `halt-time` config and
-CLI option to the `start` command. When provided, an application will halt during `Commit` when the
-block time is >= the `halt-time`.
 
-### API Breaking Changes
-* [\#4979](https://github.com/cosmos/cosmos-sdk/issues/4979) Introduce a new `halt-time` config and
-CLI option to the `start` command. When provided, an application will halt during `Commit` when the
-block time is >= the `halt-time`.
+*   [#4](https://github.com/coinexchain/trade-server/issues/4) Modify the calculation method of order deal price in trade-server   
+*   [#5](https://github.com/coinexchain/trade-server/issues/5) Modify the way depth data is updated to prevent REST queries from getting incomplete data
 
 ### Client Breaking Changes
-* [\#4979](https://github.com/cosmos/cosmos-sdk/issues/4979) Introduce a new `halt-time` config and
-CLI option to the `start` command. When provided, an application will halt during `Commit` when the
-block time is >= the `halt-time`.
-
-### Features
-
-* (cli) [\#4973](https://github.com/cosmos/cosmos-sdk/pull/4973) Enable application CPU profiling
-via the `--cpu-profile` flag.
-* [\#4979](https://github.com/cosmos/cosmos-sdk/issues/4979) Introduce a new `halt-time` config and
-CLI option to the `start` command. When provided, an application will halt during `Commit` when the
-block time is >= the `halt-time`.
-
-### Improvements
-
-* [\#4990](https://github.com/cosmos/cosmos-sdk/issues/4990) Add `Events` to the `ABCIMessageLog` to
-provide context and grouping of events based on the messages they correspond to. The `Events` field
-in `TxResponse` is deprecated and will be removed in the next major release.
-
-### Bug Fixes
-
-* [\#4979](https://github.com/cosmos/cosmos-sdk/issues/4979) Use `Signal(os.Interrupt)` over
-`os.Exit(0)` during configured halting to allow any `defer` calls to be executed.
-* [\#5034](https://github.com/cosmos/cosmos-sdk/issues/5034) Binary search in NFT Module wasn't working on larger sets.
+*   [#3](https://github.com/coinexchain/trade-server/issues/3) Add the function of push full amount of depth information periodically
+*   [#4](https://github.com/coinexchain/trade-server/issues/4) Modify the calculation method of order deal price in trade-server
+*   [#6](https://github.com/coinexchain/trade-server/issues/6) Change LockedCoin type to keep consistent with cetd
 

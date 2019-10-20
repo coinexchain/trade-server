@@ -15,7 +15,6 @@ import (
 
 	"github.com/coinexchain/trade-server/core"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/pkg/profile"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -582,7 +581,7 @@ func T(s string) time.Time {
 }
 
 func simulateKafkaInput() {
-	defer profile.Start().Stop()
+	// defer profile.Start().Stop()
 	println("Args[0]: ", os.Args[0])
 	file, err := os.Open(os.Args[1])
 	if err != nil {
@@ -592,7 +591,7 @@ func simulateKafkaInput() {
 
 	db := dbm.NewMemDB()
 	subMan := core.GetSubscribeManager("coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly", "coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c")
-	hub := core.NewHub(db, subMan)
+	hub := core.NewHub(db, subMan, 60)
 
 	scanner := bufio.NewScanner(file)
 	counter := int64(0)
