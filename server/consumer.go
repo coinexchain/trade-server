@@ -8,6 +8,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Consumer interface {
+	Consume()
+	Close()
+}
+
 type TradeConsumer struct {
 	sarama.Consumer
 	topic    string

@@ -39,7 +39,7 @@ var (
 type TradeSever struct {
 	httpSvr  *http.Server
 	hub      *core.Hub
-	consumer *TradeConsumer
+	consumer Consumer
 }
 
 func NewServer(svrConfig *toml.Tree) *TradeSever {
