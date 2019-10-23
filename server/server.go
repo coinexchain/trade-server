@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/coinexchain/trade-server/core"
@@ -84,19 +83,7 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	}
 
 	// consumer
-	addrs := svrConfig.GetDefault("kafka-addrs", "").(string)
-	if len(addrs) == 0 {
-		log.Fatal("kafka address is empty")
-	}
-
-	var filePath string
-	if backupToggle := svrConfig.GetDefault("backup-toggle", false).(bool); backupToggle {
-		filePath = svrConfig.GetDefault("backup-file", "").(string)
-		if len(filePath) == 0 {
-			log.Fatal("backup data filePath is empty")
-		}
-	}
-	consumer := NewConsumer(strings.Split(addrs, ","), DexTopic, filePath, &hub)
+	consumer := NewConsumer(svrConfig, &hub)
 	return &TradeSever{
 		httpSvr:  httpSvr,
 		consumer: consumer,

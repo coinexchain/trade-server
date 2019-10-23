@@ -4,6 +4,8 @@ import (
 	"strings"
 	"sync"
 
+	toml "github.com/pelletier/go-toml"
+
 	"github.com/Shopify/sarama"
 	log "github.com/sirupsen/logrus"
 
@@ -14,6 +16,18 @@ import (
 type Consumer interface {
 	Consume()
 	Close()
+	String() string
+}
+
+func NewConsumer(svrConfig *toml.Tree, hub *core.Hub) Consumer {
+	var c Consumer
+	dir := svrConfig.GetDefault("dir-mode", false).(bool)
+	if dir {
+		c = NewConsumerWithDirTail(svrConfig, hub)
+	} else {
+		c = NewKafkaConsumer(svrConfig, DexTopic, hub)
+	}
+	return c
 }
 
 type TradeConsumer struct {
@@ -25,17 +39,33 @@ type TradeConsumer struct {
 	writer   MsgWriter
 }
 
-func NewConsumer(addrs []string, topic string, writeConfig string, hub *core.Hub) *TradeConsumer {
+func (tc *TradeConsumer) String() string {
+	return "kafka-consumer"
+}
+
+func NewKafkaConsumer(svrConfig *toml.Tree, topic string, hub *core.Hub) *TradeConsumer {
+	addrs := svrConfig.GetDefault("kafka-addrs", "").(string)
+	if len(addrs) == 0 {
+		log.Fatal("kafka address is empty")
+	}
+
+	var filePath string
+	if backupToggle := svrConfig.GetDefault("backup-toggle", false).(bool); backupToggle {
+		filePath = svrConfig.GetDefault("backup-file", "").(string)
+		if len(filePath) == 0 {
+			log.Fatal("backup data filePath is empty")
+		}
+	}
 	// set logger
 	sarama.Logger = log.StandardLogger()
 
-	consumer, err := sarama.NewConsumer(addrs, nil)
+	consumer, err := sarama.NewConsumer(strings.Split(addrs, ","), nil)
 	if err != nil {
 		log.WithError(err).Fatal("create consumer error")
 	}
 	var writer MsgWriter
-	if len(writeConfig) != 0 {
-		if writer, err = NewFileMsgWriter(writeConfig); err != nil {
+	if len(filePath) != 0 {
+		if writer, err = NewFileMsgWriter(filePath); err != nil {
 			log.WithError(err).Fatal("create writer error")
 		}
 	}
@@ -130,20 +160,33 @@ type TradeConsumerWithDirTail struct {
 	writer     MsgWriter
 }
 
-func NewConsumerWithDirTail(dirs []string, filePrefix string, writeConfig string, hub *core.Hub) Consumer {
+func NewConsumerWithDirTail(svrConfig *toml.Tree, hub *core.Hub) Consumer {
 	var writer MsgWriter
 	var err error
-	if len(writeConfig) != 0 {
-		if writer, err = NewFileMsgWriter(writeConfig); err != nil {
+	dir := svrConfig.GetDefault("dir", "").(string)
+	filePrefix := svrConfig.GetDefault("filePrefix", "").(string)
+	var backFilePath string
+	if backupToggle := svrConfig.GetDefault("backup-toggle", false).(bool); backupToggle {
+		backFilePath = svrConfig.GetDefault("backup-file", "").(string)
+		if len(backFilePath) == 0 {
+			log.Fatal("backup data filePath is empty")
+		}
+	}
+	if len(backFilePath) != 0 {
+		if writer, err = NewFileMsgWriter(backFilePath); err != nil {
 			log.WithError(err).Fatal("create writer error")
 		}
 	}
 	return &TradeConsumerWithDirTail{
-		dirName:    dirs[0],
+		dirName:    dir,
 		filePrefix: filePrefix,
 		hub:        hub,
 		writer:     writer,
 	}
+}
+
+func (tc *TradeConsumerWithDirTail) String() string {
+	return "dir-consumer"
 }
 
 func (tc *TradeConsumerWithDirTail) Consume() {
