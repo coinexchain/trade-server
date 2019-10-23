@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/Shopify/sarama v1.23.1
-	github.com/coinexchain/dirtail v0.0.0-20191022201507-346079f9aace
+	github.com/coinexchain/dirtail v0.0.0-20191023095636-14c319aeadf4
 	github.com/cosmos/cosmos-sdk v0.36.0
 	github.com/emirpasic/gods v1.12.0
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
@@ -20,7 +20,7 @@ require (
 	github.com/pkg/profile v1.3.0
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sirupsen/logrus v1.4.2
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.4.0
 	github.com/tebeka/strftime v0.1.3 // indirect
 	github.com/tendermint/tendermint v0.32.2
 	github.com/tendermint/tm-db v0.1.1
