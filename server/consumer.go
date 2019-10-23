@@ -164,7 +164,7 @@ func NewConsumerWithDirTail(svrConfig *toml.Tree, hub *core.Hub) Consumer {
 	var writer MsgWriter
 	var err error
 	dir := svrConfig.GetDefault("dir", "").(string)
-	filePrefix := svrConfig.GetDefault("filePrefix", "").(string)
+	filePrefix := svrConfig.GetDefault("file-prefix", "").(string)
 	var backFilePath string
 	if backupToggle := svrConfig.GetDefault("backup-toggle", false).(bool); backupToggle {
 		backFilePath = svrConfig.GetDefault("backup-file", "").(string)

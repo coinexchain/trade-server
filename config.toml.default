@@ -24,3 +24,9 @@ log-format = "plain"
 
 # websocket
 interval = 120
+
+# dir-mode
+
+dir-mode = false
+dir = "/tmp"
+file-prefix = "backup-"
