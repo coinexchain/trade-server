@@ -25,6 +25,28 @@ func toStr(payload []json.RawMessage) string {
 	return strings.Join(out, "\n")
 }
 
+func TestUnmarshalHub(t *testing.T) {
+	db := dbm.NewMemDB()
+	subMan := GetDepthSubscribeManeger()
+	hub := NewHub(db, subMan, 99999)
+	hub.currBlockHeight = 999
+	hub4j := &HubForJSON{}
+	hub.Dump(hub4j)
+	//dumpKey := getDumpKey()
+	dumpBuf, err := json.Marshal(hub4j)
+	if err != nil {
+		panic(err)
+	}
+	tmpHub4j := &HubForJSON{}
+	err = json.Unmarshal(dumpBuf, &tmpHub4j)
+	require.Nil(t, err)
+	fmt.Printf("%v\n", tmpHub4j.TickerMap)
+	if tmpHub4j.TickerMap == nil {
+		panic("nil")
+	}
+	require.Equal(t, *hub4j, *tmpHub4j)
+}
+
 func TestDepthLevel(t *testing.T) {
 	acc1, _ := simpleAddr("00001")
 	addr1 := acc1.String()
