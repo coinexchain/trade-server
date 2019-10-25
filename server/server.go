@@ -1,12 +1,9 @@
 package server
 
 import (
-	"bytes"
 	"context"
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -154,27 +151,8 @@ func newLevelDB(name string, dir string) (db dbm.DB, err error) {
 func restoreHub(hub *core.Hub) {
 	data := hub.LoadDumpData()
 	if data == nil {
-		// TODO: Compatible with old data. Delete later.
-		// try to restore from file
-		dumpFileName := dataDir + "/" + DumpFile
-		if _, err := os.Stat(dumpFileName); err != nil {
-			log.WithError(err).Infof("stat file fail: %s", dumpFileName)
-			return
-		}
-		bz, err := ioutil.ReadFile(dumpFileName)
-		if err != nil {
-			log.WithError(err).Errorf("read from file fail %s", dumpFileName)
-			return
-		}
-		data = bz
-		if len(bz) > 16 && bz[0] != '{' {
-			data = bz[16:]
-			dataMD5 := md5.Sum(data)
-			if !bytes.Equal(bz[:16], dataMD5[:]) {
-				log.Error("hub data file is broken")
-				return
-			}
-		}
+		log.Info("dump data does not exist, init new hub")
+		return
 	}
 	hub4jo := &core.HubForJSON{}
 	if err := json.Unmarshal(data, hub4jo); err != nil {
