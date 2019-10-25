@@ -180,7 +180,17 @@ func checkTopicValid(topic string, params []string) bool {
 			return false
 		}
 		return true
-	case TickerKey, UnbondingKey, RedelegationKey, LockedKey,
+	case TickerKey:
+		if len(params) == 1 {
+			return true
+		}
+		if len(params) == 2 {
+			if params[0] != "B" {
+				return false
+			}
+		}
+		return true
+	case UnbondingKey, RedelegationKey, LockedKey,
 		UnlockKey, TxKey, IncomeKey, OrderKey, CommentKey,
 		BancorTradeKey, BancorKey, DealKey:
 		if len(params) != 1 {
@@ -270,7 +280,11 @@ func PushFullInformation(subscriptionTopic string, count int, c Subscriber, hub 
 	case OrderKey:
 		err = queryOrderAndPush(hub, c, params[0], count)
 	case TickerKey:
-		err = queryTickerAndPush(hub, c, params[0])
+		market := params[0]
+		if len(params) == 2 {
+			market = strings.Join(params, SeparateArgu)
+		}
+		err = queryTickerAndPush(hub, c, market)
 	case TxKey:
 		err = queryAndPushFunc(TxKey, params[0], hub.QueryTx)
 	case LockedKey:

@@ -954,6 +954,11 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 	key := hub.getBancorTradeKey(addr)
 	hub.batch.Set(key, bz)
 	hub.sid++
+	//Update candle sticks
+	csRec := hub.csMan.GetRecord(marketName)
+	if csRec != nil {
+		csRec.Update(hub.currBlockTime, v.TxPrice, v.Amount)
+	}
 	//Push to subscribers
 	info := hub.subMan.GetBancorTradeSubscribeInfo()
 	targets, ok := info[addr]
@@ -962,11 +967,6 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 	}
 	for _, target := range targets {
 		hub.subMan.PushBancorTrade(target, bz)
-	}
-	//Update candle sticks
-	csRec := hub.csMan.GetRecord(marketName)
-	if csRec != nil {
-		csRec.Update(hub.currBlockTime, v.TxPrice, v.Amount)
 	}
 }
 
