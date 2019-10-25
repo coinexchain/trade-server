@@ -186,7 +186,7 @@ func Test1(t *testing.T) {
 		Jailed:    true,
 	}
 	bytes, _ = json.Marshal(notificationSlash)
-	hub.ConsumeMessage("notify_slash", bytes)
+	hub.ConsumeMessage("slash", bytes)
 
 	transRec := TransferRecord{
 		Sender:    addr1,
