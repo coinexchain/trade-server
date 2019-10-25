@@ -1472,8 +1472,8 @@ type HubForJSON struct {
 	CSMan           CandleStickManager   `json:"csman"`
 	TickerMap       map[string]*Ticker   `json:"ticker_map"`
 	CurrBlockHeight int64                `json:"curr_block_height"`
-	CurrBlockTime   time.Time            `json:"curr_block_time"`
-	LastBlockTime   time.Time            `json:"last_block_time"`
+	CurrBlockTime   int64                `json:"curr_block_time"`
+	LastBlockTime   int64                `json:"last_block_time"`
 	Markets         []*MarketInfoForJSON `json:"markets"`
 }
 
@@ -1488,8 +1488,8 @@ func (hub *Hub) Load(hub4j *HubForJSON) {
 	hub.csMan = hub4j.CSMan
 	hub.tickerMap = hub4j.TickerMap
 	hub.currBlockHeight = hub4j.CurrBlockHeight
-	hub.currBlockTime = hub4j.CurrBlockTime
-	hub.lastBlockTime = hub4j.LastBlockTime
+	hub.currBlockTime = time.Unix(0, hub4j.CurrBlockTime)
+	hub.lastBlockTime = time.Unix(0, hub4j.LastBlockTime)
 
 	for _, info := range hub4j.Markets {
 		triman := &TripleManager{
@@ -1512,8 +1512,8 @@ func (hub *Hub) Dump(hub4j *HubForJSON) {
 	hub4j.CSMan = hub.csMan
 	hub4j.TickerMap = hub.tickerMap
 	hub4j.CurrBlockHeight = hub.currBlockHeight
-	hub4j.CurrBlockTime = hub.currBlockTime
-	hub4j.LastBlockTime = hub.lastBlockTime
+	hub4j.CurrBlockTime = hub.currBlockTime.UnixNano()
+	hub4j.LastBlockTime = hub.lastBlockTime.UnixNano()
 
 	hub4j.Markets = make([]*MarketInfoForJSON, 0, len(hub.managersMap))
 	for _, triman := range hub.managersMap {
