@@ -314,7 +314,7 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 		switch entry.msgType {
 		case "height_info":
 			hub.handleNewHeightInfo(entry.bz)
-		case "notify_slash":
+		case "slash":
 			hub.handleNotificationSlash(entry.bz)
 		case "notify_tx":
 			hub.handleNotificationTx(entry.bz)
