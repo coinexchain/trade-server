@@ -12,6 +12,7 @@ const (
 	DealKey         = "deal"
 	BancorKey       = "bancor"
 	BancorTradeKey  = "bancor-trade"
+	BancorDealKey   = "bancor-deal"
 	CommentKey      = "comment"
 	OrderKey        = "order"
 	IncomeKey       = "income"

@@ -888,7 +888,7 @@ func Test1(t *testing.T) {
 {"sender":"coinex1celqkm3yfkgg6nz9s5yfpnkzdsd0n3jhux4p65","amount":"200000000"}`
 	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
-	assert.Equal(t, "[1563179950,46,1563179950,42]", string(bytes))
+	assert.Equal(t, "[1563179950,47,1563179950,43]", string(bytes))
 
 	height = hub.QueryLatestHeight()
 	require.EqualValues(t, 1008, height)

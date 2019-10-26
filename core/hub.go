@@ -57,6 +57,7 @@ const (
 	DetailByte       = byte(0x22)
 	SlashByte        = byte(0x24)
 	LatestHeightByte = byte(0x26)
+	BancorDealByte   = byte(0x28)
 	RedelegationByte = byte(0x30)
 	UnbondingByte    = byte(0x32)
 	UnlockByte       = byte(0x34)
@@ -151,6 +152,9 @@ func (hub *Hub) getDealKey(market string) []byte {
 }
 func (hub *Hub) getBancorInfoKey(market string) []byte {
 	return hub.getKeyFromBytes(BancorInfoByte, []byte(market), 0)
+}
+func (hub *Hub) getBancorDealKey(market string) []byte {
+	return hub.getKeyFromBytes(BancorDealByte, []byte(market), byte(0))
 }
 func (hub *Hub) getCommentKey(token string) []byte {
 	return hub.getKeyFromBytes(CommentByte, []byte(token), 0)
@@ -954,6 +958,9 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 	key := hub.getBancorTradeKey(addr)
 	hub.batch.Set(key, bz)
 	hub.sid++
+	key = hub.getBancorDealKey(marketName)
+	hub.batch.Set(key, bz)
+	hub.sid++
 	//Update candle sticks
 	csRec := hub.csMan.GetRecord(marketName)
 	if csRec != nil {
@@ -962,11 +969,17 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 	//Push to subscribers
 	info := hub.subMan.GetBancorTradeSubscribeInfo()
 	targets, ok := info[addr]
-	if !ok {
-		return
+	if ok {
+		for _, target := range targets {
+			hub.subMan.PushBancorTrade(target, bz)
+		}
 	}
-	for _, target := range targets {
-		hub.subMan.PushBancorTrade(target, bz)
+	info = hub.subMan.GetBancorDealSubscribeInfo()
+	targets, ok = info[marketName]
+	if ok {
+		for _, target := range targets {
+			hub.subMan.PushBancorDeal(target, bz)
+		}
 	}
 }
 
@@ -1241,6 +1254,11 @@ func (hub *Hub) QueryCandleStick(market string, timespan byte, time int64, sid i
 //=========
 func (hub *Hub) QueryOrder(account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
 	return hub.query(false, OrderByte, []byte(account), time, sid, count, nil)
+}
+
+func (hub *Hub) QueryBancorDeal(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+	data, _, timesid = hub.query(false, BancorDealByte, []byte(market), time, sid, count, nil)
+	return
 }
 
 func (hub *Hub) QueryDeal(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {

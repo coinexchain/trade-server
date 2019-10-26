@@ -302,6 +302,9 @@ func (sm *MocSubscribeManager) GetOrderSubscribeInfo() map[string][]Subscriber {
 func (sm *MocSubscribeManager) GetBancorTradeSubscribeInfo() map[string][]Subscriber {
 	return sm.BancorTradeSubscribeInfo
 }
+func (sm *MocSubscribeManager) GetBancorDealSubscribeInfo() map[string][]Subscriber {
+	return nil
+}
 func (sm *MocSubscribeManager) GetIncomeSubscribeInfo() map[string][]Subscriber {
 	return sm.IncomeSubscribeInfo
 }
@@ -355,6 +358,9 @@ func (sm *MocSubscribeManager) PushBancorInfo(subscriber Subscriber, info []byte
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushBancorTrade(subscriber Subscriber, info []byte) {
+	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
+}
+func (sm *MocSubscribeManager) PushBancorDeal(subscriber Subscriber, info []byte) {
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushIncome(subscriber Subscriber, info []byte) {

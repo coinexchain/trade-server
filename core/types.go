@@ -89,6 +89,7 @@ type SubscribeManager interface {
 	//the map keys are accounts' bech32 addresses
 	GetOrderSubscribeInfo() map[string][]Subscriber
 	GetBancorTradeSubscribeInfo() map[string][]Subscriber
+	GetBancorDealSubscribeInfo() map[string][]Subscriber
 	GetIncomeSubscribeInfo() map[string][]Subscriber
 	GetUnbondingSubscribeInfo() map[string][]Subscriber
 	GetRedelegationSubscribeInfo() map[string][]Subscriber
@@ -104,6 +105,7 @@ type SubscribeManager interface {
 	PushDepthWithDelta(subscriber Subscriber, delta []byte)
 	PushCandleStick(subscriber Subscriber, info []byte)
 	PushDeal(subscriber Subscriber, info []byte)
+	PushBancorDeal(subscriber Subscriber, info []byte)
 	PushCreateOrder(subscriber Subscriber, info []byte)
 	PushFillOrder(subscriber Subscriber, info []byte)
 	PushCancelOrder(subscriber Subscriber, info []byte)
@@ -132,6 +134,7 @@ type Querier interface {
 
 	QueryLocked(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryDeal(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryBancorDeal(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryBancorInfo(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryBancorTrade(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryRedelegation(account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)

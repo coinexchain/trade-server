@@ -192,7 +192,7 @@ func checkTopicValid(topic string, params []string) bool {
 		return true
 	case UnbondingKey, RedelegationKey, LockedKey,
 		UnlockKey, TxKey, IncomeKey, OrderKey, CommentKey,
-		BancorTradeKey, BancorKey, DealKey:
+		BancorTradeKey, BancorKey, DealKey, BancorDealKey:
 		if len(params) != 1 {
 			return false
 		}
@@ -299,6 +299,8 @@ func PushFullInformation(subscriptionTopic string, count int, c Subscriber, hub 
 		err = queryAndPushFunc(BancorKey, params[0], hub.QueryBancorInfo)
 	case BancorTradeKey:
 		err = queryAndPushFunc(BancorTradeKey, params[0], hub.QueryBancorTrade)
+	case BancorDealKey:
+		err = queryAndPushFunc(DealKey, params[0], hub.QueryBancorDeal)
 	case RedelegationKey:
 		err = queryAndPushFunc(RedelegationKey, params[0], hub.QueryRedelegation)
 	case UnbondingKey:
@@ -516,6 +518,9 @@ func (w *WebsocketManager) GetOrderSubscribeInfo() map[string][]Subscriber {
 func (w *WebsocketManager) GetBancorTradeSubscribeInfo() map[string][]Subscriber {
 	return w.getNoDetailSubscribe(BancorTradeKey)
 }
+func (w *WebsocketManager) GetBancorDealSubscribeInfo() map[string][]Subscriber {
+	return w.getNoDetailSubscribe(BancorDealKey)
+}
 func (w *WebsocketManager) GetIncomeSubscribeInfo() map[string][]Subscriber {
 	return w.getNoDetailSubscribe(IncomeKey)
 }
@@ -592,6 +597,9 @@ func (w *WebsocketManager) PushBancorInfo(subscriber Subscriber, info []byte) {
 }
 func (w *WebsocketManager) PushBancorTrade(subscriber Subscriber, info []byte) {
 	w.sendEncodeMsg(subscriber, BancorTradeKey, info)
+}
+func (w *WebsocketManager) PushBancorDeal(subscriber Subscriber, info []byte) {
+	w.sendEncodeMsg(subscriber, BancorDealKey, info)
 }
 func (w *WebsocketManager) PushIncome(subscriber Subscriber, info []byte) {
 	w.sendEncodeMsg(subscriber, IncomeKey, info)

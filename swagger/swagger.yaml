@@ -418,6 +418,57 @@ paths:
                   description: Timesid entry are in pairs, a count correspond two entry(time,sid)
         500:
           description: Server internal error
+  /bancorlite/deals:
+    get:
+      tags:
+        - Bancor
+      summary: Query bancor market deal
+      description: Query bancor market deal until to given time
+      operationId: queryBancorDeal
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: market
+          description: B:stock/money
+          required: true
+          type: string
+        - in: query
+          name: time
+          description: Unix timestamp
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: sid
+          description: Sequence id
+          required: true
+          type: integer
+          format: int64
+        - in: query
+          name: count
+          description: Querier deal count limited to 1024
+          required: true
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/BancorTrade'
+              timesid:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+                  description: Timesid entry are in pairs, a count correspond two entry(time,sid)
+        500:
+          description: Server internal error
   /expiry/redelegations:
     get:
       tags:
