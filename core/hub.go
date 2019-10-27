@@ -975,7 +975,7 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 		}
 	}
 	info = hub.subMan.GetBancorDealSubscribeInfo()
-	targets, ok = info[marketName]
+	targets, ok = info[v.Stock+"/"+v.Money]
 	if ok {
 		for _, target := range targets {
 			hub.subMan.PushBancorDeal(target, bz)

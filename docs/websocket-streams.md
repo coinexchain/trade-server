@@ -154,7 +154,10 @@ websocket的响应可能含有以下三种类型：
 
 获取交易对的ticker信息
 
-**SubscriptionTopic** : `ticker:<trading-pair>`
+**SubscriptionTopic** : 
+
+*   market : `ticker:<trading-pair>`;
+*   bancor : `ticker:B:<trading-pair>`
 
 **Response** : 
 
@@ -181,7 +184,10 @@ websocket的响应可能含有以下三种类型：
 
 k线精度 : 当前支持 1min, 1hour, 1day
 
-**SubscriptionTopic** : `kline:<trading-pair>:<1min>`
+**SubscriptionTopic** : 
+
+*   market : `kline:<trading-pair>:<1min>`
+*   bancor : `kline:B:<trading-pair>:<1min>`
 
 **Response**:
 
@@ -432,9 +438,9 @@ IPFS | 0
 
 **payload** : 参见`../swagger/swagger.yaml  BancorInfo 类型定义`
 
-### 订阅bancor 合约的成交信息
+### 订阅指定地址的 bancor 合约的成交信息
 
-获取bancor合约的指定交易的成交信息
+获取bancor合约的指定地址的成交信息
 
 **SubscriptionTopic** : `bancor-trade:<address>`
 
@@ -452,7 +458,32 @@ IPFS | 0
             "side": 1,
             "monet_limit": 231,
             "transaction_price": "2123.2", 
-            "block_height": 3631,
+            "block_height": 3631
+	}
+}
+```
+
+**payload** : 参见`../swagger/swagger.yaml  BancorTrade 类型定义`
+
+### 订阅bancor 合约的成交信息
+
+**SubscriptionTopic** : `bancor-deal:<trading-pair>`
+
+**Response**:
+
+```json
+// bancor deal
+{
+	"type": "bancor-trade",
+	"payload": {
+            "sender": "coinex1ughhs0eyames355v4tzq5nx2g806p55rna0d2x",
+            "stock": "set",
+            "money": "cet",
+            "amount": 27372,
+            "side": 1,
+            "monet_limit": 231,
+            "transaction_price": "2123.2", 
+            "block_height": 3631
 	}
 }
 ```

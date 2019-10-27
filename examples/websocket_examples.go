@@ -34,7 +34,7 @@ func main() {
 				log.Println("read:", err)
 				return
 			}
-			log.Printf("recv: %s", message)
+			log.Printf("recv: %s\n", message)
 			if err := json.Unmarshal(message, &data); err != nil {
 				panic(err)
 			}
@@ -45,19 +45,22 @@ func main() {
 		Op: "subscribe",
 		Args: []string{
 			// "blockinfo",
-			"slash",
-			"send_lock_coins:coinex1rafnyd9j9gc9cwu5q5uflefpdn62awyl7rvh8t",
-			"depth:abc/cet:all",
+			//"slash",
+			//"send_lock_coins:coinex1rafnyd9j9gc9cwu5q5uflefpdn62awyl7rvh8t",
+			//"depth:abc/cet:all",
+			"bancor-deal:yofo/cet",
+			"ticker:B:yofo/cet",
+			"kline:B:yofo/cet:1min",
 			// "depth:abc/cet:10",
-			"bancor-trade:coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly",
-			"unlock:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
+			//"bancor-trade:cettest1svtmefnz5gxqzna9z5s670td27vehzchweqv83",
+			//"unlock:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
 			// "unlock:coinex1kc2nguz9xfttfpav4drldh2w96xyzrnqss9scw",
 			// "ticker:abc/cet",
 			// "deal:abc/cet",
 			// "comment:cet",
-			"order:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
+			//"order:coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw",
 			// "kline:abc/cet:1min",
-			"txs:coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg",
+			//"txs:coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg",
 			// "txs:coinex1avmxlmztzxap20hawpc85h3uzj3277ja88wec2",
 			// "txs:coinex1j0awxx9lf32y235esjkwvs8h36whqj7f699f8z",
 			// "txs:coinex1zyvvtlp2k2guuetqu3w06qxrr8w07f03s56kyj",

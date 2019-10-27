@@ -14,7 +14,7 @@ import (
 const (
 	SeparateArgu = ":"
 	MinArguNum   = 0
-	MaxArguNum   = 2
+	MaxArguNum   = 3
 )
 
 type ImplSubscriber struct {
@@ -180,7 +180,7 @@ func checkTopicValid(topic string, params []string) bool {
 			return false
 		}
 		return true
-	case TickerKey:
+	case TickerKey: // ticker:abc/cet; ticker:B:abc/cet
 		if len(params) == 1 {
 			return true
 		}
@@ -197,11 +197,18 @@ func checkTopicValid(topic string, params []string) bool {
 			return false
 		}
 		return true
-	case KlineKey:
-		if len(params) != 2 {
+	case KlineKey: // kline:abc/cet:1min; kline:B:abc/cet:1min
+		if len(params) != 2 && len(params) != 3 {
 			return false
 		}
-		switch params[1] {
+		timeSpan := params[1]
+		if len(params) == 3 {
+			if params[0] != "B" {
+				return false
+			}
+			timeSpan = params[2]
+		}
+		switch timeSpan {
 		case MinuteStr, HourStr, DayStr:
 			return true
 		default:
@@ -390,7 +397,11 @@ func queryDepthAndPush(hub *Hub, c Subscriber, market string, level string, coun
 }
 
 func queryKlineAndpush(hub *Hub, c Subscriber, params []string, count int) error {
-	candleBz := hub.QueryCandleStick(params[0], GetSpanFromSpanStr(params[1]), hub.currBlockTime.Unix(), hub.sid, count)
+	tradingPair := params[0]
+	if len(params) == 3 {
+		tradingPair = strings.Join(params[:2], SeparateArgu)
+	}
+	candleBz := hub.QueryCandleStick(tradingPair, GetSpanFromSpanStr(params[1]), hub.currBlockTime.Unix(), hub.sid, count)
 	bz := groupOfDataPacket(KlineKey, candleBz)
 	err := c.WriteMsg(bz)
 	if err != nil {
@@ -455,9 +466,15 @@ func (w *WebsocketManager) GetCandleStickSubscribeInfo() map[string][]Subscriber
 		params := conn.topicWithParams[KlineKey]
 		for p := range params {
 			vals := strings.Split(p, SeparateArgu)
-			res[vals[0]] = append(res[vals[0]], ImplSubscriber{
+			market := vals[0]
+			timeSpan := vals[1]
+			if len(vals) == 3 {
+				market = strings.Join(vals[:2], SeparateArgu)
+				timeSpan = vals[2]
+			}
+			res[market] = append(res[vals[0]], ImplSubscriber{
 				Conn:  conn,
-				value: vals[1],
+				value: timeSpan,
 			})
 		}
 	}
