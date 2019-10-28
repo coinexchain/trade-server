@@ -42,18 +42,26 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### API Breaking Changes
 
+*   [#11](https://github.com/coinexchain/trade-server/issues/11) Fix Deal Information for bancor markets; Add bancor kline subscription with websocket
+*   [#12](https://github.com/coinexchain/trade-server/issues/12) Fix bug for bancor candlestick info; Add bancor ticker subscribe
+
 
 ### Client Breaking Changes
 
 
 ### Features
 
+*   [#10](https://github.com/coinexchain/trade-server/issues/10) Add Deal Information for bancor markets, making them more similar to normal markets
 
 ### Improvements
 
+*   [#13](https://github.com/coinexchain/trade-server/issues/13) https://github.com/coinexchain/trade-server/issues/13
+*   [#14](https://github.com/coinexchain/trade-server/issues/14) Modify the deployment of trade-server and cetd node.
 
 ### Bug Fixes
 
+*   [#8](https://github.com/coinexchain/trade-server/issues/8) When there are no subscribers, some core logic is skipped
+*   [#9](https://github.com/coinexchain/trade-server/issues/9) NotificationSlash‘s msgType is "slash", not "notify_slash"
 
 ## [v0.0.18] - 2019.10.20 
 
