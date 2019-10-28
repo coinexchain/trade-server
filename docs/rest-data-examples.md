@@ -219,6 +219,34 @@ $ curl "http://localhost:8000/bancorlite/trades?account=coinex1x6rhu5m53fw8qgpwu
 }
 ```
 
+- 查询bancorlite-deal
+
+```bash
+$ curl -k "https://localhost:8000/bancorlite/deals?market=B:abc/cet&time=1567745901&count=1&sid=0"
+$ curl "http://localhost:8000/bancorlite/deals?market=B:abc/cet&time=1567745901&count=2&sid=0" 
+{
+  "data": [
+    {
+      "sender": "coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c",
+      "stock": "abc",
+      "money": "cet",
+      "init_price": "1.000000000000000000",
+      "max_supply": "10000000000000",
+      "max_price": "500.000000000000000000",
+      "price": "1.000000005988000000",
+      "stock_in_pool": "9999999999880",
+      "money_in_pool": "120",
+      "earliest_cancel_time": 1917014400
+    }
+  ],
+  "timesid": [
+    1566374447,
+    105926
+  ]
+}
+
+```
+
 - 查询bancorlite-info
 
 ```bash
