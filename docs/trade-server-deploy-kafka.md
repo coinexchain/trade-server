@@ -2,8 +2,31 @@
 
 ```
    +----------+ produce  +-------+ consume  +--------------+
-   | DEX Node | -------> | dir | -------> | trade-server | 
+   | DEX Node | -------> | kafka | -------> | trade-server | 
    +----------+          +-------+          +--------------+
+```
+
+## 1. kafka部署
+
+kafka依赖zookeeper组件。可以通过源码、docker等方式安装部署。
+
+源码安装参考：https://kafka.apache.org/quickstart
+
+docker安装参考：https://hub.docker.com/r/wurstmeister/kafka/
+
+mac可通过brew安装参考 https://github.com/coinexchain/trade-server/blob/master/examples/README.md
+
+为了让trade-server在数据存储出现异常时，可以将数据（默认data目录）删除再从kafka重新同步，而不需要让节点去重新同步，建议将kafka的消息保留时间设置为永久。启用此选项后需要对硬盘使用情况保持关注。  
+
+```properties
+# The minimum age of a log file to be eligible for deletion due to age
+log.retention.hours=-1
+
+# A size-based retention policy for logs. Segments are pruned from the log unless the remaining
+# segments drop below log.retention.bytes. Functions independently of log.retention.hours.
+log.retention.bytes=-1
+
+# log.cleaner.enable=false // TODO: 待确认
 ```
 
 ## 2. dex-node部署及配置
@@ -15,12 +38,10 @@
 ```toml
 feature-toggle = true
 subscribe-modules = "comment,authx,bankx,market,bancorlite"
-brokers = [
-    "dir:/home/data"                # 指定节点为trade-server数据存储的目录
-]
+brokers = "kafka:127.0.0.1:9092"
 ```
 
-brokers配置按实际存储的数据目录填写，修改完后启动节点。
+brokers配置按实际kafka部署配置填写。修改完后重启节点。
 
 ## 3. trade-server部署
 
@@ -50,6 +71,9 @@ proxy = false
 # DEX节点LCD地址
 lcd = "http://localhost:1317"
 
+# Kafka地址
+kafka-addrs = "localhost:9092"
+
 # LevelDB数据目录
 data-dir = "data"
 
@@ -61,12 +85,6 @@ log-level = "info"
 
 # Log格式: plain(普通文本格式) | json (json格式)
 log-format = "plain"
-
-# dir-mode
-
-dir-mode = true             # 启用目录模式
-dir = "/home/data"          # 指定dex-node 中为trade-server数据存储的目录；
-
 ```
 
 ### 启动
@@ -76,10 +94,3 @@ dir = "/home/data"          # 指定dex-node 中为trade-server数据存储的�
 ```bash
 nohup trade-server -c config.toml &
 ```
-
-## 注意
-
-1. dex-node 节点配置文件中 `brokers`下指定的`dir`的值 必须与 trade-server 配置文件中 `dir`的值一致。
-2. **初次**启用节点的`brokers`的`dir`模式时，节点必须从高度0开始，重新同步数据。
-3. 启用节点的`brokers`的`dir`模式后，当运行一段时间重启节点时，修改了节点配置文件中`dir`的值，节点必须从高度0开始，重新同步数据。
-3. 启用节点的`brokers`的`dir`模式后，当运行一段时间重启节点时，配置文件的`dir`值未修改，直接启动节点即可。

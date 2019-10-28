@@ -307,7 +307,7 @@ func PushFullInformation(subscriptionTopic string, count int, c Subscriber, hub 
 	case BancorTradeKey:
 		err = queryAndPushFunc(BancorTradeKey, params[0], hub.QueryBancorTrade)
 	case BancorDealKey:
-		err = queryAndPushFunc(DealKey, params[0], hub.QueryBancorDeal)
+		err = queryAndPushFunc(BancorDealKey, "B:"+params[0], hub.QueryBancorDeal)
 	case RedelegationKey:
 		err = queryAndPushFunc(RedelegationKey, params[0], hub.QueryRedelegation)
 	case UnbondingKey:
