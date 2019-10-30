@@ -93,8 +93,6 @@ func (w *WebsocketManager) CloseConn(c *Conn) error {
 }
 
 func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, count int, c *Conn, hub *Hub) error {
-	w.Lock()
-	defer w.Unlock()
 	values := strings.Split(subscriptionTopic, SeparateArgu)
 	if len(values) < 1 || len(values) > MaxArguNum+1 {
 		return fmt.Errorf("Expect range of parameters [%d, %d], actual : %d ", MinArguNum, MaxArguNum, len(values)-1)
@@ -111,6 +109,8 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, count int,
 		return err
 	}
 
+	w.Lock()
+	defer w.Unlock()
 	if len(params) != 0 {
 		if len(c.topicWithParams[topic]) == 0 {
 			c.topicWithParams[topic] = make(map[string]struct{})

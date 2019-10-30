@@ -100,6 +100,8 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 							}
 						}
 					}
+				default:
+					log.Errorf("Unknown operation : ", command.Op)
 				}
 
 			}

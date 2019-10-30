@@ -13,7 +13,7 @@ import (
 	"github.com/coinexchain/trade-server/core"
 )
 
-const FILE_PREFIX = "backup-"
+const FilePrefix = "backup-"
 
 type Consumer interface {
 	Consume()
@@ -180,7 +180,7 @@ func NewConsumerWithDirTail(svrConfig *toml.Tree, hub *core.Hub) Consumer {
 	}
 	return &TradeConsumerWithDirTail{
 		dirName:    dir,
-		filePrefix: FILE_PREFIX,
+		filePrefix: FilePrefix,
 		hub:        hub,
 		writer:     writer,
 	}

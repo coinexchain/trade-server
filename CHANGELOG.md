@@ -55,7 +55,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### Improvements
 
-*   [#13](https://github.com/coinexchain/trade-server/issues/13) https://github.com/coinexchain/trade-server/issues/13
+*   [#13](https://github.com/coinexchain/trade-server/issues/13) Modify the time.Time type to int64 to avoid inconsistent json serialization of different golang versions
 *   [#14](https://github.com/coinexchain/trade-server/issues/14) Modify the deployment of trade-server and cetd node.
 
 ### Bug Fixes
