@@ -244,8 +244,8 @@ type Hub struct {
 	currTxHashID string
 }
 
-func NewHub(db dbm.DB, subMan SubscribeManager, interval int64) Hub {
-	return Hub{
+func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval int64) (hub Hub) {
+	hub = Hub{
 		db:             db,
 		batch:          db.NewBatch(),
 		subMan:         subMan,
@@ -263,6 +263,20 @@ func NewHub(db dbm.DB, subMan SubscribeManager, interval int64) Hub {
 		msgEntryList:   make([]msgEntry, 0, 1000),
 		blocksInterval: interval,
 	}
+	if monitorInterval <= 0 {
+		return
+	}
+	go func() {
+		oldSid := hub.sid
+		for {
+			time.Sleep(time.Duration(monitorInterval * int64(time.Second)))
+			if oldSid == hub.sid {
+				panic("No progress for a long time")
+			}
+			oldSid = hub.sid
+		}
+	}()
+	return
 }
 
 func (hub *Hub) HasMarket(market string) bool {
