@@ -135,6 +135,7 @@ func TestDepthLevel(t *testing.T) {
 9: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"300"},{"p":"3.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"300"}]}
 `
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
 
@@ -167,6 +168,7 @@ func TestDepthLevel(t *testing.T) {
 9: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"12.000000000000000000","a":"171"}]}
 `
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
 
@@ -190,6 +192,7 @@ func TestDepthLevel(t *testing.T) {
 9: {"trading_pair":"abc/cet","bids":[{"p":"3.000000000000000000","a":"0"}],"asks":[]}
 `
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 	subMan.compareResult(t, correct)
 
 	hub.currBlockHeight = 99998
@@ -201,6 +204,7 @@ func TestDepthLevel(t *testing.T) {
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 
 	str := "{\"type\":\"depth_full\", \"payload\":{\"trading_pair\":\"abc/cet\",\"bids\":[{\"p\":\"15.000000000000000000\",\"a\":\"300\"}],\"asks\":[{\"p\":\"12.000000000000000000\",\"a\":\"171\"}]}}"
 	depthSub := subMan.DepthSubscribeInfo["abc/cet"][0].(*DepthSubscriber)
@@ -338,6 +342,7 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("create_order_info", bytes)
 
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 	correct := `
 3: {"height":1000,"timestamp":"2019-07-15T08:07:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
 4: {"height":1000,"timestamp":"2019-07-15T08:07:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
@@ -453,6 +458,7 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("del_order_info", bytes)
 
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 	correct = `
 3: {"height":1001,"timestamp":"2019-07-15T08:19:10Z","last_block_hash":"3132333435363738393031323334353637383930"}
 4: {"height":1001,"timestamp":"2019-07-15T08:19:10Z","last_block_hash":"3132333435363738393031323334353637383930"}
@@ -466,7 +472,6 @@ func Test1(t *testing.T) {
 16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":1,"price":"100.000000000000000000","del_reason":"Manually cancel the order","used_commission":0,"left_stock":50,"remain_amount":0,"deal_stock":100,"deal_money":10}
 8: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":[{"p":"100.000000000000000000","a":"200"}]}
 9: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":[{"p":"100.000000000000000000","a":"200"}]}
-
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
@@ -517,6 +522,7 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("bancor_trade", bytes)
 
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 	correct = `
 3: {"height":1002,"timestamp":"2019-07-15T08:29:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 4: {"height":1002,"timestamp":"2019-07-15T08:29:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
@@ -720,6 +726,7 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("fill_order_info", bytes)
 
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 	correct = `
 3: {"height":1003,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 4: {"height":1003,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
@@ -759,6 +766,7 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("fill_order_info", bytes)
 
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 	correct = `
 3: {"height":1004,"timestamp":"2019-07-16T00:01:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 4: {"height":1004,"timestamp":"2019-07-16T00:01:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
@@ -798,6 +806,7 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 	correct = `
 3: {"height":1005,"timestamp":"2019-07-15T08:37:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
 4: {"height":1005,"timestamp":"2019-07-15T08:37:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
@@ -820,6 +829,7 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 	correct = `
 3: {"height":1006,"timestamp":"2019-07-15T08:38:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
 4: {"height":1006,"timestamp":"2019-07-15T08:38:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
@@ -887,6 +897,7 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("bancor_trade", bytes)
 
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 	correct = `
 3: {"height":1007,"timestamp":"2019-07-15T08:39:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
 4: {"height":1007,"timestamp":"2019-07-15T08:39:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
@@ -906,6 +917,7 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
 	hub.ConsumeMessage("commit", nil)
+	time.Sleep(time.Millisecond)
 	correct = `
 3: {"height":1008,"timestamp":"2019-07-15T08:40:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
 4: {"height":1008,"timestamp":"2019-07-15T08:40:10Z","last_block_hash":"3031323334353637383930313233343536373839"}

@@ -307,7 +307,7 @@ func (hub *Hub) pushMsgToWebsocket() {
 		case TxKey:
 			hub.PushTxMsg(entry.extra.(string), entry.bz)
 		case RedelegationKey:
-			hub.PushRedelegationMsg(entry.extra.(string), entry.bz)
+			hub.PushRedelegationMsg(entry.extra.(string))
 		case UnbondingKey:
 			hub.PushUnbondingMsg(entry.extra.(string), entry.bz)
 		case UnlockKey:
@@ -786,16 +786,17 @@ func (hub *Hub) handleNotificationCompleteRedelegation(bz []byte) {
 		hub.Log("Error in Unmarshal NotificationCompleteRedelegation")
 		return
 	}
-	hub.msgsChannel <- MsgToPush{topic: RedelegationKey, bz: bz, extra: v.Delegator}
+	hub.msgsChannel <- MsgToPush{topic: RedelegationKey, extra: v.Delegator}
 }
 
-func (hub *Hub) PushRedelegationMsg(delegator string, bz []byte) {
+func (hub *Hub) PushRedelegationMsg(delegator string) {
 	info := hub.subMan.GetRedelegationSubscribeInfo()
 	targets, ok := info[delegator]
 	if ok {
 		// query the redelegations whose completion time is between current block and last block
 		end := hub.getRedelegationEventKey(delegator, hub.currBlockTime.Unix())
 		start := hub.getRedelegationEventKey(delegator, hub.lastBlockTime.Unix()-1)
+		fmt.Printf("start : %v, end : %v\n", start, end)
 		hub.dbMutex.RLock()
 		iter := hub.db.ReverseIterator(start, end)
 		defer func() {
