@@ -112,9 +112,59 @@ func TestDepthLevel(t *testing.T) {
 	}
 	bytes, _ = json.Marshal(createOrderInfo)
 	hub.ConsumeMessage("create_order_info", bytes)
+
+	fillOrderInfo := &FillOrderInfo{
+		OrderID:     addr1 + "-1",
+		TradingPair: "abc/cet",
+		Height:      1001,
+		Side:        BUY,
+		Price:       sdk.NewDec(15),
+		LeftStock:   0,
+		Freeze:      0,
+		DealStock:   100,
+		DealMoney:   10,
+		CurrStock:   100,
+		CurrMoney:   10,
+		FillPrice:   sdk.NewDec(15),
+	}
+	bytes, _ = json.Marshal(fillOrderInfo)
+	hub.ConsumeMessage("fill_order_info", bytes)
+
 	correct := `
-8: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"400"},{"p":"3.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"300"}]}
-9: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"400"},{"p":"3.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"300"}]}
+8: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"300"},{"p":"3.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"300"}]}
+9: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"300"},{"p":"3.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"300"}]}
+`
+	hub.ConsumeMessage("commit", nil)
+	subMan.compareResult(t, correct)
+	subMan.clearPushList()
+
+	newHeightInfo = &NewHeightInfo{
+		Height:        1001,
+		TimeStamp:     T("2019-07-15T08:07:10Z"),
+		LastBlockHash: []byte("01234567890123456789"),
+	}
+	bytes, _ = json.Marshal(newHeightInfo)
+	hub.ConsumeMessage("height_info", bytes)
+
+	fillOrderInfo = &FillOrderInfo{
+		OrderID:     addr1 + "-1",
+		TradingPair: "abc/cet",
+		Height:      1001,
+		Side:        SELL,
+		Price:       sdk.NewDec(12),
+		LeftStock:   0,
+		Freeze:      0,
+		DealStock:   100,
+		DealMoney:   10,
+		CurrStock:   129,
+		CurrMoney:   10,
+		FillPrice:   sdk.NewDec(15),
+	}
+	bytes, _ = json.Marshal(fillOrderInfo)
+	hub.ConsumeMessage("fill_order_info", bytes)
+	correct = `
+8: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"12.000000000000000000","a":"171"}]}
+9: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"12.000000000000000000","a":"171"}]}
 `
 	hub.ConsumeMessage("commit", nil)
 	subMan.compareResult(t, correct)
@@ -152,7 +202,7 @@ func TestDepthLevel(t *testing.T) {
 	hub.ConsumeMessage("height_info", bytes)
 	hub.ConsumeMessage("commit", nil)
 
-	str := "{\"type\":\"depth_full\", \"payload\":{\"trading_pair\":\"abc/cet\",\"bids\":[{\"p\":\"15.000000000000000000\",\"a\":\"400\"}],\"asks\":[{\"p\":\"12.000000000000000000\",\"a\":\"300\"}]}}"
+	str := "{\"type\":\"depth_full\", \"payload\":{\"trading_pair\":\"abc/cet\",\"bids\":[{\"p\":\"15.000000000000000000\",\"a\":\"300\"}],\"asks\":[{\"p\":\"12.000000000000000000\",\"a\":\"171\"}]}}"
 	depthSub := subMan.DepthSubscribeInfo["abc/cet"][0].(*DepthSubscriber)
 	depthSub.CompareRet(t, []string{str})
 
