@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -78,6 +79,8 @@ type DepthSubscriber struct {
 	PlainSubscriber
 	level    string
 	payloads []string
+
+	sync.Mutex
 }
 
 func (s *DepthSubscriber) Detail() interface{} {
@@ -85,15 +88,21 @@ func (s *DepthSubscriber) Detail() interface{} {
 }
 
 func (s *DepthSubscriber) WriteMsg(msg []byte) error {
+	s.Lock()
+	defer s.Unlock()
 	s.payloads = append(s.payloads, string(msg))
 	return nil
 }
 
 func (s *DepthSubscriber) ClearMsg() {
+	s.Lock()
+	defer s.Unlock()
 	s.payloads = s.payloads[:0]
 }
 
 func (s *DepthSubscriber) CompareRet(t *testing.T, actual []string) {
+	s.Lock()
+	defer s.Unlock()
 	assert.EqualValues(t, s.payloads, actual)
 }
 
@@ -131,6 +140,7 @@ type MocSubscribeManager struct {
 	TxSubscribeInfo           map[string][]Subscriber
 	LockedSubcribeInfo        map[string][]Subscriber
 
+	sync.Mutex
 	PushList []pushInfo
 }
 
@@ -150,10 +160,14 @@ func (sm *MocSubscribeManager) showResult() {
 }
 
 func (sm *MocSubscribeManager) clearPushList() {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = sm.PushList[:0]
 }
 
 func (sm *MocSubscribeManager) compareResult(t *testing.T, correct string) {
+	sm.Lock()
+	defer sm.Unlock()
 	out := make([]string, 0, 10)
 	for _, info := range sm.PushList {
 		var id int64
@@ -263,6 +277,8 @@ func GetSubscribeManager(addr1, addr2 string) *MocSubscribeManager {
 }
 
 func (sm *MocSubscribeManager) ClearPushInfoList() {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = sm.PushList[:0]
 }
 
@@ -321,63 +337,103 @@ func (sm *MocSubscribeManager) GetTxSubscribeInfo() map[string][]Subscriber {
 	return sm.TxSubscribeInfo
 }
 func (sm *MocSubscribeManager) PushLockedSendMsg(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushSlash(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushHeight(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushTicker(subscriber Subscriber, t []*Ticker) {
+	sm.Lock()
+	defer sm.Unlock()
 	info, _ := json.Marshal(t)
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushDepthWithChange(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushDepthWithDelta(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushCandleStick(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushDeal(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushCreateOrder(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushFillOrder(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushCancelOrder(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushBancorInfo(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushBancorTrade(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushBancorDeal(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushIncome(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushUnbonding(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushRedelegation(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushUnlock(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushTx(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushComment(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }

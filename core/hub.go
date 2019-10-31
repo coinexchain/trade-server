@@ -188,6 +188,17 @@ func (hub *Hub) getUnbondingEventKey(addr string, time int64) []byte {
 func (hub *Hub) getUnlockEventKey(addr string) []byte {
 	return hub.getKeyFromBytes(UnlockByte, []byte(addr), byte(0))
 }
+func (hub *Hub) getEventKeyWithSidAndTime(firstByte byte, addr string, time int64, sid int64) []byte {
+	res := make([]byte, 0, 1+1+len(addr)+1+16+1)
+	res = append(res, firstByte)
+	res = append(res, byte(len(addr)))
+	res = append(res, []byte(addr)...)
+	res = append(res, byte(0))
+	res = append(res, int64ToBigEndianBytes(time)...) //the block's time at which the KV pair is generated
+	res = append(res, int64ToBigEndianBytes(sid)...)  // the serial ID for a KV pair
+	res = append(res, 0)
+	return res
+}
 
 type TripleManager struct {
 	sell *DepthManager
@@ -307,9 +318,9 @@ func (hub *Hub) pushMsgToWebsocket() {
 		case TxKey:
 			hub.PushTxMsg(entry.extra.(string), entry.bz)
 		case RedelegationKey:
-			hub.PushRedelegationMsg(entry.extra.(string))
+			hub.PushRedelegationMsg(entry.extra.(TimeAndSidWithAddr))
 		case UnbondingKey:
-			hub.PushUnbondingMsg(entry.extra.(string), entry.bz)
+			hub.PushUnbondingMsg(entry.extra.(TimeAndSidWithAddr))
 		case UnlockKey:
 			hub.PushUnlockMsg(entry.extra.(string), entry.bz)
 		case CommentKey:
@@ -787,16 +798,24 @@ func (hub *Hub) handleNotificationCompleteRedelegation(bz []byte) {
 		hub.Log("Error in Unmarshal NotificationCompleteRedelegation")
 		return
 	}
-	hub.msgsChannel <- MsgToPush{topic: RedelegationKey, extra: v.Delegator}
+	hub.msgsChannel <- MsgToPush{topic: RedelegationKey, extra: TimeAndSidWithAddr{addr: v.Delegator, sid: hub.sid,
+		currTime: hub.currBlockTime.Unix(), lastTime: hub.lastBlockTime.Unix()}}
 }
 
-func (hub *Hub) PushRedelegationMsg(delegator string) {
+type TimeAndSidWithAddr struct {
+	currTime int64
+	lastTime int64
+	sid      int64
+	addr     string
+}
+
+func (hub *Hub) PushRedelegationMsg(param TimeAndSidWithAddr) {
 	info := hub.subMan.GetRedelegationSubscribeInfo()
-	targets, ok := info[delegator]
+	targets, ok := info[param.addr]
 	if ok {
 		// query the redelegations whose completion time is between current block and last block
-		end := hub.getRedelegationEventKey(delegator, hub.currBlockTime.Unix())
-		start := hub.getRedelegationEventKey(delegator, hub.lastBlockTime.Unix()-1)
+		end := hub.getEventKeyWithSidAndTime(RedelegationByte, param.addr, param.currTime, param.sid)
+		start := hub.getEventKeyWithSidAndTime(RedelegationByte, param.addr, param.lastTime-1, param.sid)
 		hub.dbMutex.RLock()
 		iter := hub.db.ReverseIterator(start, end)
 		defer func() {
@@ -818,16 +837,17 @@ func (hub *Hub) handleNotificationCompleteUnbonding(bz []byte) {
 		hub.Log("Error in Unmarshal NotificationCompleteUnbonding")
 		return
 	}
-	hub.msgsChannel <- MsgToPush{topic: UnbondingKey, bz: bz, extra: v.Delegator}
+	hub.msgsChannel <- MsgToPush{topic: UnbondingKey, bz: bz, extra: TimeAndSidWithAddr{addr: v.Delegator, sid: hub.sid,
+		currTime: hub.currBlockTime.Unix(), lastTime: hub.lastBlockTime.Unix()}}
 }
 
-func (hub *Hub) PushUnbondingMsg(delegator string, bz []byte) {
+func (hub *Hub) PushUnbondingMsg(param TimeAndSidWithAddr) {
 	info := hub.subMan.GetUnbondingSubscribeInfo()
-	targets, ok := info[delegator]
+	targets, ok := info[param.addr]
 	if ok {
 		// query the unbondings whose completion time is between current block and last block
-		end := hub.getUnbondingEventKey(delegator, hub.currBlockTime.Unix())
-		start := hub.getUnbondingEventKey(delegator, hub.lastBlockTime.Unix()-1)
+		end := hub.getEventKeyWithSidAndTime(UnbondingByte, param.addr, param.currTime, param.sid)
+		start := hub.getEventKeyWithSidAndTime(UnbondingByte, param.addr, param.lastTime-1, param.sid)
 		hub.dbMutex.RLock()
 		iter := hub.db.ReverseIterator(start, end)
 		defer func() {

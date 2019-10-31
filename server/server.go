@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/coinexchain/trade-server/core"
-	"github.com/pelletier/go-toml"
+	toml "github.com/pelletier/go-toml"
 	log "github.com/sirupsen/logrus"
 	dbm "github.com/tendermint/tm-db"
 )
@@ -72,7 +72,7 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	// http server
 	proxy := svrConfig.GetDefault("proxy", false).(bool)
 	lcd := svrConfig.GetDefault("lcd", "").(string)
-	router, err := registerHandler(&hub, wsManager, proxy, lcd)
+	router, err := registerHandler(hub, wsManager, proxy, lcd)
 	if err != nil {
 		log.WithError(err).Fatal("registerHandler fail")
 	}
@@ -84,11 +84,11 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	}
 
 	// consumer
-	consumer := NewConsumer(svrConfig, &hub)
+	consumer := NewConsumer(svrConfig, hub)
 	return &TradeSever{
 		httpSvr:  httpSvr,
 		consumer: consumer,
-		hub:      &hub,
+		hub:      hub,
 	}
 }
 
