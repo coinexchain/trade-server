@@ -55,7 +55,7 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 	interval := svrConfig.GetDefault("interval", int64(60)).(int64)
 	monitorInterval := svrConfig.GetDefault("monitorinterval", int64(0)).(int64)
 	hub := core.NewHub(db, wsManager, interval, monitorInterval)
-	restoreHub(&hub)
+	restoreHub(hub)
 
 	//https toggle
 	httpsToggle = svrConfig.GetDefault("https-toggle", false).(bool)

@@ -252,8 +252,8 @@ type Hub struct {
 	currTxHashID string
 }
 
-func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval int64) (hub Hub) {
-	hub = Hub{
+func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval int64) (hub *Hub) {
+	hub = &Hub{
 		db:             db,
 		batch:          db.NewBatch(),
 		subMan:         subMan,
@@ -507,6 +507,7 @@ func (hub *Hub) beginForCandleSticks() {
 				sym = ""
 				continue
 			}
+			sym = cs.Market
 		}
 		if len(sym) == 0 {
 			continue
@@ -796,7 +797,6 @@ func (hub *Hub) PushRedelegationMsg(delegator string) {
 		// query the redelegations whose completion time is between current block and last block
 		end := hub.getRedelegationEventKey(delegator, hub.currBlockTime.Unix())
 		start := hub.getRedelegationEventKey(delegator, hub.lastBlockTime.Unix()-1)
-		fmt.Printf("start : %v, end : %v\n", start, end)
 		hub.dbMutex.RLock()
 		iter := hub.db.ReverseIterator(start, end)
 		defer func() {
