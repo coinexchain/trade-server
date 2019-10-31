@@ -975,3 +975,25 @@ func TestDumpOffset(t *testing.T) {
 	//time.Sleep(2 * time.Second)
 	//require.EqualValues(t, true, hub.stopped)
 }
+
+func TestEncodeTicker(t *testing.T) {
+	tkMap := make(map[string]*Ticker)
+	tkMap["cet"] = &Ticker{
+		Market:            "cet",
+		NewPrice:          sdk.NewDec(3),
+		OldPriceOneDayAgo: sdk.NewDec(98),
+		MinuteInDay:       87,
+	}
+
+	bz, err := json.Marshal(tkMap)
+	require.Nil(t, err)
+	fmt.Printf("%s\n", string(bz))
+	fmt.Printf("%p, %v\n", tkMap["cet"], tkMap["cet"])
+
+	tmp := make(map[string]*Ticker)
+	err = json.Unmarshal(bz, &tmp)
+	require.Nil(t, err)
+	fmt.Printf("%p, %v\n", tmp["cet"], tmp["cet"])
+	require.EqualValues(t, tkMap["cet"], tmp["cet"])
+
+}

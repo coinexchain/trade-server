@@ -52,11 +52,13 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Features
 
 *   [#10](https://github.com/coinexchain/trade-server/issues/10) Add Deal Information for bancor markets, making them more similar to normal markets
+*   [#15](https://github.com/coinexchain/trade-server/issues/15) Add some monitoring function to kill trade-server when it is stucked 
 
 ### Improvements
 
 *   [#13](https://github.com/coinexchain/trade-server/issues/13) Modify the time.Time type to int64 to avoid inconsistent json serialization of different golang versions
 *   [#14](https://github.com/coinexchain/trade-server/issues/14) Modify the deployment of trade-server and cetd node.
+*   [#17](https://github.com/coinexchain/trade-server/issues/17) Optimize lock granularity
 
 ### Bug Fixes
 
