@@ -96,7 +96,7 @@ func (w *WebsocketManager) CloseConn(c *Conn) error {
 	defer w.Unlock()
 	topics, ok := w.connWithTopics[c]
 	if !ok {
-		panic("the remove conn not cache in websocketManager ")
+		return nil
 	}
 
 	for topic := range topics {

@@ -45,9 +45,7 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 			for {
 				_, message, err := wsConn.ReadMessage()
 				if err != nil {
-					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-						log.WithError(err).Error("unexpected close error")
-					}
+					log.WithError(err).Error("read message failed")
 					err = wsManager.CloseConn(wsConn)
 					if err != nil {
 						log.WithError(err).Error("close websocket failed")
@@ -66,13 +64,7 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 						err = wsManager.AddSubscribeConn(subTopic, command.Depth, wsConn, hub)
 						if err != nil {
 							log.WithError(err).Error(fmt.Sprintf("Subscribe topic (%s) failed ", subTopic))
-							err = wsConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("{\"error\": \"%s\"}", err.Error())))
-							if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-								err = wsManager.CloseConn(wsConn)
-								if err != nil {
-									log.WithError(err).Error(fmt.Sprintf("Connection closed failed in %s", Subscribe))
-								}
-							}
+							break
 						}
 					}
 				case Unsubscribe:
@@ -80,30 +72,28 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 						err = wsManager.RemoveSubscribeConn(subTopic, wsConn)
 						if err != nil {
 							log.WithError(err).Error(fmt.Sprintf("Unsubscribe topic (%s) failed ", subTopic))
-							err = wsConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("{\"error\": \"%s\"}", err.Error())))
-							if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-								err = wsManager.CloseConn(wsConn)
-								if err != nil {
-									log.WithError(err).Error(fmt.Sprintf("Connection closed failed in %s", Unsubscribe))
-								}
-							}
+							break
 						}
 					}
 				case Ping:
 					if err = wsConn.PingHandler()(`{"type":"pong"}`); err != nil {
 						log.WithError(err).Error(fmt.Sprintf("pong message failed"))
-						err = wsConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("{\"error\": \"%s\"}", err.Error())))
-						if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-							err = wsManager.CloseConn(wsConn)
-							if err != nil {
-								log.WithError(err).Error(fmt.Sprintf("Connection closed failed in %s", Ping))
-							}
-						}
 					}
 				default:
 					log.Errorf("Unknown operation : %v", command.Op)
 				}
 
+				if err != nil {
+					switch err.(type) {
+					case *websocket.CloseError:
+						err = wsManager.CloseConn(wsConn)
+						if err != nil {
+							log.WithError(err).Error(fmt.Sprintf("Connection closed failed"))
+						}
+					default:
+						err = wsConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("{\"error\": \"%s\"}", err.Error())))
+					}
+				}
 			}
 		}()
 	}
