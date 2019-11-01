@@ -10,7 +10,7 @@ import (
 
 	"github.com/coinexchain/trade-server/server"
 	"github.com/coinexchain/trade-server/utils"
-	"github.com/pelletier/go-toml"
+	toml "github.com/pelletier/go-toml"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 	version bool
 )
 
-const ReleaseVersion = "v0.0.2"
+const ReleaseVersion = "v0.0.19"
 
 func init() {
 	newFlag = flag.NewFlagSet(os.Args[0], flag.ExitOnError)

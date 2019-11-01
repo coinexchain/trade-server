@@ -86,6 +86,7 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 				if err != nil {
 					switch err.(type) {
 					case *websocket.CloseError:
+						log.Error(err)
 						err = wsManager.CloseConn(wsConn)
 						if err != nil {
 							log.WithError(err).Error(fmt.Sprintf("Connection closed failed"))
