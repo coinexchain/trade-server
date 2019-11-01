@@ -18,7 +18,7 @@ const (
 )
 
 type ImplSubscriber struct {
-	*Conn
+	Conn  *Conn
 	value interface{}
 }
 
@@ -27,7 +27,7 @@ func (i ImplSubscriber) Detail() interface{} {
 }
 
 func (i ImplSubscriber) WriteMsg(v []byte) error {
-	return i.WriteMessage(websocket.TextMessage, v)
+	return i.Conn.WriteMsg(v)
 }
 
 func (i ImplSubscriber) GetConn() *Conn {
@@ -37,6 +37,23 @@ func (i ImplSubscriber) GetConn() *Conn {
 type Conn struct {
 	*websocket.Conn
 	topicWithParams map[string]map[string]struct{} // topic --> params
+
+	lastError error
+	mtx       sync.RWMutex
+}
+
+func (c *Conn) WriteMsg(v []byte) error {
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
+	if c.lastError != nil {
+		return c.lastError
+	}
+	go func() {
+		c.mtx.Lock()
+		defer c.mtx.Unlock()
+		c.lastError = c.WriteMessage(websocket.TextMessage, v)
+	}()
+	return nil
 }
 
 func NewConn(c *websocket.Conn) *Conn {
