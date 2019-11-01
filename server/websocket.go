@@ -93,7 +93,7 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 							log.WithError(err).Error(fmt.Sprintf("Connection closed failed"))
 						}
 					default:
-						err = wsConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("{\"error\": \"%s\"}", err.Error())))
+						wsConn.WriteMsg([]byte(fmt.Sprintf("{\"error\": \"%s\"}", err.Error())))
 					}
 				}
 			}

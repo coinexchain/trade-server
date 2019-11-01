@@ -58,14 +58,15 @@ func (c *Conn) WriteMsg(v []byte) error {
 }
 
 func NewConn(c *websocket.Conn) *Conn {
-	c.SetPingHandler(func(appData string) error {
-		return c.WriteMessage(websocket.TextMessage, []byte(appData))
-	})
-	return &Conn{
+	conn := &Conn{
 		Conn:            c,
 		topicWithParams: make(map[string]map[string]struct{}),
 		allTopics:       make(map[string]struct{}),
 	}
+	c.SetPingHandler(func(appData string) error {
+		return conn.WriteMsg([]byte(appData))
+	})
+	return conn
 }
 
 type WebsocketManager struct {
