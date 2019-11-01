@@ -37,6 +37,7 @@ func (i ImplSubscriber) GetConn() *Conn {
 type Conn struct {
 	*websocket.Conn
 	topicWithParams map[string]map[string]struct{} // topic --> params
+	allTopics       map[string]struct{}            // all the topics (with or without params)
 
 	lastError error
 	mtx       sync.RWMutex
@@ -63,21 +64,22 @@ func NewConn(c *websocket.Conn) *Conn {
 	return &Conn{
 		Conn:            c,
 		topicWithParams: make(map[string]map[string]struct{}),
+		allTopics:       make(map[string]struct{}),
 	}
 }
 
 type WebsocketManager struct {
 	sync.RWMutex
 
-	SkipPushed     bool
-	connWithTopics map[*Conn]map[string]struct{} // conn --> topics
-	topicAndConns  map[string]map[*Conn]struct{}
+	SkipPushed    bool
+	wsConn2Conn   map[*websocket.Conn]*Conn
+	topicAndConns map[string]map[*Conn]struct{}
 }
 
 func NewWebSocketManager() *WebsocketManager {
 	return &WebsocketManager{
-		topicAndConns:  make(map[string]map[*Conn]struct{}),
-		connWithTopics: make(map[*Conn]map[string]struct{}),
+		topicAndConns: make(map[string]map[*Conn]struct{}),
+		wsConn2Conn:   make(map[*websocket.Conn]*Conn),
 	}
 }
 
@@ -85,27 +87,25 @@ func (w *WebsocketManager) SetSkipOption(isSkip bool) {
 	w.SkipPushed = isSkip
 }
 
-func (w *WebsocketManager) AddConn(c *Conn) {
+func (w *WebsocketManager) AddWsConn(c *websocket.Conn) *Conn {
 	w.Lock()
 	defer w.Unlock()
-	w.connWithTopics[c] = make(map[string]struct{})
+	if _, ok := w.wsConn2Conn[c]; !ok {
+		w.wsConn2Conn[c] = NewConn(c)
+	}
+	return w.wsConn2Conn[c]
 }
 
 func (w *WebsocketManager) CloseConn(c *Conn) error {
 	w.Lock()
 	defer w.Unlock()
-	topics, ok := w.connWithTopics[c]
-	if !ok {
-		return nil
-	}
-
-	for topic := range topics {
+	for topic := range c.allTopics {
 		conns, ok := w.topicAndConns[topic]
 		if ok {
 			delete(conns, c)
 		}
 	}
-	delete(w.connWithTopics, c)
+	delete(w.wsConn2Conn, c.Conn)
 	return c.Close()
 }
 
@@ -138,11 +138,11 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, count int,
 			c.topicWithParams[topic][strings.Join(params, SeparateArgu)] = struct{}{}
 		}
 	}
+	c.allTopics[topic] = struct{}{}
 	if len(w.topicAndConns[topic]) == 0 {
 		w.topicAndConns[topic] = make(map[*Conn]struct{})
 	}
 	w.topicAndConns[topic][c] = struct{}{}
-	w.connWithTopics[c][topic] = struct{}{}
 
 	return nil
 }
@@ -178,15 +178,7 @@ func (w *WebsocketManager) RemoveSubscribeConn(subscriptionTopic string, c *Conn
 			}
 		}
 	}
-	if topics, ok := w.connWithTopics[c]; ok {
-		if _, ok := topics[topic]; ok {
-			if conns, ok := w.topicAndConns[topic]; ok {
-				if _, ok := conns[c]; !ok {
-					delete(topics, topic)
-				}
-			}
-		}
-	}
+	delete(c.allTopics, topic)
 	return nil
 }
 

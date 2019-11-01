@@ -38,8 +38,9 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 			log.Error(err)
 			return
 		}
-		wsConn := core.NewConn(c)
-		wsManager.AddConn(wsConn)
+		//wsConn := core.NewConn(c)
+		//wsManager.AddConn(wsConn)
+		wsConn := wsManager.AddWsConn(c)
 
 		go func() {
 			for {
