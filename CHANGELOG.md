@@ -59,6 +59,8 @@ Ref: https://keepachangelog.com/en/1.0.0/
 *   [#13](https://github.com/coinexchain/trade-server/issues/13) Modify the time.Time type to int64 to avoid inconsistent json serialization of different golang versions
 *   [#14](https://github.com/coinexchain/trade-server/issues/14) Modify the deployment of trade-server and cetd node.
 *   [#17](https://github.com/coinexchain/trade-server/issues/17) Optimize lock granularity
+*   [#19](https://github.com/coinexchain/trade-server/issues/19) Separate the message sending logic from the data processing logic
+*   [#18](https://github.com/coinexchain/trade-server/issues/18) Use go routine to speed up websocket's Conn.WriteMessage 
 
 ### Bug Fixes
 
