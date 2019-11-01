@@ -478,28 +478,6 @@ func QueryDonationsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	}
 }
 
-func QueryDelistRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		err := r.ParseForm()
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest,
-				sdk.AppendMsgToErr("could not parse query parameters", err.Error()))
-			return
-		}
-
-		market := r.FormValue(queryKeyMarket)
-		time, sid, count, err := parseQueryKVStoreParams(r)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		data, timesid := hub.QueryDelist(market, time, sid, count)
-
-		postQueryKVStoreResponse(w, data, timesid)
-	}
-}
-
 func postQueryResponse(w http.ResponseWriter, data interface{}) {
 	var (
 		baseData []byte
