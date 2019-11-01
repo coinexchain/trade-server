@@ -307,7 +307,7 @@ func (hub *Hub) pushMsgToWebsocket() {
 		entry := <-hub.msgsChannel
 		switch entry.topic {
 		case BlockInfoKey:
-			hub.PushHeightInfo(entry.bz)
+			hub.PushHeightInfoMsg(entry.bz)
 		case KlineKey:
 			vals := entry.extra.([]string)
 			hub.PushCandleMsg(vals[0], entry.bz, vals[1])
@@ -504,7 +504,7 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 	hub.beginForCandleSticks()
 }
 
-func (hub *Hub) PushHeightInfo(bz []byte) {
+func (hub *Hub) PushHeightInfoMsg(bz []byte) {
 	infos := hub.subMan.GetHeightSubscribeInfo()
 	for _, ss := range infos {
 		hub.subMan.PushHeight(ss, bz)
