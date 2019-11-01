@@ -6,6 +6,7 @@ const (
 	TickerKey       = "ticker"
 	KlineKey        = "kline"
 	DepthKey        = "depth"
+	OptionKey       = "option"
 	DepthDelta      = "depth_delta"
 	DepthChange     = "depth_change"
 	DepthFull       = "depth_full"
