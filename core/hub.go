@@ -63,6 +63,7 @@ const (
 	LockedByte       = byte(0x36)
 	DonationByte     = byte(0x38)
 	DelistByte       = byte(0x3A)
+	DelistsByte      = byte(0x3B)
 	OffsetByte       = byte(0xF0)
 	DumpByte         = byte(0xF1)
 
@@ -733,8 +734,9 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 		hub.sid++
 		hub.msgsChannel <- MsgToPush{topic: TxKey, bz: bz, extra: signer}
 	}
-
-	hub.analyzeMessages(v.MsgTypes, v.TxJSON)
+	if len(v.ExtraInfo) == 0 {
+		hub.analyzeMessages(v.MsgTypes, v.TxJSON)
+	}
 }
 
 func (hub *Hub) PushTxMsg(addr string, bz []byte) {
@@ -1516,6 +1518,12 @@ func (hub *Hub) QueryDelist(market string, time int64, sid int64, count int) (da
 	return
 }
 
+func (hub *Hub) QueryDelists(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+	count = limitCount(count)
+	data, _, timesid = hub.query(false, DelistsByte, []byte{}, time, sid, count, nil)
+	return
+}
+
 // --------------
 
 func (hub *Hub) QueryOrderAboutToken(tag, token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
@@ -1616,6 +1624,8 @@ func (hub *Hub) query(fetchTxDetail bool, firstByteIn byte, bz []byte, time int6
 	firstByte := firstByteIn
 	if firstByteIn == CreateOrderOnlyByte || firstByteIn == FillOrderOnlyByte || firstByteIn == CancelOrderOnlyByte {
 		firstByte = OrderByte
+	} else if firstByteIn == DelistsByte {
+		firstByte = DelistByte
 	} else {
 		firstByteIn = 0
 	}
@@ -1625,6 +1635,9 @@ func (hub *Hub) query(fetchTxDetail bool, firstByteIn byte, bz []byte, time int6
 	timesid = make([]int64, 0, 2*count)
 	start := getStartKeyFromBytes(firstByte, bz)
 	end := getEndKeyFromBytes(firstByte, bz, time, sid)
+	if firstByteIn == DelistsByte {
+		end = getEndKeyFromBytes(DelistsByte, bz, time, sid)
+	}
 	hub.dbMutex.RLock()
 	iter := hub.db.ReverseIterator(start, end)
 	defer func() {
@@ -1645,7 +1658,11 @@ func (hub *Hub) query(fetchTxDetail bool, firstByteIn byte, bz []byte, time int6
 		if fetchTxDetail {
 			hexTxHashID := getTxHashID(iter.Value())
 			key := append([]byte{DetailByte}, hexTxHashID...)
-			entry = json.RawMessage(hub.db.Get(key))
+			entry = hub.db.Get(key)
+		}
+		//if firstByteIn
+		if firstByteIn == DelistsByte {
+			data = append(data, iKey[2:iKey[1]+2]) // length = iKey[1], market name = iKey[2:length+2]
 		}
 		data = append(data, entry)
 		tags = append(tags, tag)

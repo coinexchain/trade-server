@@ -632,7 +632,53 @@ $ curl "http://localhost:8000/misc/donations?time=1569862862&sid=0&count=2"
 }
 ```
 
+- 查询取消交易对的信息
 
+```bash
+$ curl -k "https://localhost:8000//market/delist?market=lkk2/cet&time=1569862862&sid=0&count=2"
+$ curl "http://localhost:8000/market/delist?market=lkk2/cet&time=1569862862&sid=0&count=2"
+{
+  "data": [
+     1668700800
+  ],
+  "timesid": [
+    1566374451,
+    2
+  ]
+}
+```
+
+
+- 查询取消交易对的列表
+
+```bash
+$ curl -k "https://localhost:8000/market/delists?time=1569862862&sid=0&count=2"
+$ curl "http://localhost:8000/market/delists?time=1569862862&sid=0&count=2"
+{
+    "data": [
+        {
+            "trading_pair": "lkp237/cet", 
+            "cancel_time": 1668700800
+        }, 
+        {
+            "trading_pair": "lkp37/cet", 
+            "cancel_time": 1668700800
+        }, 
+        {
+            "trading_pair": "lkp/cet", 
+            "cancel_time": 1668700800
+        }
+    ], 
+    "timesid": [
+        1571633845, 
+        13, 
+        1571633838, 
+        7, 
+        1571633838, 
+        4
+    ]
+}
+```
 
 
 

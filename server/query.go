@@ -3,10 +3,11 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/gorilla/mux"
 
 	"github.com/coinexchain/trade-server/core"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -495,8 +496,36 @@ func QueryDelistRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		}
 
 		data, timesid := hub.QueryDelist(market, time, sid, count)
+		cancelTime := core.BigEndianBytesToInt64(data[0])
+		postQueryKVStoreResponse(w, []int64{cancelTime}, timesid)
+	}
+}
+func QueryDelistsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest,
+				sdk.AppendMsgToErr("could not parse query parameters", err.Error()))
+			return
+		}
 
-		postQueryKVStoreResponse(w, data, timesid)
+		time, sid, count, err := parseQueryKVStoreParams(r)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		data, timesid := hub.QueryDelists(time, sid, count)
+		type CancelTradingPair struct {
+			TradingPair string `json:"trading_pair"`
+			CancelTime  int64  `json:"cancel_time"`
+		}
+		vals := make([]CancelTradingPair, len(data)/2)
+		for i := 0; i < len(data); i += 2 {
+			vals[i/2].TradingPair = string(data[i])
+			vals[i/2].CancelTime = core.BigEndianBytesToInt64(data[i+1])
+		}
+		postQueryKVStoreResponse(w, vals, timesid)
 	}
 }
 

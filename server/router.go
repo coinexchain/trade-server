@@ -26,6 +26,7 @@ func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager, proxy bool
 	router.HandleFunc("/market/user-orders", QueryOrdersRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/market/deals", QueryDealsRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/market/delist", QueryDelistRequestHandlerFn(hub)).Methods("GET")
+	router.HandleFunc("/market/delists", QueryDelistsRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/bancorlite/infos", QueryBancorInfosRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/bancorlite/trades", QueryBancorTradesRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/bancorlite/deals", QueryBancorDealsRequestHandlerFn(hub)).Methods("GET")
