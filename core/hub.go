@@ -62,6 +62,7 @@ const (
 	UnlockByte       = byte(0x34)
 	LockedByte       = byte(0x36)
 	DonationByte     = byte(0x38)
+	DelistByte       = byte(0x3A)
 	OffsetByte       = byte(0xF0)
 	DumpByte         = byte(0xF1)
 
@@ -636,8 +637,8 @@ func (hub *Hub) analyzeMessages(MsgTypes []string, TxJSON string) {
 		hub.Log(fmt.Sprintf("Length mismatch in Unmarshal NotificationTx: %s %s", TxJSON, MsgTypes))
 		return
 	}
-	var donation Donation
 	for i, msgType := range MsgTypes {
+		var donation Donation
 		msg, ok := msgList[i].(map[string]interface{})
 		if !ok {
 			continue
@@ -664,6 +665,19 @@ func (hub *Hub) analyzeMessages(MsgTypes []string, TxJSON string) {
 		key := hub.getKeyFromBytes(DonationByte, []byte{}, 0)
 		hub.batch.Set(key, bz)
 		hub.sid++
+	}
+	for i, msgType := range MsgTypes {
+		msg, ok := msgList[i].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if msgType == "MsgCancelTradingPair" {
+			market := msg["trading_pair"].(string)
+			effTime := msg["effective_time"].(int64)
+			key := hub.getKeyFromBytes(DelistByte, []byte(market), 0)
+			hub.batch.Set(key, int64ToBigEndianBytes(effTime))
+			hub.sid++
+		}
 	}
 }
 
@@ -1494,6 +1508,11 @@ func (hub *Hub) QuerySlash(time int64, sid int64, count int) (data []json.RawMes
 
 func (hub *Hub) QueryDonation(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
 	data, _, timesid = hub.query(false, DonationByte, []byte{}, time, sid, count, nil)
+	return
+}
+
+func (hub *Hub) QueryDelist(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+	data, _, timesid = hub.query(false, DelistByte, []byte(market), time, sid, count, nil)
 	return
 }
 

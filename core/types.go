@@ -145,6 +145,7 @@ type Querier interface {
 	QueryComment(token string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QuerySlash(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 	QueryDonation(time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
+	QueryDelist(market string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
 
 	QueryOrderAboutToken(tag, token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64)
 	QueryLockedAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64)
