@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -1400,7 +1399,7 @@ func (hub *Hub) QueryDepth(market string, count int) (sell []*PricePoint, buy []
 
 func (hub *Hub) AddLevel(market, level string) error {
 	if !hub.HasMarket(market) {
-		return errors.New("No such market")
+		hub.AddMarket(market)
 	}
 	tripleMan := hub.managersMap[market]
 	err := tripleMan.sell.AddLevel(level)
