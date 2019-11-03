@@ -256,6 +256,7 @@ type Hub struct {
 	partition    int32
 	offset       int64
 	dumpFlag     bool
+	dumpFlagLock sync.Mutex
 	lastDumpTime time.Time
 
 	stopped bool
@@ -1337,17 +1338,21 @@ func (hub *Hub) PushDepthMsg(data []byte, levelsData map[string][]byte) {
 }
 
 func (hub *Hub) commit() {
+	hub.dbMutex.RLock()
 	if hub.stopped {
 		return
 	}
+	hub.dbMutex.RUnlock()
 	hub.commitForSlash()
 	hub.commitForTicker()
 	hub.commitForDepth()
 	hub.pushDepthFull()
+	hub.dumpFlagLock.Lock()
 	if hub.dumpFlag {
 		hub.commitForDump()
 		hub.dumpFlag = false
 	}
+	hub.dumpFlagLock.Unlock()
 	hub.dbMutex.Lock()
 	hub.batch.WriteSync()
 	hub.batch.Close()
@@ -1801,7 +1806,9 @@ func (hub *Hub) UpdateOffset(partition int32, offset int64) {
 	now := time.Now()
 	// dump data every <interval> offset
 	if offset%DumpInterval == 0 && now.Sub(hub.lastDumpTime) > DumpMinTime {
+		hub.dumpFlagLock.Lock()
 		hub.dumpFlag = true
+		hub.dumpFlagLock.Unlock()
 	}
 }
 
@@ -1830,12 +1837,16 @@ func getOffsetKey(partition int32) []byte {
 
 func (hub *Hub) Close() {
 	// try to dump the latest block
+	hub.dumpFlagLock.Lock()
 	hub.dumpFlag = true
+	hub.dumpFlagLock.Unlock()
 	for i := 0; i < 5; i++ {
 		time.Sleep(time.Second)
+		hub.dumpFlagLock.Lock()
 		if !hub.dumpFlag {
 			break
 		}
+		hub.dumpFlagLock.Unlock()
 	}
 	// close db
 	hub.dbMutex.Lock()
