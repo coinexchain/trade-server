@@ -37,14 +37,25 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## [Unreleased]
 
-### State Machine Breaking
+## [v0.0.20] - 2019.11.5
 
+### Features
+
+*   [#16](https://github.com/coinexchain/trade-server/issues/16) We want to know each market's delist time (if any)
+*   [#20](https://github.com/coinexchain/trade-server/issues/20) Query for all pending cancelled trading-pairs within a specified time frame 
+
+### Bug Fixes
+
+*   [#21](https://github.com/coinexchain/trade-server/issues/21) Fix data race 
+
+## [v0.0.19] - 2019.11.1
+
+### State Machine Breaking
 
 ### API Breaking Changes
 
 *   [#11](https://github.com/coinexchain/trade-server/issues/11) Fix Deal Information for bancor markets; Add bancor kline subscription with websocket
 *   [#12](https://github.com/coinexchain/trade-server/issues/12) Fix bug for bancor candlestick info; Add bancor ticker subscribe
-
 
 ### Client Breaking Changes
 
