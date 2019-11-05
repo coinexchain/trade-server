@@ -675,7 +675,7 @@ func (hub *Hub) analyzeMessages(MsgTypes []string, TxJSON string) {
 		}
 		if msgType == "MsgCancelTradingPair" {
 			market := msg["trading_pair"].(string)
-			effTime := msg["effective_height"].(float64) // Why encode to float64
+			effTime := msg["effective_time"].(float64) // Why encode to float64
 			key := hub.getKeyFromBytes(DelistByte, []byte(market), 0)
 			hub.batch.Set(key, int64ToBigEndianBytes(int64(effTime)))
 			hub.sid++
