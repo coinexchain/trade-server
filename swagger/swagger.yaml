@@ -938,6 +938,15 @@ definitions:
         format: int64
         example: 1565740800
         description: The unix timestamp when tokens can transfer again
+      from_address:
+        type: string
+        example: "coinex1y5kdxnzn2tfwayyntf2n28q8q2s80mcul852ke"
+      supervisor:
+        type: string
+        example: "coinex1dmz7e2fddhejdz5n7e3qc5szx3zn2gj3ta8rwj"
+      reward:
+        type: string
+        example: "0"
   Tickers:
     type: object
     properties:

@@ -1788,7 +1788,7 @@ func (hub *Hub) commitForDump() {
 	hub.batch.Set(offsetKey, offsetBuf)
 
 	hub.lastDumpTime = time.Now()
-	log.Infof("dump date at offset: %v", hub.offset)
+	log.Infof("dump data at offset: %v", hub.offset)
 }
 
 func getDumpKey() []byte {
