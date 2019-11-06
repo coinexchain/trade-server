@@ -5,7 +5,7 @@ DEX trade backend
 [![Coverage Status](https://coveralls.io/repos/github/coinexchain/trade-server/badge.svg?t=OJj2bl)](https://coveralls.io/github/coinexchain/trade-server)
 
 ## How to run trade-server
-[Getting Started](https://github.com/coinexchain/trade-server/blob/master/docs/trade-server-deploy.md)
+[Getting Started](https://github.com/coinexchain/trade-server/blob/redesign_consumer/docs/trade-server-deploy.md)
 
 ## Version adaptation
 
