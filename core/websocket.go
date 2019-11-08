@@ -44,15 +44,13 @@ type Conn struct {
 }
 
 func (c *Conn) WriteMsg(v []byte) error {
-	c.mtx.RLock()
-	defer c.mtx.RUnlock()
+	c.mtx.Lock()
 	if c.lastError != nil {
 		return c.lastError
 	}
 	go func() {
-		c.mtx.Lock()
-		defer c.mtx.Unlock()
 		c.lastError = c.WriteMessage(websocket.TextMessage, v)
+		c.mtx.Unlock()
 	}()
 	return nil
 }
