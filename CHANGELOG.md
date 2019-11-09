@@ -35,7 +35,11 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-## [Unreleased]
+## [v0.0.20-patch-second]  - 2019.11.9
+
+### Bug Fixes
+
+*   [#23](https://github.com/coinexchain/trade-server/issues/23) Fix data out of order
 
 ## [v0.0.20-patch]  - 2019.11.6
 
