@@ -35,7 +35,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-## [v0.0.20-patch-second]  - 2019.11.9
+## [v0.1.0] - 2019.11.9
 
 ### Bug Fixes
 
