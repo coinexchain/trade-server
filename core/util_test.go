@@ -202,18 +202,23 @@ func TestDepthManager(t *testing.T) {
 
 func TestMergePrice(t *testing.T) {
 	update := make([]*PricePoint, 2)
-	price, _ := sdk.NewDecFromStr("100.81562324")
+	price, _ := sdk.NewDecFromStr("100.815623247626481946")
 	update[0] = &PricePoint{
 		Price:  price,
 		Amount: sdk.NewInt(300),
 	}
-	price, _ = sdk.NewDecFromStr("112.812866273")
+	price, _ = sdk.NewDecFromStr("112.812866273482850328")
 	update[1] = &PricePoint{
 		Price:  price,
 		Amount: sdk.NewInt(300),
 	}
 
-	levels := []string{"1", "10", "100", "1000", "0.1", "0.01", "0.001", "0.0001", "0.00001", "0.000001", "0.0000001", "0.00000001"}
+	levels := []string{"1", "10", "100", "1000", "0.1", "0.01", "0.001", "0.0001", "0.00001", "0.000001",
+		"0.0000001", "0.00000001", "0.000000001", "0.0000000001",
+		"0.00000000001", "0.000000000001", "0.0000000000001",
+		"0.00000000000001", "0.000000000000001", "0.0000000000000001",
+		"0.00000000000000001", "0.000000000000000001"}
+	//levels := []string{"1", "10", "100", "1000", "0.1", "0.01", "0.001", "0.0001", "0.00001", "0.000001", "0.0000001", "0.00000001"}
 	correctStr := [][]string{
 		{"price : 100.000000000000000000, amount : 300", "price : 112.000000000000000000, amount : 300"}, // 1
 		{"price : 100.000000000000000000, amount : 300", "price : 110.000000000000000000, amount : 300"}, // 10
@@ -227,6 +232,16 @@ func TestMergePrice(t *testing.T) {
 		{"price : 100.815623000000000000, amount : 300", "price : 112.812866000000000000, amount : 300"}, // 0.000001
 		{"price : 100.815623200000000000, amount : 300", "price : 112.812866200000000000, amount : 300"}, // 0.0000001
 		{"price : 100.815623240000000000, amount : 300", "price : 112.812866270000000000, amount : 300"}, // 0.00000001
+		{"price : 100.815623247000000000, amount : 300", "price : 112.812866273000000000, amount : 300"}, // 0.000000001
+		{"price : 100.815623247600000000, amount : 300", "price : 112.812866273400000000, amount : 300"}, // 0.0000000001
+		{"price : 100.815623247620000000, amount : 300", "price : 112.812866273480000000, amount : 300"}, // 0.00000000001
+		{"price : 100.815623247626000000, amount : 300", "price : 112.812866273482000000, amount : 300"}, // 0.000000000001
+		{"price : 100.815623247626400000, amount : 300", "price : 112.812866273482800000, amount : 300"}, // 0.0000000000001
+		{"price : 100.815623247626480000, amount : 300", "price : 112.812866273482850000, amount : 300"}, // 0.00000000000001
+		{"price : 100.815623247626481000, amount : 300", "price : 112.812866273482850000, amount : 300"}, // 0.000000000000001
+		{"price : 100.815623247626481900, amount : 300", "price : 112.812866273482850300, amount : 300"}, // 0.0000000000000001
+		{"price : 100.815623247626481940, amount : 300", "price : 112.812866273482850320, amount : 300"}, // 0.00000000000000001
+		{"price : 100.815623247626481946, amount : 300", "price : 112.812866273482850328, amount : 300"}, // 0.000000000000000001
 	}
 
 	for i, lev := range levels {
@@ -235,11 +250,13 @@ func TestMergePrice(t *testing.T) {
 			report := fmt.Sprintf("price : %s, amount : %s", point.Price, point.Amount)
 			if len(correctStr[i]) == 2 {
 				if report != correctStr[i][0] && report != correctStr[i][1] {
-					t.Errorf("actual : %s", report)
+					t.Errorf("actual : %s, expect one : %s, expect two : %s\n", report, correctStr[i][0], correctStr[i][1])
+					return
 				}
 			} else {
 				if report != correctStr[i][0] {
-					t.Errorf("actual : %s", report)
+					t.Errorf("actual : %s, expect : %s\n", report, correctStr[i][0])
+					return
 				}
 			}
 		}
@@ -257,7 +274,17 @@ func TestMergePrice(t *testing.T) {
 		{"price : 100.815630000000000000, amount : 300", "price : 112.812870000000000000, amount : 300"}, // 0.00001
 		{"price : 100.815624000000000000, amount : 300", "price : 112.812867000000000000, amount : 300"}, // 0.000001
 		{"price : 100.815623300000000000, amount : 300", "price : 112.812866300000000000, amount : 300"}, // 0.0000001
-		{"price : 100.815623240000000000, amount : 300", "price : 112.812866280000000000, amount : 300"}, // 0.00000001
+		{"price : 100.815623250000000000, amount : 300", "price : 112.812866280000000000, amount : 300"}, // 0.00000001
+		{"price : 100.815623248000000000, amount : 300", "price : 112.812866274000000000, amount : 300"}, // 0.000000001
+		{"price : 100.815623247700000000, amount : 300", "price : 112.812866273500000000, amount : 300"}, // 0.0000000001
+		{"price : 100.815623247630000000, amount : 300", "price : 112.812866273490000000, amount : 300"}, // 0.00000000001
+		{"price : 100.815623247627000000, amount : 300", "price : 112.812866273483000000, amount : 300"}, // 0.000000000001
+		{"price : 100.815623247626500000, amount : 300", "price : 112.812866273482900000, amount : 300"}, // 0.0000000000001
+		{"price : 100.815623247626490000, amount : 300", "price : 112.812866273482860000, amount : 300"}, // 0.00000000000001
+		{"price : 100.815623247626482000, amount : 300", "price : 112.812866273482851000, amount : 300"}, // 0.000000000000001
+		{"price : 100.815623247626482000, amount : 300", "price : 112.812866273482850400, amount : 300"}, // 0.0000000000000001
+		{"price : 100.815623247626481950, amount : 300", "price : 112.812866273482850330, amount : 300"}, // 0.00000000000000001
+		{"price : 100.815623247626481946, amount : 300", "price : 112.812866273482850328, amount : 300"}, // 0.000000000000000001
 	}
 	for i, lev := range levels {
 		ret := mergePrice(update, lev, false)
@@ -265,11 +292,13 @@ func TestMergePrice(t *testing.T) {
 			report := fmt.Sprintf("price : %s, amount : %s", point.Price, point.Amount)
 			if len(correctStr[i]) == 2 {
 				if report != correctStr[i][0] && report != correctStr[i][1] {
-					t.Errorf("actual : %s", report)
+					t.Errorf("actual : %s, expect one : %s, expect two : %s\n", report, correctStr[i][0], correctStr[i][1])
+					return
 				}
 			} else {
 				if report != correctStr[i][0] {
-					t.Errorf("actual : %s", report)
+					t.Errorf("actual : %s, expect : %s\n", report, correctStr[i][0])
+					return
 				}
 			}
 		}
