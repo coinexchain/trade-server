@@ -67,6 +67,15 @@ log-format = "plain"
 dir-mode = true             # 启用目录模式
 dir = "/home/data"          # 指定dex-node 中为trade-server数据存储的目录；
 
+# monitorinterval
+
+# 设置看门狗的监控的时间间隔，单位为秒。当它取非零值的时候，会有一个goroutine定期检查是否发生了新的写KV数据库的行为
+# 如果没有，意味着Trade-Server已经卡死，这时整个Trade-Server就会Panic掉，进程退出。
+# 建议外部用initd等工具守护进程来监控Trade-Server，如果它的进程退出来，就自动启动一个新的进程
+# 不设置此参数时，默认不启动看门狗监控
+
+monitorinterval = 10       
+
 ```
 
 ### 启动
