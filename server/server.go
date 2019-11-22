@@ -32,13 +32,13 @@ var (
 	httpsToggle    bool
 )
 
-type TradeSever struct {
+type TradeServer struct {
 	httpSvr  *http.Server
 	hub      *core.Hub
 	consumer Consumer
 }
 
-func NewServer(svrConfig *toml.Tree) *TradeSever {
+func NewServer(svrConfig *toml.Tree) *TradeServer {
 	// websocket manager
 	wsManager := core.NewWebSocketManager()
 
@@ -82,14 +82,14 @@ func NewServer(svrConfig *toml.Tree) *TradeSever {
 
 	// consumer
 	consumer := NewConsumer(svrConfig, hub)
-	return &TradeSever{
+	return &TradeServer{
 		httpSvr:  httpSvr,
 		consumer: consumer,
 		hub:      hub,
 	}
 }
 
-func (ts *TradeSever) Start() {
+func (ts *TradeServer) Start() {
 	log.WithField("addr", ts.httpSvr.Addr).Info("Server start...")
 
 	// start consumer
@@ -111,7 +111,7 @@ func (ts *TradeSever) Start() {
 	}()
 }
 
-func (ts *TradeSever) Stop() {
+func (ts *TradeServer) Stop() {
 	// stop http server
 	ctx, cancel := context.WithTimeout(context.Background(), WaitTimeout*time.Second)
 	defer cancel()
