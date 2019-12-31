@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/Shopify/sarama v1.23.1
-	github.com/coinexchain/dirtail v0.0.0-20191023095636-14c319aeadf4
+	github.com/coinexchain/dirtail v0.0.0-20191231093009-753b1f23110c
 	github.com/cosmos/cosmos-sdk v0.36.0
 	github.com/emirpasic/gods v1.12.0
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
