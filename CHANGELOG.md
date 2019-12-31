@@ -35,6 +35,12 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
+## [v0.1.1] - 2019.12.31
+
+### Bug Fixed
+
+*   [#24](https://github.com/coinexchain/trade-server/issues/24) Fix token too long in bufio.Scanner
+
 ## [v0.1.0] - 2019.11.9
 
 ### Bug Fixes
