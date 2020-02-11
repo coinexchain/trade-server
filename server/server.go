@@ -8,10 +8,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/coinexchain/trade-server/core"
 	toml "github.com/pelletier/go-toml"
 	log "github.com/sirupsen/logrus"
 	dbm "github.com/tendermint/tm-db"
+
+	"github.com/coinexchain/trade-server/core"
+	"github.com/coinexchain/trade-server/rocksdb"
 )
 
 const (
@@ -44,14 +46,22 @@ func NewServer(svrConfig *toml.Tree) *TradeServer {
 
 	// hub
 	dataDir = svrConfig.GetDefault("data-dir", "data").(string)
-	db, err := newLevelDB(DbName, dataDir)
+	useRocksDB := svrConfig.GetDefault("use-rocksdb", false).(bool)
+	var db dbm.DB
+	var err error
+	if useRocksDB {
+		db, err = rocksdb.NewRocksDB(DbName, dataDir)
+	} else {
+		db, err = newLevelDB(DbName, dataDir)
+	}
 	if err != nil {
 		log.WithError(err).Fatal("open db fail")
 	}
 
 	interval := svrConfig.GetDefault("interval", int64(60)).(int64)
+	keepRecent := svrConfig.GetDefault("keepRecent", int64(-1)).(int64)
 	monitorInterval := svrConfig.GetDefault("monitorinterval", int64(0)).(int64)
-	hub := core.NewHub(db, wsManager, interval, monitorInterval)
+	hub := core.NewHub(db, wsManager, interval, monitorInterval, keepRecent)
 	restoreHub(hub)
 
 	//https toggle

@@ -44,25 +44,25 @@ const (
 	DumpInterval = 1000
 	DumpMinTime  = 10 * time.Minute
 	//These bytes are used as the first byte in key
-	CandleStickByte  = byte(0x10)
-	DealByte         = byte(0x12)
-	OrderByte        = byte(0x14)
-	BancorInfoByte   = byte(0x16)
-	BancorTradeByte  = byte(0x18)
-	IncomeByte       = byte(0x1A)
-	TxByte           = byte(0x1C)
-	CommentByte      = byte(0x1E)
-	BlockHeightByte  = byte(0x20)
-	DetailByte       = byte(0x22)
-	SlashByte        = byte(0x24)
-	LatestHeightByte = byte(0x26)
-	BancorDealByte   = byte(0x28)
-	RedelegationByte = byte(0x30)
-	UnbondingByte    = byte(0x32)
-	UnlockByte       = byte(0x34)
-	LockedByte       = byte(0x36)
-	DonationByte     = byte(0x38)
-	DelistByte       = byte(0x3A)
+	CandleStickByte  = byte(0x10) //-, ([]byte(market), []byte{0, timespan}...), 0, currBlockTime, hub.sid, lastByte=0
+	DealByte         = byte(0x12) //-, []byte(market), 0, currBlockTime, hub.sid, lastByte=0
+	OrderByte        = byte(0x14) //-, []byte(addr), 0, currBlockTime, hub.sid, lastByte=CreateOrderEndByte,FillOrderEndByte,CancelOrderEndByte
+	BancorInfoByte   = byte(0x16) //-, []byte(market), 0, currBlockTime, hub.sid, lastByte=0
+	BancorTradeByte  = byte(0x18) //-, []byte(addr), 0, currBlockTime, hub.sid, lastByte=0
+	IncomeByte       = byte(0x1A) //-, []byte(addr), 0, currBlockTime, hub.sid, lastByte=0
+	TxByte           = byte(0x1C) //-, []byte(addr), 0, currBlockTime, hub.sid, lastByte=0
+	CommentByte      = byte(0x1E) //-, []byte(token), 0, currBlockTime, hub.sid, lastByte=0
+	BlockHeightByte  = byte(0x20) //-, heightBytes
+	DetailByte       = byte(0x22) //([]byte{DetailByte}, []byte(v.Hash), currBlockTime)
+	SlashByte        = byte(0x24) //-, []byte{}, 0, currBlockTime, hub.sid, lastByte=0
+	LatestHeightByte = byte(0x26) //-
+	BancorDealByte   = byte(0x28) //-, []byte(market), 0, currBlockTime, hub.sid, lastByte=0
+	RedelegationByte = byte(0x30) //-, []byte(token), 0, completion time, hub.sid, lastByte=0
+	UnbondingByte    = byte(0x32) //-, []byte(token), 0, completion time, hub.sid, lastByte=0
+	UnlockByte       = byte(0x34) //-, []byte(addr), 0, currBlockTime, hub.sid, lastByte=0
+	LockedByte       = byte(0x36) //-, []byte(addr), 0, currBlockTime, hub.sid, lastByte=0
+	DonationByte     = byte(0x38) //-, []byte{}, 0, currBlockTime, hub.sid, lastByte=0
+	DelistByte       = byte(0x3A) //-, []byte(market), 0, currBlockTime, hub.sid, lastByte=0
 	DelistsByte      = byte(0x3B)
 	OffsetByte       = byte(0xF0)
 	DumpByte         = byte(0xF1)
@@ -71,6 +71,11 @@ const (
 	FillOrderOnlyByte   = byte(0x42)
 	CancelOrderOnlyByte = byte(0x44)
 )
+
+type Pruneable interface {
+	SetPruneTimestamp(t uint64)
+	GetPruneTimestamp() uint64
+}
 
 func limitCount(count int) int {
 	if count > MaxCount {
@@ -248,6 +253,7 @@ type Hub struct {
 	lastBlockTime time.Time
 
 	blocksInterval int64
+	keepRecent     int64
 
 	// cache for NotificationSlash
 	slashSlice []*NotificationSlash
@@ -264,7 +270,7 @@ type Hub struct {
 	currTxHashID string
 }
 
-func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval int64) (hub *Hub) {
+func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval int64, keepRecent int64) (hub *Hub) {
 	hub = &Hub{
 		db:             db,
 		batch:          db.NewBatch(),
@@ -282,6 +288,7 @@ func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval 
 		stopped:        false,
 		msgEntryList:   make([]msgEntry, 0, 1000),
 		blocksInterval: interval,
+		keepRecent:     keepRecent,
 		msgsChannel:    make(chan MsgToPush, 10000),
 	}
 
@@ -476,6 +483,13 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 		return
 	}
 
+	timestamp := uint64(v.TimeStamp.Unix())
+	if v.Height % hub.blocksInterval == 0 {
+		if pdb, ok := hub.db.(Pruneable); ok && hub.keepRecent > 0 {
+			pdb.SetPruneTimestamp(timestamp - uint64(hub.keepRecent))
+		}
+	}
+
 	latestHeight := hub.QueryLatestHeight()
 	if latestHeight >= v.Height {
 		hub.msgsChannel <- MsgToPush{topic: OptionKey, extra: true}
@@ -494,7 +508,7 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 	}
 
 	b := make([]byte, 8)
-	binary.LittleEndian.PutUint64(b[:], uint64(v.TimeStamp.Unix()))
+	binary.LittleEndian.PutUint64(b[:], timestamp)
 	heightBytes := int64ToBigEndianBytes(v.Height)
 	key := append([]byte{BlockHeightByte}, heightBytes...)
 	hub.batch.Set(key, b)
@@ -705,7 +719,9 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 	hub.currTxHashID = v.Hash
 
 	// Use the transaction's hashid as key, save its detail
+	timeBytes := int64ToBigEndianBytes(hub.currBlockTime.Unix())
 	key := append([]byte{DetailByte}, []byte(v.Hash)...)
+	key = append(key, timeBytes...)
 	hub.batch.Set(key, bz)
 	hub.sid++
 
@@ -1641,7 +1657,7 @@ func (hub *Hub) query(fetchTxDetail bool, firstByteIn byte, bz []byte, time int6
 	start := getStartKeyFromBytes(firstByte, bz)
 	end := getEndKeyFromBytes(firstByte, bz, time, sid)
 	if firstByteIn == DelistsByte {
-		end = getEndKeyFromBytes(DelistsByte, bz, time, sid)
+		end = []byte{DelistsByte} // To a different 'firstByte'
 	}
 	hub.dbMutex.RLock()
 	iter := hub.db.ReverseIterator(start, end)
@@ -1655,7 +1671,8 @@ func (hub *Hub) query(fetchTxDetail bool, firstByteIn byte, bz []byte, time int6
 		tag := iKey[idx]
 		sid := binary.BigEndian.Uint64(iKey[idx-8 : idx])
 		idx -= 8
-		time := binary.BigEndian.Uint64(iKey[idx-8 : idx])
+		timeBytes := iKey[idx-8 : idx]
+		time := binary.BigEndian.Uint64(timeBytes)
 		entry := json.RawMessage(iter.Value())
 		if filter != nil && !filter(tag, entry) {
 			continue
@@ -1663,6 +1680,7 @@ func (hub *Hub) query(fetchTxDetail bool, firstByteIn byte, bz []byte, time int6
 		if fetchTxDetail {
 			hexTxHashID := getTxHashID(iter.Value())
 			key := append([]byte{DetailByte}, hexTxHashID...)
+			key = append(key, timeBytes...)
 			entry = hub.db.Get(key)
 		}
 		//if firstByteIn
@@ -1698,7 +1716,16 @@ func (hub *Hub) QueryTxByHashID(hexHashID string) json.RawMessage {
 	hub.dbMutex.RLock()
 	defer hub.dbMutex.RUnlock()
 	key := append([]byte{DetailByte}, []byte(hexHashID)...)
-	return json.RawMessage(hub.db.Get(key))
+	iter := hub.db.Iterator(key, nil)
+	defer iter.Close()
+	if !iter.Valid() {
+		return json.RawMessage([]byte{})
+	}
+	value := iter.Value()
+	if len(value) > 1+len(hexHashID) && string(value[1:1+len(hexHashID)]) == hexHashID {
+		return json.RawMessage(value)
+	}
+	return json.RawMessage([]byte{})
 }
 
 //===================================

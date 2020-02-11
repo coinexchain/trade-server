@@ -22,6 +22,7 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.4.0
 	github.com/tebeka/strftime v0.1.3 // indirect
+	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c
 	github.com/tendermint/tendermint v0.32.2
 	github.com/tendermint/tm-db v0.1.1
 	gopkg.in/jcmturner/goidentity.v3 v3.0.0 // indirect
