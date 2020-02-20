@@ -111,6 +111,7 @@ type CancelOrderInfo struct {
 }
 
 type NewHeightInfo struct {
+	ChainID       string       `json:"chain_id"`
 	Height        int64        `json:"height"`
 	TimeStamp     time.Time    `json:"timestamp"`
 	LastBlockHash cmn.HexBytes `json:"last_block_hash"`
