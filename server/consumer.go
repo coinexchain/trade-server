@@ -22,14 +22,17 @@ type Consumer interface {
 }
 
 func NewConsumer(svrConfig *toml.Tree, hub *core.Hub) Consumer {
-	var c Consumer
-	dir := svrConfig.GetDefault("dir-mode", false).(bool)
+	var (
+		dir      bool
+		consumer Consumer
+	)
+	dir = svrConfig.GetDefault("dir-mode", false).(bool)
 	if dir {
-		c = NewConsumerWithDirTail(svrConfig, hub)
+		consumer = NewConsumerWithDirTail(svrConfig, hub)
 	} else {
-		c = NewKafkaConsumer(svrConfig, DexTopic, hub)
+		consumer = NewKafkaConsumer(svrConfig, DexTopic, hub)
 	}
-	return c
+	return consumer
 }
 
 type TradeConsumer struct {
@@ -46,30 +49,15 @@ func (tc *TradeConsumer) String() string {
 }
 
 func NewKafkaConsumer(svrConfig *toml.Tree, topic string, hub *core.Hub) *TradeConsumer {
-	addrs := svrConfig.GetDefault("kafka-addrs", "").(string)
-	if len(addrs) == 0 {
-		log.Fatal("kafka address is empty")
+	var (
+		writer   MsgWriter
+		consumer sarama.Consumer
+	)
+	if writer = initBackupWriter(svrConfig); writer == nil {
+		return nil
 	}
-
-	var filePath string
-	if backupToggle := svrConfig.GetDefault("backup-toggle", false).(bool); backupToggle {
-		filePath = svrConfig.GetDefault("backup-file", "").(string)
-		if len(filePath) == 0 {
-			log.Fatal("backup data filePath is empty")
-		}
-	}
-	// set logger
-	sarama.Logger = log.StandardLogger()
-
-	consumer, err := sarama.NewConsumer(strings.Split(addrs, ","), nil)
-	if err != nil {
-		log.WithError(err).Fatal("create consumer error")
-	}
-	var writer MsgWriter
-	if len(filePath) != 0 {
-		if writer, err = NewFileMsgWriter(filePath); err != nil {
-			log.WithError(err).Fatal("create writer error")
-		}
+	if consumer = newKafka(svrConfig); consumer == nil {
+		return nil
 	}
 	return &TradeConsumer{
 		Consumer: consumer,
@@ -79,6 +67,22 @@ func NewKafkaConsumer(svrConfig *toml.Tree, topic string, hub *core.Hub) *TradeC
 		hub:      hub,
 		writer:   writer,
 	}
+}
+
+func newKafka(svrConfig *toml.Tree) sarama.Consumer {
+	addrs := svrConfig.GetDefault("kafka-addrs", "").(string)
+	if len(addrs) == 0 {
+		log.Error("kafka address is empty")
+		return nil
+	}
+	sarama.Logger = log.StandardLogger()
+	consumer, err := sarama.NewConsumer(strings.Split(addrs, ","), nil)
+	if err != nil {
+		log.WithError(err).Error("create consumer error")
+		return nil
+	}
+	return consumer
+
 }
 
 func (tc *TradeConsumer) Consume() {
@@ -163,27 +167,42 @@ type TradeConsumerWithDirTail struct {
 }
 
 func NewConsumerWithDirTail(svrConfig *toml.Tree, hub *core.Hub) Consumer {
-	var writer MsgWriter
-	var err error
-	dir := svrConfig.GetDefault("dir", "").(string)
-	var backFilePath string
-	if backupToggle := svrConfig.GetDefault("backup-toggle", false).(bool); backupToggle {
-		backFilePath = svrConfig.GetDefault("backup-file", "").(string)
-		if len(backFilePath) == 0 {
-			log.Fatal("backup data filePath is empty")
-		}
-	}
-	if len(backFilePath) != 0 {
-		if writer, err = NewFileMsgWriter(backFilePath); err != nil {
-			log.WithError(err).Fatal("create writer error")
-		}
+	var (
+		dataDir string
+		writer  MsgWriter
+	)
+	dataDir = svrConfig.GetDefault("dir", "").(string)
+	if writer = initBackupWriter(svrConfig); writer == nil {
+		return nil
 	}
 	return &TradeConsumerWithDirTail{
-		dirName:    dir,
+		dirName:    dataDir,
 		filePrefix: FilePrefix,
 		hub:        hub,
 		writer:     writer,
 	}
+}
+
+func initBackupWriter(svrConfig *toml.Tree) MsgWriter {
+	var (
+		err          error
+		writer       MsgWriter
+		backFilePath string
+	)
+	if backupToggle := svrConfig.GetDefault("backup-toggle", false).(bool); backupToggle {
+		if backFilePath = svrConfig.GetDefault("backup-file", "").(string); len(backFilePath) == 0 {
+			log.Error("backup data filePath is empty")
+			return nil
+		}
+	}
+	if len(backFilePath) != 0 {
+		if writer, err = NewFileMsgWriter(backFilePath); err != nil {
+			log.WithError(err).Error("create writer error")
+			return nil
+		}
+	}
+	return writer
+
 }
 
 func (tc *TradeConsumerWithDirTail) String() string {

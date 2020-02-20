@@ -23,15 +23,6 @@ const (
 
 	DexTopic = "coinex-dex"
 	DbName   = "dex-trade"
-	DumpFile = "hub"
-)
-
-var (
-	dataDir        string
-	certDir        string
-	serverCertName = "server.crt"
-	serverKeyName  = "server.key"
-	httpsToggle    bool
 )
 
 type TradeServer struct {
@@ -41,57 +32,29 @@ type TradeServer struct {
 }
 
 func NewServer(svrConfig *toml.Tree) *TradeServer {
-	// websocket manager
-	wsManager := core.NewWebSocketManager()
-
-	// hub
-	dataDir = svrConfig.GetDefault("data-dir", "data").(string)
-	useRocksDB := svrConfig.GetDefault("use-rocksdb", false).(bool)
-	var db dbm.DB
-	var err error
-	if useRocksDB {
-		db, err = rocksdb.NewRocksDB(DbName, dataDir)
-	} else {
-		db, err = newLevelDB(DbName, dataDir)
+	var (
+		db        dbm.DB
+		err       error
+		hub       *core.Hub
+		httpSvr   *http.Server
+		consumer  Consumer
+		wsManager = core.NewWebSocketManager()
+	)
+	if db, err = initDB(svrConfig); err != nil {
+		log.WithError(err).Fatal("init db failed")
+		return nil
 	}
-	if err != nil {
-		log.WithError(err).Fatal("open db fail")
+	if hub, err = initHub(svrConfig, db, wsManager); err != nil {
+		log.WithError(err).Error("init hub failed")
+		return nil
 	}
-
-	interval := svrConfig.GetDefault("interval", int64(60)).(int64)
-	keepRecent := svrConfig.GetDefault("keepRecent", int64(-1)).(int64)
-	monitorInterval := svrConfig.GetDefault("monitorinterval", int64(0)).(int64)
-	hub := core.NewHub(db, wsManager, interval, monitorInterval, keepRecent)
-	restoreHub(hub)
-
-	//https toggle
-	httpsToggle = svrConfig.GetDefault("https-toggle", false).(bool)
-	if httpsToggle {
-		certDir = svrConfig.GetDefault("cert-dir", "cert").(string)
-		if _, err := os.Stat(certDir); err != nil && os.IsNotExist(err) {
-			if err = os.Mkdir(certDir, 0755); err != nil {
-				fmt.Print(err)
-				log.WithError(err).Fatal("certificate path not exist")
-			}
-		}
+	if httpSvr, err = initWebService(svrConfig, hub, wsManager); err != nil {
+		log.WithError(err).Error("init web service failed")
+		return nil
 	}
-
-	// http server
-	proxy := svrConfig.GetDefault("proxy", false).(bool)
-	lcd := svrConfig.GetDefault("lcd", "").(string)
-	router, err := registerHandler(hub, wsManager, proxy, lcd)
-	if err != nil {
-		log.WithError(err).Fatal("registerHandler fail")
+	if consumer = NewConsumer(svrConfig, hub); consumer == nil {
+		return nil
 	}
-	httpSvr := &http.Server{
-		Addr:         fmt.Sprintf(":%d", svrConfig.GetDefault("port", 8000).(int64)),
-		Handler:      router,
-		ReadTimeout:  ReadTimeout * time.Second,
-		WriteTimeout: WriteTimeout * time.Second,
-	}
-
-	// consumer
-	consumer := NewConsumer(svrConfig, hub)
 	return &TradeServer{
 		httpSvr:  httpSvr,
 		consumer: consumer,
@@ -99,26 +62,95 @@ func NewServer(svrConfig *toml.Tree) *TradeServer {
 	}
 }
 
-func (ts *TradeServer) Start() {
-	log.WithField("addr", ts.httpSvr.Addr).Info("Server start...")
+func initDB(svrConfig *toml.Tree) (dbm.DB, error) {
+	var (
+		db  dbm.DB
+		err error
+	)
+	dataDir := svrConfig.GetDefault("data-dir", "data").(string)
+	useRocksDB := svrConfig.GetDefault("use-rocksdb", false).(bool)
+	if useRocksDB {
+		db, err = rocksdb.NewRocksDB(DbName, dataDir)
+	} else {
+		db, err = newLevelDB(DbName, dataDir)
+	}
+	return db, err
+}
 
-	// start consumer
-	go ts.consumer.Consume()
+func initHub(svrConfig *toml.Tree, db dbm.DB, wsManager *core.WebsocketManager) (*core.Hub, error) {
+	interval := svrConfig.GetDefault("interval", int64(60)).(int64)
+	keepRecent := svrConfig.GetDefault("keepRecent", int64(-1)).(int64)
+	monitorInterval := svrConfig.GetDefault("monitorinterval", int64(0)).(int64)
+	hub := core.NewHub(db, wsManager, interval, monitorInterval, keepRecent)
+	if err := restoreHub(hub); err != nil {
+		return nil, err
+	}
+	return hub, nil
+}
 
-	// start http server
-	go func() {
-		if httpsToggle {
-			certPath := certDir + "/" + serverCertName
-			keyPath := certDir + "/" + serverKeyName
-			if err := ts.httpSvr.ListenAndServeTLS(certPath, keyPath); err != nil && err != http.ErrServerClosed {
-				log.WithError(err).Fatal("https server listen and serve error")
-			}
-		} else {
-			if err := ts.httpSvr.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				log.WithError(err).Fatal("http server listen and serve error")
-			}
+func initWebService(svrConfig *toml.Tree, hub *core.Hub, wsManager *core.WebsocketManager) (*http.Server, error) {
+	if err := checkHttpsOption(svrConfig); err != nil {
+		log.WithError(err).Error("check https required cert file failed")
+	}
+	httpSvr, err := initHttpService(svrConfig, hub, wsManager)
+	return httpSvr, err
+}
+
+func checkHttpsOption(svrConfig *toml.Tree) error {
+	if httpsToggle, ok := svrConfig.GetDefault("https-toggle",
+		false).(bool); ok && httpsToggle {
+		certDir := svrConfig.GetDefault("cert-dir", "cert").(string)
+		if _, err := os.Stat(certDir); err != nil {
+			return fmt.Errorf("certificate path[%s] error", certDir)
 		}
-	}()
+	}
+	return nil
+}
+
+func initHttpService(svrConfig *toml.Tree, hub *core.Hub, wsManager *core.WebsocketManager) (*http.Server, error) {
+	proxy := svrConfig.GetDefault("proxy", false).(bool)
+	lcd := svrConfig.GetDefault("lcd", "").(string)
+	router, err := registerHandler(hub, wsManager, proxy, lcd)
+	if err != nil {
+		return nil, err
+	}
+	httpSvr := &http.Server{
+		Addr:         fmt.Sprintf(":%d", svrConfig.GetDefault("port", 8000).(int64)),
+		Handler:      router,
+		ReadTimeout:  ReadTimeout * time.Second,
+		WriteTimeout: WriteTimeout * time.Second,
+	}
+	return httpSvr, nil
+}
+
+func (ts *TradeServer) Start(svrConfig *toml.Tree) {
+	log.WithField("addr", ts.httpSvr.Addr).Info("Trade-Server start...")
+	go ts.startHttpServer(svrConfig)
+	go ts.consume()
+}
+
+func (ts *TradeServer) startHttpServer(svrConfig *toml.Tree) {
+	var (
+		certDir     = svrConfig.GetDefault("cert-dir", "cert").(string)
+		httpsToggle = svrConfig.GetDefault("https-toggle", false).(bool)
+	)
+	if httpsToggle {
+		certPath := certDir + "/" + serverCertName
+		keyPath := certDir + "/" + serverKeyName
+		if err := ts.httpSvr.ListenAndServeTLS(certPath, keyPath); err != nil && err != http.ErrServerClosed {
+			log.WithError(err).Error("https server listen and serve error")
+			os.Exit(-1)
+		}
+		return
+	}
+	if err := ts.httpSvr.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.WithError(err).Error("http server listen and serve error")
+		os.Exit(-1)
+	}
+}
+
+func (ts *TradeServer) consume() {
+	ts.consumer.Consume()
 }
 
 func (ts *TradeServer) Stop() {
@@ -146,17 +178,17 @@ func newLevelDB(name string, dir string) (db dbm.DB, err error) {
 	return dbm.NewDB(name, dbm.GoLevelDBBackend, dir), err
 }
 
-func restoreHub(hub *core.Hub) {
+func restoreHub(hub *core.Hub) error {
 	data := hub.LoadDumpData()
 	if data == nil {
 		log.Info("dump data does not exist, init new hub")
-		return
+		return nil
 	}
 	hub4jo := &core.HubForJSON{}
 	if err := json.Unmarshal(data, hub4jo); err != nil {
-		log.WithError(err).Error("hub json unmarshal fail")
-		return
+		return err
 	}
 	hub.Load(hub4jo)
 	log.Info("restore hub finish")
+	return nil
 }

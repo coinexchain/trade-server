@@ -4,9 +4,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -21,6 +22,7 @@ func registerProxyHandler(lcd string, router *mux.Router) error {
 	paths, err := getRestPaths(lcd)
 	if err != nil {
 		log.WithError(err).Fatal("get rest paths failed")
+		return err
 	}
 	for _, path := range paths {
 		router.HandleFunc(path, httpProxy(lcd))

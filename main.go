@@ -11,6 +11,7 @@ import (
 	"github.com/coinexchain/trade-server/server"
 	"github.com/coinexchain/trade-server/utils"
 	toml "github.com/pelletier/go-toml"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -53,11 +54,12 @@ func main() {
 	}
 
 	svr := server.NewServer(svrConfig)
-	svr.Start()
-
-	waitForSignal()
-
-	svr.Stop()
+	if svr != nil {
+		svr.Start(svrConfig)
+		waitForSignal()
+		svr.Stop()
+	}
+	log.Info("trade-server exit")
 }
 
 func loadConfigFile(cfgFile string) (*toml.Tree, error) {
