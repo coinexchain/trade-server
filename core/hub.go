@@ -484,7 +484,7 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 	}
 
 	timestamp := uint64(v.TimeStamp.Unix())
-	if v.Height % hub.blocksInterval == 0 {
+	if v.Height%hub.blocksInterval == 0 {
 		if pdb, ok := hub.db.(Pruneable); ok && hub.keepRecent > 0 {
 			pdb.SetPruneTimestamp(timestamp - uint64(hub.keepRecent))
 		}

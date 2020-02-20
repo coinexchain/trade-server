@@ -2,14 +2,14 @@ package rocksdb
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"path/filepath"
 	"runtime"
-	"encoding/binary"
 
-	dbm "github.com/tendermint/tm-db"
-	"github.com/tecbot/gorocksdb"
 	"github.com/coinexchain/trade-server/core"
+	"github.com/tecbot/gorocksdb"
+	dbm "github.com/tendermint/tm-db"
 )
 
 // We use rocksdb's customizable compact filter to prune old records
@@ -55,16 +55,15 @@ func (f *TimestampCompactionFilter) Filter(level int, key, val []byte) (remove b
 	if _, ok := PruneableKeys[key[0]]; !ok {
 		return false, val
 	}
-	start := len(key)-1/*lastByte*/-8/*sid*/-8/*timeBytes*/
+	start := len(key) - 1 /*lastByte*/ - 8 /*sid*/ - 8 /*timeBytes*/
 	if key[0] == core.DetailByte {
-		start = len(key)-8/*timeBytes*/
+		start = len(key) - 8 /*timeBytes*/
 	}
-	t := binary.BigEndian.Uint64(key[start:start+8])
+	t := binary.BigEndian.Uint64(key[start : start+8])
 	if f.pruneTimestamp > t {
 		return true, nil
-	} else {
-		return false, val
 	}
+	return false, val
 }
 
 var _ dbm.DB = (*RocksDB)(nil)
@@ -124,6 +123,10 @@ func (db *RocksDB) SetPruneTimestamp(t uint64) {
 
 func (db *RocksDB) GetPruneTimestamp() uint64 {
 	return db.filter.pruneTimestamp
+}
+
+func (db *RocksDB) CompactRange(r gorocksdb.Range) {
+	db.db.CompactRange(r)
 }
 
 // Implements DB.
@@ -409,4 +412,3 @@ func nonNilBytes(bz []byte) []byte {
 	}
 	return bz
 }
-

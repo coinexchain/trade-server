@@ -65,10 +65,13 @@ type CreateOrderInfo struct {
 	Quantity    int64   `json:"quantity"`
 	Side        byte    `json:"side"`
 	TimeInForce int     `json:"time_in_force"`
-	FeatureFee  int64   `json:"feature_fee"`
+	FeatureFee  int64   `json:"feature_fee"` //Deprecated
 	Height      int64   `json:"height"`
-	FrozenFee   int64   `json:"frozen_fee"`
+	FrozenFee   int64   `json:"frozen_fee"` //Deprecated
 	Freeze      int64   `json:"freeze"`
+
+	FrozenFeatureFee int64 `json:"frozen_feature_fee,omitempty"`
+	FrozenCommission int64 `json:"frozen_commission,omitempty"`
 
 	TxHash string `json:"tx_hash,omitempty"`
 }
@@ -108,10 +111,14 @@ type CancelOrderInfo struct {
 	DealMoney      int64 `json:"deal_money"`
 
 	TxHash string `json:"tx_hash,omitempty"`
+
+	UsedFeatureFee   int64          `json:"used_feature_fee,omitempty"`
+	RebateCommission int64          `json:"rebate_commission,omitempty"`
+	Referee          sdk.AccAddress `json:"referee,omitempty"`
 }
 
 type NewHeightInfo struct {
-	ChainID       string       `json:"chain_id"`
+	ChainID       string       `json:"chain_id,omitempty"`
 	Height        int64        `json:"height"`
 	TimeStamp     time.Time    `json:"timestamp"`
 	LastBlockHash cmn.HexBytes `json:"last_block_hash"`
@@ -234,6 +241,10 @@ type MsgBancorInfoForKafka struct {
 	MoneyInPool        sdk.Int `json:"money_in_pool"`
 	EarliestCancelTime int64   `json:"earliest_cancel_time"`
 	BlockHeight        int64   `json:"block_height"`
+
+	StockPrecision byte   `json:"stock_precision,omitempty"`
+	MaxMoney       string `json:"max_money,omitempty"`
+	AR             int64  `json:"ar,omitempty"`
 }
 
 type MsgBancorTradeInfoForKafka struct {
@@ -247,6 +258,10 @@ type MsgBancorTradeInfoForKafka struct {
 	BlockHeight int64   `json:"block_height"`
 
 	TxHash string `json:"tx_hash,omitempty"`
+
+	UsedCommission   int64  `json:"used_commission,omitempty"`
+	RebateCommission int64  `json:"rebate_commission,omitempty"`
+	Referee          string `json:"referee,omitempty"`
 }
 
 type LockedSendMsg struct {
