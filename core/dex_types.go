@@ -112,9 +112,9 @@ type CancelOrderInfo struct {
 
 	TxHash string `json:"tx_hash,omitempty"`
 
-	UsedFeatureFee   int64          `json:"used_feature_fee,omitempty"`
-	RebateCommission int64          `json:"rebate_commission,omitempty"`
-	Referee          sdk.AccAddress `json:"referee,omitempty"`
+	UsedFeatureFee    int64          `json:"used_feature_fee,omitempty"`
+	RebateAmount      int64          `json:"rebate_amount,omitempty"`
+	RebateRefereeAddr sdk.AccAddress `json:"RebateRefereeAddr,omitempty"`
 }
 
 type NewHeightInfo struct {
@@ -259,9 +259,9 @@ type MsgBancorTradeInfoForKafka struct {
 
 	TxHash string `json:"tx_hash,omitempty"`
 
-	UsedCommission   int64  `json:"used_commission,omitempty"`
-	RebateCommission int64  `json:"rebate_commission,omitempty"`
-	Referee          string `json:"referee,omitempty"`
+	UsedCommission    int64  `json:"used_commission,omitempty"`
+	RebateAmount      int64  `json:"rebate_amount,omitempty"`
+	RebateRefereeAddr string `json:"rebate_referee_addr,omitempty"`
 }
 
 type LockedSendMsg struct {
