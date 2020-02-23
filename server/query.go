@@ -2,12 +2,12 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/coinexchain/trade-server/core"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -531,24 +531,27 @@ func QueryDelistsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 
 func postQueryResponse(w http.ResponseWriter, data interface{}) {
 	var (
-		baseData []byte
 		err      error
+		baseData []byte
 	)
-
 	switch data := data.(type) {
 	case []byte:
 		baseData = data
-
 	default:
-		baseData, err = json.Marshal(data)
-		if err != nil {
+		if baseData, err = json.Marshal(data); err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 	}
+	writeData(w, baseData)
+}
 
+func writeData(w http.ResponseWriter, data []byte) {
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(baseData)
+	if _, err := w.Write(data); err != nil {
+		log.WithError(err).Error("write response failed")
+		return
+	}
 }
 
 func postQueryKVStoreResponse(w http.ResponseWriter, data interface{}, timesid []int64) {
@@ -558,54 +561,42 @@ func postQueryKVStoreResponse(w http.ResponseWriter, data interface{}, timesid [
 		rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(output)
+	writeData(w, output)
 }
 
 func parseQueryHeightParams(str string) (height int64, err error) {
-
 	if str == "" {
 		return height, ErrNilParams(queryKeyHeight)
 	}
-
-	height, err = strconv.ParseInt(str, 10, 64)
-	if err != nil {
-		return height, err
-	} else if height < 0 {
+	if height, err = strconv.ParseInt(str, 10, 64); err != nil {
+		return
+	}
+	if height < 0 {
 		return height, ErrNegativeParams(queryKeyHeight)
 	}
-
 	return
 }
 
 func parseQueryCountParams(str string) (count int, err error) {
-
 	if str == "" {
 		return count, ErrNilParams(queryKeyCount)
 	}
-
-	count, err = strconv.Atoi(str)
-	if err != nil {
+	if count, err = strconv.Atoi(str); err != nil {
 		return count, err
-	} else if count <= 0 {
+	}
+	if count <= 0 {
 		return count, ErrInvalidParams(queryKeyCount)
 	}
-
 	return
 }
 
-func parseQueryTimespanParams(str string) (byte, error) {
-	var timespan byte
+func parseQueryTimespanParams(str string) (timespan byte, err error) {
 	if str == "" {
-		return 0, ErrNilParams(queryKeyTimespan)
+		return timespan, ErrNilParams(queryKeyTimespan)
 	}
-
-	timespan = core.GetSpanFromSpanStr(str)
-	if timespan == 0 {
+	if timespan = core.GetSpanFromSpanStr(str); timespan == 0 {
 		return 0, ErrInvalidTimespan()
 	}
-
 	return timespan, nil
 }
 
@@ -613,12 +604,10 @@ func parseQueryTagParams(str string) error {
 	if str != "" && str != core.CreateOrderStr && str != core.FillOrderStr && str != core.CancelOrderStr {
 		return ErrInvalidTag()
 	}
-
 	return nil
 }
 
 func parseQueryKVStoreParams(r *http.Request) (time int64, sid int64, count int, err error) {
-
 	timeStr := r.FormValue(queryKeyTime)
 	if timeStr == "" {
 		return time, sid, count, ErrNilParams(queryKeyTime)
@@ -656,22 +645,6 @@ func parseQueryKVStoreParams(r *http.Request) (time int64, sid int64, count int,
 	}
 
 	return
-}
-
-func ErrNilParams(params string) error {
-	return fmt.Errorf("%s can not be nil", params)
-}
-func ErrNegativeParams(params string) error {
-	return fmt.Errorf("%s cannot be negative", params)
-}
-func ErrInvalidParams(params string) error {
-	return fmt.Errorf("%s must greater than 0", params)
-}
-func ErrInvalidTimespan() error {
-	return fmt.Errorf("timespan must be 1min/1hour/1day")
-}
-func ErrInvalidTag() error {
-	return fmt.Errorf("tag must be create/fill/cancel")
 }
 
 type DataWrapped struct {

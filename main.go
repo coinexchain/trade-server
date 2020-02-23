@@ -32,34 +32,41 @@ func init() {
 }
 
 func main() {
-	_ = newFlag.Parse(os.Args[1:])
+	if !isBeginService() {
+		return
+	}
+	if svrConfig := initConfigAndLog(); svrConfig != nil {
+		startService(svrConfig)
+	}
+	log.Info("trade-server exit")
+}
+
+func isBeginService() bool {
+	if err := newFlag.Parse(os.Args[1:]); err != nil {
+		return false
+	}
 	if help {
 		newFlag.Usage()
-		return
+		return false
 	}
 	if version {
 		fmt.Println(ReleaseVersion)
-		return
+		return false
 	}
+	return true
+}
 
+func initConfigAndLog() *toml.Tree {
 	svrConfig, err := loadConfigFile(cfgFile)
 	if err != nil {
 		fmt.Printf("Load config file fail:%v\n", err)
-		os.Exit(1)
+		return nil
 	}
-
 	if err = utils.InitLog(svrConfig); err != nil {
 		fmt.Printf("Init log fail:%v\n", err)
 		os.Exit(1)
 	}
-
-	svr := server.NewServer(svrConfig)
-	if svr != nil {
-		svr.Start(svrConfig)
-		waitForSignal()
-		svr.Stop()
-	}
-	log.Info("trade-server exit")
+	return svrConfig
 }
 
 func loadConfigFile(cfgFile string) (*toml.Tree, error) {
@@ -78,6 +85,14 @@ func loadConfigFile(cfgFile string) (*toml.Tree, error) {
 	}
 
 	return tree, nil
+}
+
+func startService(svrConfig *toml.Tree) {
+	if svr := server.NewServer(svrConfig); svr != nil {
+		svr.Start(svrConfig)
+		waitForSignal()
+		svr.Stop()
+	}
 }
 
 func waitForSignal() {

@@ -34,51 +34,18 @@ func (i ImplSubscriber) GetConn() *Conn {
 	return i.Conn
 }
 
-type Conn struct {
-	*websocket.Conn
-	topicWithParams map[string]map[string]struct{} // topic --> params
-	allTopics       map[string]struct{}            // all the topics (with or without params)
-
-	lastError error
-	mtx       sync.RWMutex
-}
-
-func (c *Conn) WriteMsg(v []byte) error {
-	c.mtx.Lock()
-	if c.lastError != nil {
-		return c.lastError
-	}
-	go func() {
-		c.lastError = c.WriteMessage(websocket.TextMessage, v)
-		c.mtx.Unlock()
-	}()
-	return nil
-}
-
-func NewConn(c *websocket.Conn) *Conn {
-	conn := &Conn{
-		Conn:            c,
-		topicWithParams: make(map[string]map[string]struct{}),
-		allTopics:       make(map[string]struct{}),
-	}
-	c.SetPingHandler(func(appData string) error {
-		return conn.WriteMsg([]byte(appData))
-	})
-	return conn
-}
-
 type WebsocketManager struct {
 	sync.RWMutex
 
-	SkipPushed    bool
-	wsConn2Conn   map[*websocket.Conn]*Conn
-	topicAndConns map[string]map[*Conn]struct{}
+	SkipPushed   bool
+	wsConn2Conn  map[*websocket.Conn]*Conn
+	topics2Conns map[string]map[*Conn]struct{}
 }
 
 func NewWebSocketManager() *WebsocketManager {
 	return &WebsocketManager{
-		topicAndConns: make(map[string]map[*Conn]struct{}),
-		wsConn2Conn:   make(map[*websocket.Conn]*Conn),
+		topics2Conns: make(map[string]map[*Conn]struct{}),
+		wsConn2Conn:  make(map[*websocket.Conn]*Conn),
 	}
 }
 
@@ -95,17 +62,18 @@ func (w *WebsocketManager) AddWsConn(c *websocket.Conn) *Conn {
 	return w.wsConn2Conn[c]
 }
 
-func (w *WebsocketManager) CloseConn(c *Conn) error {
+func (w *WebsocketManager) CloseConn(c *Conn) {
 	w.Lock()
 	defer w.Unlock()
 	for topic := range c.allTopics {
-		conns, ok := w.topicAndConns[topic]
-		if ok {
+		if conns, ok := w.topics2Conns[topic]; ok {
 			delete(conns, c)
 		}
 	}
 	delete(w.wsConn2Conn, c.Conn)
-	return c.Close()
+	if err := c.Close(); err != nil {
+		log.WithError(err).Error(fmt.Sprintf("close connection failed"))
+	}
 }
 
 func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, count int, c *Conn, hub *Hub) error {
@@ -113,98 +81,85 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, count int,
 	if len(values) < 1 || len(values) > MaxArguNum+1 {
 		return fmt.Errorf("Expect range of parameters [%d, %d], actual : %d ", MinArguNum, MaxArguNum, len(values)-1)
 	}
-
 	topic := values[0]
 	params := values[1:]
 	if !checkTopicValid(topic, params) {
 		log.Errorf("The subscribed topic [%s] is illegal ", topic)
 		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
 	}
-
 	if err := PushFullInformation(subscriptionTopic, count, ImplSubscriber{Conn: c}, hub); err != nil {
 		return err
 	}
-
-	w.Lock()
-	defer w.Unlock()
-	if len(params) != 0 {
-		if len(c.topicWithParams[topic]) == 0 {
-			c.topicWithParams[topic] = make(map[string]struct{})
-		}
-		if len(params) == 1 {
-			c.topicWithParams[topic][params[0]] = struct{}{}
-		} else {
-			c.topicWithParams[topic][strings.Join(params, SeparateArgu)] = struct{}{}
-		}
-	}
-	c.allTopics[topic] = struct{}{}
-	if len(w.topicAndConns[topic]) == 0 {
-		w.topicAndConns[topic] = make(map[*Conn]struct{})
-	}
-	w.topicAndConns[topic][c] = struct{}{}
-
+	w.addConn(topic, params, c)
 	return nil
 }
 
-func (w *WebsocketManager) RemoveSubscribeConn(subscriptionTopic string, c *Conn) error {
+func (w *WebsocketManager) addConn(topic string, params []string, conn *Conn) {
+	w.addConnWithTopic(topic, conn)
+	conn.addTopicAndParams(topic, params)
+}
+
+func (w *WebsocketManager) addConnWithTopic(topic string, conn *Conn) {
 	w.Lock()
 	defer w.Unlock()
+	if len(w.topics2Conns[topic]) == 0 {
+		w.topics2Conns[topic] = make(map[*Conn]struct{})
+	}
+	w.topics2Conns[topic][conn] = struct{}{}
+}
+
+func (w *WebsocketManager) RemoveSubscribeConn(subscriptionTopic string, c *Conn) error {
 	values := strings.Split(subscriptionTopic, SeparateArgu)
 	if len(values) < 1 || len(values) > MaxArguNum+1 {
 		return fmt.Errorf("Expect range of parameters [%d, %d], actual : %d ", MinArguNum, MaxArguNum, len(values)-1)
 	}
-	topic := values[0]
-	params := values[1:]
+	var (
+		topic  = values[0]
+		params = values[1:]
+	)
 	if !checkTopicValid(topic, params) {
 		log.Errorf("The subscribed topic [%s] is illegal ", topic)
 		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
 	}
+	w.removeConn(topic, params, c)
+	return nil
+}
 
-	if conns, ok := w.topicAndConns[topic]; ok {
-		if _, ok := conns[c]; ok {
-			if len(params) != 0 {
-				if len(params) == 1 {
-					delete(c.topicWithParams[topic], params[0])
-				} else {
-					tmpVal := strings.Join(params, SeparateArgu)
-					delete(c.topicWithParams[topic], tmpVal)
-				}
-				if len(c.topicWithParams[topic]) == 0 {
-					delete(conns, c)
-				}
-			} else {
-				delete(conns, c)
+func (w *WebsocketManager) removeConn(topic string, params []string, conn *Conn) {
+	conn.removeTopicAndParams(topic, params)
+	w.removeConnWithTopic(topic, conn)
+}
+
+func (w *WebsocketManager) removeConnWithTopic(topic string, conn *Conn) {
+	w.Lock()
+	defer w.Unlock()
+	if conns, ok := w.topics2Conns[topic]; ok {
+		if _, ok := conns[conn]; ok {
+			if conn.isCleanedTopic(topic) {
+				delete(conns, conn)
 			}
 		}
 	}
-	delete(c.allTopics, topic)
-	return nil
+	if len(w.topics2Conns[topic]) == 0 {
+		delete(w.topics2Conns, topic)
+	}
 }
 
 func checkTopicValid(topic string, params []string) bool {
 	switch topic {
 	case BlockInfoKey, SlashKey:
-		if len(params) != 0 {
-			return false
-		}
-		return true
+		return len(params) == 0
 	case TickerKey: // ticker:abc/cet; ticker:B:abc/cet
 		if len(params) == 1 {
 			return true
 		}
 		if len(params) == 2 {
-			if params[0] != "B" {
-				return false
-			}
+			return params[0] == "B"
 		}
-		return true
 	case UnbondingKey, RedelegationKey, LockedKey,
 		UnlockKey, TxKey, IncomeKey, OrderKey, CommentKey,
 		BancorTradeKey, BancorKey, DealKey, BancorDealKey:
-		if len(params) != 1 {
-			return false
-		}
-		return true
+		return len(params) == 1
 	case KlineKey: // kline:abc/cet:1min; kline:B:abc/cet:1min
 		if len(params) != 2 && len(params) != 3 {
 			return false
@@ -219,13 +174,12 @@ func checkTopicValid(topic string, params []string) bool {
 		switch timeSpan {
 		case MinuteStr, HourStr, DayStr:
 			return true
-		default:
-			return false
 		}
-	case DepthKey:
+	case DepthKey: //depth:<trading-pair>:<level>
 		if len(params) == 1 {
 			return true
-		} else if len(params) == 2 {
+		}
+		if len(params) == 2 {
 			switch params[1] {
 			case "100", "10", "1", "0.1", "0.01", "0.001", "0.0001", "0.00001", "0.000001",
 				"0.0000001", "0.00000001", "0.000000001", "0.0000000001",
@@ -233,14 +187,10 @@ func checkTopicValid(topic string, params []string) bool {
 				"0.00000000000001", "0.000000000000001", "0.0000000000000001",
 				"0.00000000000000001", "0.000000000000000001", "all":
 				return true
-			default:
-				return false
 			}
 		}
-		return false
-	default:
-		return false
 	}
+	return false
 }
 
 func getCount(count int) int {
@@ -434,7 +384,7 @@ func querySlashAndPush(hub *Hub, c Subscriber, count int) error {
 func (w *WebsocketManager) GetSlashSubscribeInfo() []Subscriber {
 	w.RLock()
 	defer w.RUnlock()
-	conns := w.topicAndConns[SlashKey]
+	conns := w.topics2Conns[SlashKey]
 	res := make([]Subscriber, 0, len(conns))
 	for conn := range conns {
 		res = append(res, ImplSubscriber{Conn: conn})
@@ -445,7 +395,7 @@ func (w *WebsocketManager) GetSlashSubscribeInfo() []Subscriber {
 func (w *WebsocketManager) GetHeightSubscribeInfo() []Subscriber {
 	w.RLock()
 	defer w.RUnlock()
-	conns := w.topicAndConns[BlockInfoKey]
+	conns := w.topics2Conns[BlockInfoKey]
 	res := make([]Subscriber, 0, len(conns))
 	for conn := range conns {
 		res = append(res, ImplSubscriber{Conn: conn})
@@ -456,7 +406,7 @@ func (w *WebsocketManager) GetHeightSubscribeInfo() []Subscriber {
 func (w *WebsocketManager) GetTickerSubscribeInfo() []Subscriber {
 	w.RLock()
 	defer w.RUnlock()
-	conns := w.topicAndConns[TickerKey]
+	conns := w.topics2Conns[TickerKey]
 	res := make([]Subscriber, 0, len(conns))
 	for conn := range conns {
 		res = append(res, ImplSubscriber{
@@ -471,7 +421,7 @@ func (w *WebsocketManager) GetTickerSubscribeInfo() []Subscriber {
 func (w *WebsocketManager) GetCandleStickSubscribeInfo() map[string][]Subscriber {
 	w.RLock()
 	defer w.RUnlock()
-	conns := w.topicAndConns[KlineKey]
+	conns := w.topics2Conns[KlineKey]
 	res := make(map[string][]Subscriber)
 	for conn := range conns {
 		params := conn.topicWithParams[KlineKey]
@@ -496,7 +446,7 @@ func (w *WebsocketManager) GetCandleStickSubscribeInfo() map[string][]Subscriber
 func (w *WebsocketManager) getNoDetailSubscribe(topic string) map[string][]Subscriber {
 	w.RLock()
 	defer w.RUnlock()
-	conns := w.topicAndConns[topic]
+	conns := w.topics2Conns[topic]
 	res := make(map[string][]Subscriber)
 	for conn := range conns {
 		for param := range conn.topicWithParams[topic] {
@@ -512,7 +462,7 @@ func (w *WebsocketManager) getNoDetailSubscribe(topic string) map[string][]Subsc
 func (w *WebsocketManager) GetDepthSubscribeInfo() map[string][]Subscriber {
 	w.RLock()
 	defer w.RUnlock()
-	conns := w.topicAndConns[DepthKey]
+	conns := w.topics2Conns[DepthKey]
 	res := make(map[string][]Subscriber)
 	for conn := range conns {
 		params := conn.topicWithParams[DepthKey]
@@ -576,9 +526,7 @@ func (w *WebsocketManager) sendEncodeMsg(subscriber Subscriber, typeKey string, 
 		if err := subscriber.WriteMsg(msg); err != nil {
 			log.Errorf(err.Error())
 			s := subscriber.(ImplSubscriber)
-			if err = w.CloseConn(s.Conn); err != nil {
-				log.Error(err)
-			}
+			w.CloseConn(s.Conn)
 		}
 	}
 }
