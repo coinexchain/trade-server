@@ -389,27 +389,52 @@ func (hub *Hub) Log(s string) {
 var _ Consumer = &Hub{}
 
 func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
-
-	// fmt.Printf("msgType : %s, values : %s\n", msgType, string(bz))
-	if msgType == "height_info" {
-		hub.prehandleNewHeightInfo(bz)
-	}
+	hub.preHandleNewHeightInfo(msgType, bz)
 	if hub.skipHeight {
 		return
 	}
+	hub.recordMsg(msgType, bz)
+	if !hub.isTimeToHandleMsg(msgType) {
+		return
+	}
+	hub.handleMsg()
+}
 
-	hub.msgEntryList = append(hub.msgEntryList, msgEntry{msgType: msgType, bz: bz})
-	// if msgType == "fill_order_info" {
-	// 	fmt.Printf("trade-server have received fillOrderInfo, time : %d\n", time.Now().Second())
-	// }
-	// if msgType == "height_info" {
-	// 	fmt.Printf("trade-server received newBlockInfo, time : %d\n", time.Now().Second())
-	// }
-
-	if msgType != "commit" {
+func (hub *Hub) preHandleNewHeightInfo(msgType string, bz []byte) {
+	if msgType != "height_info" {
+		return
+	}
+	var v NewHeightInfo
+	err := json.Unmarshal(bz, &v)
+	if err != nil {
+		hub.Log("Error in Unmarshal NewHeightInfo")
 		return
 	}
 
+	if hub.currBlockHeight >= v.Height {
+		hub.skipHeight = true
+		hub.Log(fmt.Sprintf("Skipping Height %d<%d\n", hub.currBlockHeight, v.Height))
+	} else if hub.currBlockHeight+1 == v.Height {
+		hub.currBlockHeight = v.Height
+		hub.skipHeight = false
+	} else {
+		hub.skipHeight = true
+		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", hub.currBlockHeight, v.Height))
+		panic("here")
+	}
+
+	hub.msgEntryList = hub.msgEntryList[:0]
+}
+
+func (hub *Hub) recordMsg(msgType string, bz []byte) {
+	hub.msgEntryList = append(hub.msgEntryList, msgEntry{msgType: msgType, bz: bz})
+}
+
+func (hub *Hub) isTimeToHandleMsg(msgType string) bool {
+	return msgType == "commit"
+}
+
+func (hub *Hub) handleMsg() {
 	for _, entry := range hub.msgEntryList {
 		switch entry.msgType {
 		case "height_info":
@@ -448,30 +473,6 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 			hub.Log(fmt.Sprintf("Unknown Message Type:%s", entry.msgType))
 		}
 	}
-
-	hub.msgEntryList = hub.msgEntryList[:0]
-}
-
-func (hub *Hub) prehandleNewHeightInfo(bz []byte) {
-	var v NewHeightInfo
-	err := json.Unmarshal(bz, &v)
-	if err != nil {
-		hub.Log("Error in Unmarshal NewHeightInfo")
-		return
-	}
-
-	if hub.currBlockHeight >= v.Height {
-		hub.skipHeight = true
-		hub.Log(fmt.Sprintf("Skipping Height %d<%d\n", hub.currBlockHeight, v.Height))
-	} else if hub.currBlockHeight+1 == v.Height {
-		hub.currBlockHeight = v.Height
-		hub.skipHeight = false
-	} else {
-		hub.skipHeight = true
-		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", hub.currBlockHeight, v.Height))
-		panic("here")
-	}
-
 	hub.msgEntryList = hub.msgEntryList[:0]
 }
 
@@ -484,26 +485,15 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 	}
 
 	timestamp := uint64(v.TimeStamp.Unix())
-	if v.Height%hub.blocksInterval == 0 {
-		if pdb, ok := hub.db.(Pruneable); ok && hub.keepRecent > 0 {
-			pdb.SetPruneTimestamp(timestamp - uint64(hub.keepRecent))
-		}
-	}
-
+	hub.pruneDB(v.Height, timestamp)
 	latestHeight := hub.QueryLatestHeight()
 	if latestHeight >= v.Height {
 		hub.msgsChannel <- MsgToPush{topic: OptionKey, extra: true}
-		//hub.subMan.SetSkipOption(true)
 		hub.Log(fmt.Sprintf("Skipping Height websocket %d<%d\n", latestHeight, v.Height))
-	} else if latestHeight+1 == v.Height {
+	} else if latestHeight+1 == v.Height || latestHeight < 0 {
 		hub.msgsChannel <- MsgToPush{topic: OptionKey, extra: false}
-		//hub.subMan.SetSkipOption(false)
-	} else if latestHeight < 0 {
-		hub.msgsChannel <- MsgToPush{topic: OptionKey, extra: false}
-		//hub.subMan.SetSkipOption(false)
 	} else {
 		hub.msgsChannel <- MsgToPush{topic: OptionKey, extra: true}
-		//hub.subMan.SetSkipOption(true)
 		hub.Log(fmt.Sprintf("Invalid Height! websocket %d+1!=%d\n", latestHeight, v.Height))
 	}
 
@@ -517,6 +507,14 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 	hub.lastBlockTime = hub.currBlockTime
 	hub.currBlockTime = v.TimeStamp
 	hub.beginForCandleSticks()
+}
+
+func (hub *Hub) pruneDB(height int64, timestamp uint64) {
+	if height%hub.blocksInterval == 0 {
+		if pdb, ok := hub.db.(Pruneable); ok && hub.keepRecent > 0 {
+			pdb.SetPruneTimestamp(timestamp - uint64(hub.keepRecent))
+		}
+	}
 }
 
 func (hub *Hub) PushHeightInfoMsg(bz []byte) {

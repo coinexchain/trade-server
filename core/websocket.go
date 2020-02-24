@@ -38,14 +38,14 @@ type WebsocketManager struct {
 	mtx sync.RWMutex
 
 	SkipPushed   bool
-	wsConn2Conn  map[*websocket.Conn]*Conn
+	wsConn2Conn  map[WsInterface]*Conn
 	topics2Conns map[string]map[*Conn]struct{}
 }
 
 func NewWebSocketManager() *WebsocketManager {
 	return &WebsocketManager{
 		topics2Conns: make(map[string]map[*Conn]struct{}),
-		wsConn2Conn:  make(map[*websocket.Conn]*Conn),
+		wsConn2Conn:  make(map[WsInterface]*Conn),
 	}
 }
 
@@ -76,26 +76,15 @@ func (w *WebsocketManager) CloseConn(c *Conn) {
 	}
 }
 
-func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, count int, c *Conn, hub *Hub) error {
-	values := strings.Split(subscriptionTopic, SeparateArgu)
-	if len(values) < 1 || len(values) > MaxArguNum+1 {
-		return fmt.Errorf("Expect range of parameters [%d, %d], actual : %d ", MinArguNum, MaxArguNum, len(values)-1)
-	}
-	topic := values[0]
-	params := values[1:]
-	if !checkTopicValid(topic, params) {
-		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
-	}
-	if err := PushFullInformation(subscriptionTopic, count, ImplSubscriber{Conn: c}, hub); err != nil {
-		return err
-	}
-	w.addConn(topic, params, c)
+func (w *WebsocketManager) AddSubscribeConn(c *Conn, topic string, params []string) error {
+	w.addConnWithTopic(topic, c)
+	c.addTopicAndParams(topic, params)
 	return nil
 }
 
-func (w *WebsocketManager) addConn(topic string, params []string, conn *Conn) {
-	w.addConnWithTopic(topic, conn)
-	conn.addTopicAndParams(topic, params)
+func (w *WebsocketManager) PushFullInfo(hub *Hub, c *Conn, topic string, params []string, count int) error {
+	err := PushFullInformation(topic, params, count, ImplSubscriber{Conn: c}, hub)
+	return err
 }
 
 func (w *WebsocketManager) addConnWithTopic(topic string, conn *Conn) {
@@ -107,26 +96,10 @@ func (w *WebsocketManager) addConnWithTopic(topic string, conn *Conn) {
 	w.topics2Conns[topic][conn] = struct{}{}
 }
 
-func (w *WebsocketManager) RemoveSubscribeConn(subscriptionTopic string, c *Conn) error {
-	values := strings.Split(subscriptionTopic, SeparateArgu)
-	if len(values) < 1 || len(values) > MaxArguNum+1 {
-		return fmt.Errorf("Expect range of parameters [%d, %d], actual : %d ", MinArguNum, MaxArguNum, len(values)-1)
-	}
-	var (
-		topic  = values[0]
-		params = values[1:]
-	)
-	if !checkTopicValid(topic, params) {
-		log.Errorf("The subscribed topic [%s] is illegal ", topic)
-		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
-	}
-	w.removeConn(topic, params, c)
+func (w *WebsocketManager) RemoveSubscribeConn(c *Conn, topic string, params []string) error {
+	c.removeTopicAndParams(topic, params)
+	w.removeConnWithTopic(topic, c)
 	return nil
-}
-
-func (w *WebsocketManager) removeConn(topic string, params []string, conn *Conn) {
-	conn.removeTopicAndParams(topic, params)
-	w.removeConnWithTopic(topic, conn)
 }
 
 func (w *WebsocketManager) removeConnWithTopic(topic string, conn *Conn) {
@@ -142,62 +115,6 @@ func (w *WebsocketManager) removeConnWithTopic(topic string, conn *Conn) {
 	if len(w.topics2Conns[topic]) == 0 {
 		delete(w.topics2Conns, topic)
 	}
-}
-
-func checkTopicValid(topic string, params []string) bool {
-	switch topic {
-	case BlockInfoKey, SlashKey:
-		return len(params) == 0
-	case TickerKey: // ticker:abc/cet; ticker:B:abc/cet
-		if len(params) == 1 {
-			return true
-		}
-		if len(params) == 2 {
-			return params[0] == "B"
-		}
-	case UnbondingKey, RedelegationKey, LockedKey,
-		UnlockKey, TxKey, IncomeKey, OrderKey, CommentKey,
-		BancorTradeKey, BancorKey, DealKey, BancorDealKey:
-		return len(params) == 1
-	case KlineKey: // kline:abc/cet:1min; kline:B:abc/cet:1min
-		if len(params) != 2 && len(params) != 3 {
-			return false
-		}
-		timeSpan := params[1]
-		if len(params) == 3 {
-			if params[0] != "B" {
-				return false
-			}
-			timeSpan = params[2]
-		}
-		switch timeSpan {
-		case MinuteStr, HourStr, DayStr:
-			return true
-		}
-	case DepthKey: //depth:<trading-pair>:<level>
-		if len(params) == 1 {
-			return true
-		}
-		if len(params) == 2 {
-			switch params[1] {
-			case "100", "10", "1", "0.1", "0.01", "0.001", "0.0001", "0.00001", "0.000001",
-				"0.0000001", "0.00000001", "0.000000001", "0.0000000001",
-				"0.00000000001", "0.000000000001", "0.0000000000001",
-				"0.00000000000001", "0.000000000000001", "0.0000000000000001",
-				"0.00000000000000001", "0.000000000000000001", "all":
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func getCount(count int) int {
-	count = limitCount(count)
-	if count == 0 {
-		count = 10
-	}
-	return count
 }
 
 func groupOfDataPacket(topic string, data []json.RawMessage) []byte {
@@ -216,12 +133,12 @@ func groupOfDataPacket(topic string, data []json.RawMessage) []byte {
 	return bz
 }
 
-func PushFullInformation(subscriptionTopic string, count int, c Subscriber, hub *Hub) error {
-	values := strings.Split(subscriptionTopic, SeparateArgu)
-	topic, params := values[0], values[1:]
+func PushFullInformation(topic string, params []string, count int, c Subscriber, hub *Hub) error {
+	var (
+		err        error
+		depthLevel = "all"
+	)
 	count = getCount(count)
-
-	var err error
 	type queryFunc func(string, int64, int64, int) ([]json.RawMessage, []int64)
 	queryAndPushFunc := func(typeKey string, param string, qf queryFunc) error {
 		data, _ := qf(param, hub.currBlockTime.Unix(), hub.sid, count)
@@ -232,11 +149,9 @@ func PushFullInformation(subscriptionTopic string, count int, c Subscriber, hub 
 		}
 		return nil
 	}
-	depthLevel := "all"
 	if len(params) == 2 && topic == DepthKey {
 		depthLevel = params[1]
 	}
-
 	switch topic {
 	case SlashKey:
 		err = querySlashAndPush(hub, c, count)
@@ -330,6 +245,7 @@ func queryDepthAndPush(hub *Hub, c Subscriber, market string, level string, coun
 	return hub.AddLevel(market, level)
 }
 
+//TODO. will modify send msg method
 func sendCommonDepthData(c Subscriber, market string, buy, sell []*PricePoint) error {
 	if c == nil {
 		return nil

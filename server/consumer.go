@@ -87,7 +87,6 @@ func newKafka(svrConfig *toml.Tree) sarama.Consumer {
 
 func (tc *TradeConsumer) Consume() {
 	defer close(tc.stopChan)
-
 	partitionList, err := tc.Partitions(tc.topic)
 	if err != nil {
 		panic(err)

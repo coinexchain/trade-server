@@ -42,19 +42,33 @@ func (op *OpCommand) HandleCommand(hub *core.Hub, wsManager *core.WebsocketManag
 
 func (op *OpCommand) handleSubscribe(hub *core.Hub, wsManager *core.WebsocketManager, wsConn *core.Conn) (err error) {
 	for _, subTopic := range op.Args {
-		if err = wsManager.AddSubscribeConn(subTopic, op.Depth, wsConn, hub); err != nil {
-			log.WithError(err).Error(fmt.Sprintf("Subscribe topic (%s) failed ", subTopic))
-			return
+		topic, params, err := core.GetTopicAndParams(subTopic)
+		if err != nil {
+			log.WithError(err).Error(fmt.Sprintf("Parse subscribe topic (%s) failed ", subTopic))
+			return err
+		}
+		if err = wsManager.PushFullInfo(hub, wsConn, topic, params, op.Depth); err != nil {
+			log.WithError(err).Error(fmt.Sprintf("Push full info failed; topic (%s)", subTopic))
+			return err
+		}
+		if err = wsManager.AddSubscribeConn(wsConn, topic, params); err != nil {
+			log.WithError(err).Error(fmt.Sprintf("Add subscribe conn to wsManager failed; topic (%s)  ", subTopic))
+			return err
 		}
 	}
 	return nil
 }
 
-func (op *OpCommand) handleUnSubscribe(wsManager *core.WebsocketManager, wsConn *core.Conn) (err error) {
+func (op *OpCommand) handleUnSubscribe(wsManager *core.WebsocketManager, wsConn *core.Conn) error {
 	for _, subTopic := range op.Args {
-		if err = wsManager.RemoveSubscribeConn(subTopic, wsConn); err != nil {
+		topic, params, err := core.GetTopicAndParams(subTopic)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if err = wsManager.RemoveSubscribeConn(wsConn, topic, params); err != nil {
 			log.WithError(err).Error(fmt.Sprintf("Unsubscribe topic (%s) failed ", subTopic))
-			return
+			return err
 		}
 	}
 	return nil

@@ -114,7 +114,7 @@ func assertDepth(t *testing.T) {
 	require.False(t, checkTopicValid(DepthKey, []string{"abc/cet", "invalid-level"}))
 }
 
-func TestWebsocketManager_addConnAndremoveConn(t *testing.T) {
+func TestWebsocketManager_AddSubscribeConnAndRemoveSubscribeConn(t *testing.T) {
 	wg := sync.WaitGroup{}
 	for i := 0; i < 10; i++ {
 		var (
@@ -123,43 +123,43 @@ func TestWebsocketManager_addConnAndremoveConn(t *testing.T) {
 			c2        = NewConn(&websocket.Conn{})
 		)
 		wg.Add(2)
-		//go assertAddConn(t, &wg, wsManager, c1, c2)
-		//go assertRemoveConn(t, &wg, wsManager, c1, c2)
-		assertAddConn(t, &wg, wsManager, c1, c2)
-		assertRemoveConn(t, &wg, wsManager, c1, c2)
+		//go assertAddSubscribeConn(t, &wg, wsManager, c1, c2)
+		//go assertRemoveSubscribeConn(t, &wg, wsManager, c1, c2)
+		assertAddSubscribeConn(t, &wg, wsManager, c1, c2)
+		assertRemoveSubscribeConn(t, &wg, wsManager, c1, c2)
 	}
 	wg.Wait()
 }
 
-func assertAddConn(t *testing.T, wg *sync.WaitGroup, wsManager *WebsocketManager, c1, c2 *Conn) {
+func assertAddSubscribeConn(t *testing.T, wg *sync.WaitGroup, wsManager *WebsocketManager, c1, c2 *Conn) {
 	defer wg.Done()
 	// zero param: blockinfo
-	wsManager.addConn(SlashKey, nil, c1)
-	wsManager.addConn(BlockInfoKey, nil, c1)
+	wsManager.AddSubscribeConn(c1, SlashKey, nil)
+	wsManager.AddSubscribeConn(c1, BlockInfoKey, nil)
 	require.EqualValues(t, 2, len(wsManager.topics2Conns))
 	require.EqualValues(t, 2, len(c1.allTopics))
 	require.EqualValues(t, 0, len(c1.topicWithParams))
 
 	// ticker:abc/cet; ticker:B:abc/cet
-	wsManager.addConn(TickerKey, []string{"abc/cet"}, c2)
-	wsManager.addConn(TickerKey, []string{"B", "abc/cet"}, c2)
+	wsManager.AddSubscribeConn(c2, TickerKey, []string{"abc/cet"})
+	wsManager.AddSubscribeConn(c2, TickerKey, []string{"B", "abc/cet"})
 	require.EqualValues(t, 3, len(wsManager.topics2Conns))
 	require.EqualValues(t, 1, len(c2.allTopics))
 	require.EqualValues(t, 2, len(c2.topicWithParams[TickerKey]))
 }
 
-func assertRemoveConn(t *testing.T, wg *sync.WaitGroup, wsManager *WebsocketManager, c1, c2 *Conn) {
+func assertRemoveSubscribeConn(t *testing.T, wg *sync.WaitGroup, wsManager *WebsocketManager, c1, c2 *Conn) {
 	defer wg.Done()
 	// zero param: blockinfo
-	wsManager.removeConn(SlashKey, nil, c1)
+	wsManager.RemoveSubscribeConn(c1, SlashKey, nil)
 	require.EqualValues(t, 2, len(wsManager.topics2Conns))
-	wsManager.removeConn(BlockInfoKey, nil, c1)
+	wsManager.RemoveSubscribeConn(c1, BlockInfoKey, nil)
 	require.EqualValues(t, 0, len(c1.allTopics))
 	require.EqualValues(t, 0, len(c1.topicWithParams))
 	require.EqualValues(t, 1, len(wsManager.topics2Conns))
 
 	// ticker:abc/cet; ticker:B:abc/cet
-	wsManager.removeConn(TickerKey, []string{"abc/cet"}, c2)
+	wsManager.RemoveSubscribeConn(c2, TickerKey, []string{"abc/cet"})
 	require.EqualValues(t, 1, len(c2.allTopics))
 	require.EqualValues(t, 1, len(wsManager.topics2Conns))
 	require.EqualValues(t, 1, len(c2.topicWithParams))
@@ -167,7 +167,7 @@ func assertRemoveConn(t *testing.T, wg *sync.WaitGroup, wsManager *WebsocketMana
 	expectVal["B:abc/cet"] = struct{}{}
 	require.EqualValues(t, expectVal, c2.topicWithParams[TickerKey])
 
-	wsManager.removeConn(TickerKey, []string{"B", "abc/cet"}, c2)
+	wsManager.RemoveSubscribeConn(c2, TickerKey, []string{"B", "abc/cet"})
 	require.EqualValues(t, 0, len(c2.allTopics))
 	require.EqualValues(t, 0, len(wsManager.topics2Conns))
 	require.EqualValues(t, 0, len(c2.topicWithParams))
