@@ -1324,12 +1324,8 @@ func (hub *Hub) commitForDepth() {
 			}
 		}
 
-		data := encodeDepthLevel(market, depthDeltaBuy, depthDeltaSell)
 		levelsData := encodeDepthLevels(market, mergeDeltaBuy, mergeDeltaSell)
-		if levelsData == nil {
-			levelsData = make(map[string][]byte)
-		}
-		levelsData["all"] = data
+		levelsData["all"] = encodeDepthLevel(market, depthDeltaBuy, depthDeltaSell)
 		hub.msgsChannel <- MsgToPush{topic: DepthKey, bz: []byte(market), extra: levelsData}
 	}
 }

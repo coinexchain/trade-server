@@ -12,7 +12,6 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	log "github.com/sirupsen/logrus"
 	cmn "github.com/tendermint/tendermint/libs/common"
 )
 
@@ -290,22 +289,21 @@ type DepthDetails struct {
 	Asks        []*PricePoint `json:"asks"`
 }
 
-func encodeDepthLevels(market string, buyDepths map[string]map[string]*PricePoint, sellDepths map[string]map[string]*PricePoint) map[string][]byte {
-	if len(buyDepths) == 0 && len(sellDepths) == 0 {
-		return nil
-	}
-	rets := make(map[string][]byte)
+type LevelsPricePoint map[string]map[string]*PricePoint // [level][priceBigEndian][*PricePoint]
 
+func encodeDepthLevels(market string, buyDepths, sellDepths LevelsPricePoint) map[string][]byte {
+	levelsData := make(map[string][]byte)
+	if len(buyDepths) == 0 && len(sellDepths) == 0 {
+		return levelsData
+	}
 	for level, depth := range buyDepths {
-		sell, ok := sellDepths[level]
-		if !ok {
-			rets[level] = encodeDepthLevel(market, depth, nil)
+		if sell, ok := sellDepths[level]; ok {
+			levelsData[level] = encodeDepthLevel(market, depth, sell)
 		} else {
-			rets[level] = encodeDepthLevel(market, depth, sell)
+			levelsData[level] = encodeDepthLevel(market, depth, nil)
 		}
 	}
-
-	return rets
+	return levelsData
 }
 
 func encodeDepthLevel(market string, buyDepth map[string]*PricePoint, sellDepth map[string]*PricePoint) []byte {
@@ -327,16 +325,19 @@ func encodeDepthLevel(market string, buyDepth map[string]*PricePoint, sellDepth 
 			return sellValues[i].Price.LT(sellValues[j].Price)
 		})
 	}
-
-	detail := DepthDetails{
-		TradingPair: market,
-		Bids:        buyValues,
-		Asks:        sellValues,
-	}
-
-	bz, err := json.Marshal(detail)
+	bz, err := encodeDepthData(market, buyValues, sellValues)
 	if err != nil {
-		log.Error(err)
+		return nil
 	}
 	return bz
+}
+
+func encodeDepthData(market string, buy, sell []*PricePoint) ([]byte, error) {
+	depRes := DepthDetails{
+		TradingPair: market,
+		Bids:        buy,
+		Asks:        sell,
+	}
+	bz, err := json.Marshal(depRes)
+	return bz, err
 }

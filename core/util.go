@@ -375,7 +375,7 @@ func (dm *DepthManager) DeltaChange(price sdk.Dec, amount sdk.Int) {
 func (dm *DepthManager) EndBlock() (map[string]*PricePoint, map[string]map[string]*PricePoint) {
 	oldUpdated, oldLevelDepth := dm.Updated, dm.LevelDepth
 	dm.Updated = make(map[string]*PricePoint)
-	dm.LevelDepth = make(map[string]map[string]*PricePoint, len(dm.Levels))
+	dm.LevelDepth = make(LevelsPricePoint, len(dm.Levels))
 	for _, lev := range dm.Levels {
 		dm.LevelDepth[lev] = make(map[string]*PricePoint)
 	}

@@ -89,14 +89,14 @@ func initHub(svrConfig *toml.Tree, db dbm.DB, wsManager *core.WebsocketManager) 
 }
 
 func initWebService(svrConfig *toml.Tree, hub *core.Hub, wsManager *core.WebsocketManager) (*http.Server, error) {
-	if err := checkHttpsOption(svrConfig); err != nil {
+	if err := checkHTTPSOption(svrConfig); err != nil {
 		log.WithError(err).Error("check https required cert file failed")
 	}
-	httpSvr, err := initHttpService(svrConfig, hub, wsManager)
+	httpSvr, err := initHTTPService(svrConfig, hub, wsManager)
 	return httpSvr, err
 }
 
-func checkHttpsOption(svrConfig *toml.Tree) error {
+func checkHTTPSOption(svrConfig *toml.Tree) error {
 	if httpsToggle, ok := svrConfig.GetDefault("https-toggle",
 		false).(bool); ok && httpsToggle {
 		certDir := svrConfig.GetDefault("cert-dir", "cert").(string)
@@ -107,7 +107,7 @@ func checkHttpsOption(svrConfig *toml.Tree) error {
 	return nil
 }
 
-func initHttpService(svrConfig *toml.Tree, hub *core.Hub, wsManager *core.WebsocketManager) (*http.Server, error) {
+func initHTTPService(svrConfig *toml.Tree, hub *core.Hub, wsManager *core.WebsocketManager) (*http.Server, error) {
 	proxy := svrConfig.GetDefault("proxy", false).(bool)
 	lcd := svrConfig.GetDefault("lcd", "").(string)
 	router, err := registerHandler(hub, wsManager, proxy, lcd)
@@ -125,11 +125,11 @@ func initHttpService(svrConfig *toml.Tree, hub *core.Hub, wsManager *core.Websoc
 
 func (ts *TradeServer) Start(svrConfig *toml.Tree) {
 	log.WithField("addr", ts.httpSvr.Addr).Info("Trade-Server start...")
-	go ts.startHttpServer(svrConfig)
+	go ts.startHTTPServer(svrConfig)
 	go ts.consume()
 }
 
-func (ts *TradeServer) startHttpServer(svrConfig *toml.Tree) {
+func (ts *TradeServer) startHTTPServer(svrConfig *toml.Tree) {
 	var (
 		certDir     = svrConfig.GetDefault("cert-dir", "cert").(string)
 		httpsToggle = svrConfig.GetDefault("https-toggle", false).(bool)

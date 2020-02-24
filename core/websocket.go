@@ -35,7 +35,7 @@ func (i ImplSubscriber) GetConn() *Conn {
 }
 
 type WebsocketManager struct {
-	sync.RWMutex
+	mtx sync.RWMutex
 
 	SkipPushed   bool
 	wsConn2Conn  map[*websocket.Conn]*Conn
@@ -54,8 +54,8 @@ func (w *WebsocketManager) SetSkipOption(isSkip bool) {
 }
 
 func (w *WebsocketManager) AddWsConn(c *websocket.Conn) *Conn {
-	w.Lock()
-	defer w.Unlock()
+	w.mtx.Lock()
+	defer w.mtx.Unlock()
 	if _, ok := w.wsConn2Conn[c]; !ok {
 		w.wsConn2Conn[c] = NewConn(c)
 	}
@@ -63,8 +63,8 @@ func (w *WebsocketManager) AddWsConn(c *websocket.Conn) *Conn {
 }
 
 func (w *WebsocketManager) CloseConn(c *Conn) {
-	w.Lock()
-	defer w.Unlock()
+	w.mtx.Lock()
+	defer w.mtx.Unlock()
 	for topic := range c.allTopics {
 		if conns, ok := w.topics2Conns[topic]; ok {
 			delete(conns, c)
@@ -84,7 +84,6 @@ func (w *WebsocketManager) AddSubscribeConn(subscriptionTopic string, count int,
 	topic := values[0]
 	params := values[1:]
 	if !checkTopicValid(topic, params) {
-		log.Errorf("The subscribed topic [%s] is illegal ", topic)
 		return fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
 	}
 	if err := PushFullInformation(subscriptionTopic, count, ImplSubscriber{Conn: c}, hub); err != nil {
@@ -100,8 +99,8 @@ func (w *WebsocketManager) addConn(topic string, params []string, conn *Conn) {
 }
 
 func (w *WebsocketManager) addConnWithTopic(topic string, conn *Conn) {
-	w.Lock()
-	defer w.Unlock()
+	w.mtx.Lock()
+	defer w.mtx.Unlock()
 	if len(w.topics2Conns[topic]) == 0 {
 		w.topics2Conns[topic] = make(map[*Conn]struct{})
 	}
@@ -131,8 +130,8 @@ func (w *WebsocketManager) removeConn(topic string, params []string, conn *Conn)
 }
 
 func (w *WebsocketManager) removeConnWithTopic(topic string, conn *Conn) {
-	w.Lock()
-	defer w.Unlock()
+	w.mtx.Lock()
+	defer w.mtx.Unlock()
 	if conns, ok := w.topics2Conns[topic]; ok {
 		if _, ok := conns[conn]; ok {
 			if conn.isCleanedTopic(topic) {
@@ -308,53 +307,51 @@ func queryOrderAndPush(hub *Hub, c Subscriber, account string, count int) error 
 		}
 	}
 	bz := groupOfDataPacket(CreateOrderKey, createData)
-	err := c.WriteMsg(bz)
-	if err != nil {
+	if err := c.WriteMsg(bz); err != nil {
 		return err
 	}
 	bz = groupOfDataPacket(FillOrderKey, fillData)
-	err = c.WriteMsg(bz)
-	if err != nil {
+	if err := c.WriteMsg(bz); err != nil {
 		return err
 	}
 	bz = groupOfDataPacket(CancelOrderKey, cancelData)
-	err = c.WriteMsg(bz)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	err := c.WriteMsg(bz)
+	return err
 }
 
 func queryDepthAndPush(hub *Hub, c Subscriber, market string, level string, count int) error {
-	var msg []byte
 	sell, buy := hub.QueryDepth(market, count)
 	if level == "all" {
-		depRes := DepthDetails{
-			TradingPair: market,
-			Bids:        buy,
-			Asks:        sell,
-		}
-		bz, err := json.Marshal(depRes)
-		if err != nil {
-			return err
-		}
-		msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(bz)))
-		if c == nil {
-			return nil
-		}
-		return c.WriteMsg(msg)
+		return sendCommonDepthData(c, market, buy, sell)
 	}
+	if err := sendLevelDepthData(c, level, market, buy, sell); err != nil {
+		return err
+	}
+	return hub.AddLevel(market, level)
+}
 
+func sendCommonDepthData(c Subscriber, market string, buy, sell []*PricePoint) error {
+	if c == nil {
+		return nil
+	}
+	var (
+		bz  []byte
+		err error
+	)
+	if bz, err = encodeDepthData(market, buy, sell); err != nil {
+		return err
+	}
+	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(bz)))
+	return c.WriteMsg(msg)
+}
+
+func sendLevelDepthData(c Subscriber, level string, market string, buy, sell []*PricePoint) error {
 	sellLevel := mergePrice(sell, level, false)
 	buyLevel := mergePrice(buy, level, true)
 	data := encodeDepthLevel(market, buyLevel, sellLevel)
-	msg = []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(data)))
-	if err := c.WriteMsg(msg); err != nil {
-		return err
-	}
-
-	return hub.AddLevel(market, level)
+	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(data)))
+	err := c.WriteMsg(msg)
+	return err
 }
 
 func queryKlineAndpush(hub *Hub, c Subscriber, params []string, count int) error {
@@ -382,8 +379,8 @@ func querySlashAndPush(hub *Hub, c Subscriber, count int) error {
 }
 
 func (w *WebsocketManager) GetSlashSubscribeInfo() []Subscriber {
-	w.RLock()
-	defer w.RUnlock()
+	w.mtx.RLock()
+	defer w.mtx.RUnlock()
 	conns := w.topics2Conns[SlashKey]
 	res := make([]Subscriber, 0, len(conns))
 	for conn := range conns {
@@ -393,8 +390,8 @@ func (w *WebsocketManager) GetSlashSubscribeInfo() []Subscriber {
 }
 
 func (w *WebsocketManager) GetHeightSubscribeInfo() []Subscriber {
-	w.RLock()
-	defer w.RUnlock()
+	w.mtx.RLock()
+	defer w.mtx.RUnlock()
 	conns := w.topics2Conns[BlockInfoKey]
 	res := make([]Subscriber, 0, len(conns))
 	for conn := range conns {
@@ -404,8 +401,8 @@ func (w *WebsocketManager) GetHeightSubscribeInfo() []Subscriber {
 }
 
 func (w *WebsocketManager) GetTickerSubscribeInfo() []Subscriber {
-	w.RLock()
-	defer w.RUnlock()
+	w.mtx.RLock()
+	defer w.mtx.RUnlock()
 	conns := w.topics2Conns[TickerKey]
 	res := make([]Subscriber, 0, len(conns))
 	for conn := range conns {
@@ -414,13 +411,12 @@ func (w *WebsocketManager) GetTickerSubscribeInfo() []Subscriber {
 			value: conn.topicWithParams[TickerKey],
 		})
 	}
-
 	return res
 }
 
 func (w *WebsocketManager) GetCandleStickSubscribeInfo() map[string][]Subscriber {
-	w.RLock()
-	defer w.RUnlock()
+	w.mtx.RLock()
+	defer w.mtx.RUnlock()
 	conns := w.topics2Conns[KlineKey]
 	res := make(map[string][]Subscriber)
 	for conn := range conns {
@@ -444,8 +440,8 @@ func (w *WebsocketManager) GetCandleStickSubscribeInfo() map[string][]Subscriber
 }
 
 func (w *WebsocketManager) getNoDetailSubscribe(topic string) map[string][]Subscriber {
-	w.RLock()
-	defer w.RUnlock()
+	w.mtx.RLock()
+	defer w.mtx.RUnlock()
 	conns := w.topics2Conns[topic]
 	res := make(map[string][]Subscriber)
 	for conn := range conns {
@@ -460,19 +456,22 @@ func (w *WebsocketManager) getNoDetailSubscribe(topic string) map[string][]Subsc
 }
 
 func (w *WebsocketManager) GetDepthSubscribeInfo() map[string][]Subscriber {
-	w.RLock()
-	defer w.RUnlock()
+	w.mtx.RLock()
+	defer w.mtx.RUnlock()
 	conns := w.topics2Conns[DepthKey]
 	res := make(map[string][]Subscriber)
 	for conn := range conns {
 		params := conn.topicWithParams[DepthKey]
 		for p := range params {
-			level := "all"
-			vals := strings.Split(p, SeparateArgu)
+			var (
+				level  = "all"
+				vals   = strings.Split(p, SeparateArgu)
+				market = vals[0]
+			)
 			if len(vals) == 2 {
 				level = vals[1]
 			}
-			res[vals[0]] = append(res[vals[0]], ImplSubscriber{
+			res[market] = append(res[market], ImplSubscriber{
 				Conn:  conn,
 				value: level,
 			})
@@ -525,8 +524,7 @@ func (w *WebsocketManager) sendEncodeMsg(subscriber Subscriber, typeKey string, 
 		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", typeKey, string(info)))
 		if err := subscriber.WriteMsg(msg); err != nil {
 			log.Errorf(err.Error())
-			s := subscriber.(ImplSubscriber)
-			w.CloseConn(s.Conn)
+			w.CloseConn(subscriber.(ImplSubscriber).Conn)
 		}
 	}
 }
