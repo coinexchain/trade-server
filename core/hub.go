@@ -369,13 +369,13 @@ func (hub *Hub) HasMarket(market string) bool {
 func (hub *Hub) AddMarket(market string) {
 	if strings.HasPrefix(market, "B:") {
 		hub.managersMap[market] = &TripleManager{
-			tkm: DefaultTickerManager(market),
+			tkm: NewTickerManager(market),
 		}
 	} else {
 		hub.managersMap[market] = &TripleManager{
-			sell: DefaultDepthManager("sell"),
-			buy:  DefaultDepthManager("buy"),
-			tkm:  DefaultTickerManager(market),
+			sell: NewDepthManager("sell"),
+			buy:  NewDepthManager("buy"),
+			tkm:  NewTickerManager(market),
 		}
 	}
 	hub.csMan.AddMarket(market)
@@ -1755,8 +1755,8 @@ func (hub *Hub) Load(hub4j *HubForJSON) {
 
 	for _, info := range hub4j.Markets {
 		triman := &TripleManager{
-			sell: DefaultDepthManager("sell"),
-			buy:  DefaultDepthManager("buy"),
+			sell: NewDepthManager("sell"),
+			buy:  NewDepthManager("buy"),
 			tkm:  info.TkMan,
 		}
 		for _, pp := range info.SellPricePoints {

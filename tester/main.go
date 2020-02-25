@@ -283,7 +283,7 @@ func testDepth(pointsSets [][]core.PricePoint) {
 	//	}
 	//}
 	refMan := DepthManager{ppMap: make(map[string]core.PricePoint)}
-	impMan := core.DefaultDepthManager("")
+	impMan := core.NewDepthManager("")
 	for x, points := range pointsSets {
 		changes := make(map[string]core.PricePoint)
 		for _, point := range points {
@@ -397,7 +397,7 @@ func findTickers(priceList []sdk.Dec) ([]core.Ticker, []int) {
 func testTicker(priceList []sdk.Dec) {
 	fmt.Printf("Begin testTicker\n")
 	refTickers, refIdxList := findTickers(priceList)
-	tkMan := core.DefaultTickerManager("")
+	tkMan := core.NewTickerManager("")
 	for i := 0; i < core.MinuteNumInDay; i++ {
 		tkMan.UpdateNewestPrice(priceList[i], i)
 	}

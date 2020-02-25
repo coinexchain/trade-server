@@ -10,7 +10,7 @@ import (
 )
 
 func TestBaseCandleStick(t *testing.T) {
-	cs := defaultBaseCandleStick()
+	cs := NewBaseCandleStick()
 	//test update
 	cs.update(sdk.NewDec(50), 2)
 	cs.update(sdk.NewDec(10), 2)
@@ -169,7 +169,7 @@ func TestCandleStickRecord(t *testing.T) {
 }
 
 func TestDepthManager(t *testing.T) {
-	dm := DefaultDepthManager("")
+	dm := NewDepthManager("")
 	dm.DeltaChange(sdk.NewDec(90), sdk.NewInt(90))
 	dm.DeltaChange(sdk.NewDec(100), sdk.NewInt(100))
 	dm.DeltaChange(sdk.NewDec(80), sdk.NewInt(80))
