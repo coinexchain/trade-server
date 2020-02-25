@@ -465,6 +465,8 @@ func (hub *Hub) handleMsg() {
 			hub.handleMsgBancorTradeInfoForKafka(entry.bz)
 		case "bancor_info":
 			hub.handleMsgBancorInfoForKafka(entry.bz)
+		case "bancor_create":
+			hub.handleMsgBancorInfoForKafka(entry.bz)
 		case "commit":
 			hub.commit()
 		case "send_lock_coins":

@@ -239,7 +239,6 @@ type MsgBancorInfoForKafka struct {
 	StockInPool        sdk.Int `json:"stock_in_pool"`
 	MoneyInPool        sdk.Int `json:"money_in_pool"`
 	EarliestCancelTime int64   `json:"earliest_cancel_time"`
-	BlockHeight        int64   `json:"block_height"`
 
 	StockPrecision byte   `json:"stock_precision,omitempty"`
 	MaxMoney       string `json:"max_money,omitempty"`
