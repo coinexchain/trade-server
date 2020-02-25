@@ -90,11 +90,11 @@ func (op *OpCommand) handlerExecOpErr(err error, wsManager *core.WebsocketManage
 	if err != nil {
 		if _, ok := err.(*websocket.CloseError); ok {
 			log.WithError(err).Errorf("handle command[%s] failed", op.Op)
-			wsManager.CloseConn(wsConn)
+			wsManager.CloseWsConn(wsConn)
 			return false
 		}
 		if err = wsConn.WriteMsg([]byte(fmt.Sprintf("{\"error\": \"%s\"}", err.Error()))); err != nil {
-			wsManager.CloseConn(wsConn)
+			wsManager.CloseWsConn(wsConn)
 			return false
 		}
 	}

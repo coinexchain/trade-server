@@ -101,6 +101,7 @@ type SubscribeManager interface {
 	PushSlash(subscriber Subscriber, info []byte)
 	PushHeight(subscriber Subscriber, info []byte)
 	PushTicker(subscriber Subscriber, t []*Ticker)
+	PushDepthFullMsg(subscriber Subscriber, info []byte)
 	PushDepthWithChange(subscriber Subscriber, info []byte)
 	PushDepthWithDelta(subscriber Subscriber, delta []byte)
 	PushCandleStick(subscriber Subscriber, info []byte)

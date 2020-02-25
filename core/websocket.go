@@ -6,14 +6,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
 	SeparateArgu = ":"
-	MinArguNum   = 0
 	MaxArguNum   = 3
 )
 
@@ -53,7 +51,7 @@ func (w *WebsocketManager) SetSkipOption(isSkip bool) {
 	w.SkipPushed = isSkip
 }
 
-func (w *WebsocketManager) AddWsConn(c *websocket.Conn) *Conn {
+func (w *WebsocketManager) AddWsConn(c WsInterface) *Conn {
 	w.mtx.Lock()
 	defer w.mtx.Unlock()
 	if _, ok := w.wsConn2Conn[c]; !ok {
@@ -62,7 +60,7 @@ func (w *WebsocketManager) AddWsConn(c *websocket.Conn) *Conn {
 	return w.wsConn2Conn[c]
 }
 
-func (w *WebsocketManager) CloseConn(c *Conn) {
+func (w *WebsocketManager) CloseWsConn(c *Conn) {
 	w.mtx.Lock()
 	defer w.mtx.Unlock()
 	for topic := range c.allTopics {
@@ -235,39 +233,31 @@ func queryOrderAndPush(hub *Hub, c Subscriber, account string, count int) error 
 }
 
 func queryDepthAndPush(hub *Hub, c Subscriber, market string, level string, count int) error {
-	sell, buy := hub.QueryDepth(market, count)
-	if level == "all" {
-		return sendCommonDepthData(c, market, buy, sell)
+	bz, err := getDepthFullData(hub, market, level, count)
+	if err != nil {
+		return err
 	}
-	if err := sendLevelDepthData(c, level, market, buy, sell); err != nil {
+	if err := c.WriteMsg(bz); err != nil {
 		return err
 	}
 	return hub.AddLevel(market, level)
 }
 
-//TODO. will modify send msg method
-func sendCommonDepthData(c Subscriber, market string, buy, sell []*PricePoint) error {
-	if c == nil {
-		return nil
-	}
+func getDepthFullData(hub *Hub, market string, level string, count int) ([]byte, error) {
 	var (
 		bz  []byte
 		err error
 	)
-	if bz, err = encodeDepthData(market, buy, sell); err != nil {
-		return err
+	sell, buy := hub.QueryDepth(market, count)
+	if level == "all" {
+		bz, err = encodeDepthData(market, buy, sell)
+		return bz, err
 	}
-	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(bz)))
-	return c.WriteMsg(msg)
-}
 
-func sendLevelDepthData(c Subscriber, level string, market string, buy, sell []*PricePoint) error {
-	sellLevel := mergePrice(sell, level, false)
 	buyLevel := mergePrice(buy, level, true)
-	data := encodeDepthLevel(market, buyLevel, sellLevel)
-	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(data)))
-	err := c.WriteMsg(msg)
-	return err
+	sellLevel := mergePrice(sell, level, false)
+	bz, err = encodeDepthLevel(market, buyLevel, sellLevel)
+	return bz, nil
 }
 
 func queryKlineAndpush(hub *Hub, c Subscriber, params []string, count int) error {
@@ -440,7 +430,7 @@ func (w *WebsocketManager) sendEncodeMsg(subscriber Subscriber, typeKey string, 
 		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", typeKey, string(info)))
 		if err := subscriber.WriteMsg(msg); err != nil {
 			log.Errorf(err.Error())
-			w.CloseConn(subscriber.(ImplSubscriber).Conn)
+			w.CloseWsConn(subscriber.(ImplSubscriber).Conn)
 		}
 	}
 }
@@ -460,6 +450,9 @@ func (w *WebsocketManager) PushTicker(subscriber Subscriber, t []*Ticker) {
 		return
 	}
 	w.sendEncodeMsg(subscriber, TickerKey, payload)
+}
+func (w *WebsocketManager) PushDepthFullMsg(subscriber Subscriber, info []byte) {
+	w.sendEncodeMsg(subscriber, DepthFull, info)
 }
 func (w *WebsocketManager) PushDepthWithChange(subscriber Subscriber, info []byte) {
 	w.sendEncodeMsg(subscriber, DepthChange, info)

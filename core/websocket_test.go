@@ -173,6 +173,32 @@ func assertRemoveSubscribeConn(t *testing.T, wg *sync.WaitGroup, wsManager *Webs
 	require.EqualValues(t, 0, len(c2.topicWithParams))
 }
 
+func TestWebsocketManager_AddWsConnAndCloseConn_MulThread(t *testing.T) {
+	var (
+		wg        sync.WaitGroup
+		wsManager = NewWebSocketManager()
+	)
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go assertAddAndCloseConn(&wg, wsManager)
+	}
+	wg.Wait()
+}
+
+func assertAddAndCloseConn(wg *sync.WaitGroup, wsManager *WebsocketManager) {
+	defer wg.Done()
+	c1 := wsManager.AddWsConn(&mockWsConn{})
+	wsManager.CloseWsConn(c1)
+}
+
+func TestWebsocketManager_AddWsConnAndCloseConn_SigThread(t *testing.T) {
+	var wsManager = NewWebSocketManager()
+	c1 := wsManager.AddWsConn(&mockWsConn{})
+	require.EqualValues(t, 1, len(wsManager.wsConn2Conn))
+	wsManager.CloseWsConn(c1)
+	require.EqualValues(t, 0, len(wsManager.wsConn2Conn))
+}
+
 func TestDecToBigEndianBytes(t *testing.T) {
 	var (
 		num   int

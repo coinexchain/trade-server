@@ -41,7 +41,6 @@ import (
 const DecByteCount = 40
 const BUY = 1
 const SELL = 2
-const IOC = 4
 const GTE = 3
 const LIMIT = 2
 
@@ -297,15 +296,19 @@ func encodeDepthLevels(market string, buyDepths, sellDepths LevelsPricePoint) ma
 	}
 	for level, depth := range buyDepths {
 		if sell, ok := sellDepths[level]; ok {
-			levelsData[level] = encodeDepthLevel(market, depth, sell)
+			if bz, err := encodeDepthLevel(market, depth, sell); err == nil {
+				levelsData[level] = bz
+			}
 		} else {
-			levelsData[level] = encodeDepthLevel(market, depth, nil)
+			if bz, err := encodeDepthLevel(market, depth, nil); err == nil {
+				levelsData[level] = bz
+			}
 		}
 	}
 	return levelsData
 }
 
-func encodeDepthLevel(market string, buyDepth map[string]*PricePoint, sellDepth map[string]*PricePoint) []byte {
+func encodeDepthLevel(market string, buyDepth map[string]*PricePoint, sellDepth map[string]*PricePoint) ([]byte, error) {
 	buyValues := make([]*PricePoint, 0, len(buyDepth))
 	sellValues := make([]*PricePoint, 0, len(sellDepth))
 	for _, p := range buyDepth {
@@ -325,10 +328,7 @@ func encodeDepthLevel(market string, buyDepth map[string]*PricePoint, sellDepth 
 		})
 	}
 	bz, err := encodeDepthData(market, buyValues, sellValues)
-	if err != nil {
-		return nil
-	}
-	return bz
+	return bz, err
 }
 
 func encodeDepthData(market string, buy, sell []*PricePoint) ([]byte, error) {

@@ -144,6 +144,10 @@ type MocSubscribeManager struct {
 	PushList []pushInfo
 }
 
+func (sm *MocSubscribeManager) PushDepthFullMsg(subscriber Subscriber, info []byte) {
+	return
+}
+
 func (sm *MocSubscribeManager) showResult() {
 	for _, info := range sm.PushList {
 		var id int64

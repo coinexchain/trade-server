@@ -1288,8 +1288,8 @@ func (hub *Hub) PushDepthFullMsg(market string) {
 	if ok {
 		for _, target := range targets {
 			level := target.Detail().(string)
-			if err := queryDepthAndPush(hub, target, market, level, 0); err != nil {
-				hub.Log(err.Error())
+			if bz, err := getDepthFullData(hub, market, level, MaxCount); err == nil {
+				hub.subMan.PushDepthFullMsg(target, bz)
 			}
 		}
 	}
@@ -1325,7 +1325,9 @@ func (hub *Hub) commitForDepth() {
 		}
 
 		levelsData := encodeDepthLevels(market, mergeDeltaBuy, mergeDeltaSell)
-		levelsData["all"] = encodeDepthLevel(market, depthDeltaBuy, depthDeltaSell)
+		if bz, err := encodeDepthLevel(market, depthDeltaBuy, depthDeltaSell); err == nil {
+			levelsData["all"] = bz
+		}
 		hub.msgsChannel <- MsgToPush{topic: DepthKey, bz: []byte(market), extra: levelsData}
 	}
 }

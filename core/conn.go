@@ -54,7 +54,7 @@ func (c *Conn) sendMsg() {
 func (c *Conn) ReadMsg(manager *WebsocketManager) (message []byte, err error) {
 	if _, message, err = c.Conn.ReadMessage(); err != nil {
 		log.WithError(err).Error("read message failed")
-		manager.CloseConn(c)
+		manager.CloseWsConn(c)
 	}
 	return
 }
