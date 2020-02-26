@@ -14,6 +14,7 @@ cache:
     - ${TRAVIS_BUILD_DIR}/vendor
     - $GOPATH/src
     - $GOPATH/pkg
+    - $HOME/rocksdb-6.6.4
 
 before_cache:
   - find $HOME/.glide/cache -name ORIG_HEAD -exec rm {} \;
@@ -31,11 +32,18 @@ before_install:
 
 install:
   - cd -
+  - pwd
   - go mod tidy
   - go mod vendor
   - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.18.0
   - go get golang.org/x/tools/cmd/cover
   - go get github.com/mattn/goveralls
+  - cd $HOME
+  - wget  https://github.com/facebook/rocksdb/archive/v6.6.4.tar.gz
+  - tar -xzvf v6.6.4.tar.gz && cd rocksdb-6.6.4
+  - pwd
+  - mkdir build && cd build && cmake .. && make -j4 &&  sudo make install
+  - cd $HOME/build/coinexchain/trade-server
 
 script:
   - ./scripts/check.sh
