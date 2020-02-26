@@ -10,7 +10,7 @@ type baseCandleStick struct {
 	TotalDeal  sdk.Int `json:"total"`
 }
 
-func NewBaseCandleStick() baseCandleStick {
+func newBaseCandleStick() baseCandleStick {
 	return baseCandleStick{
 		OpenPrice:  sdk.ZeroDec(),
 		ClosePrice: sdk.ZeroDec(),

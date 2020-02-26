@@ -15,29 +15,6 @@ import (
 	dbm "github.com/tendermint/tm-db"
 )
 
-// only following methods from dbm.DB are used
-//type Batch interface {
-//	Set(key, value []byte)
-//	WriteSync()
-//	Close()
-//}
-//
-//type Iterator interface {
-//	Valid() bool
-//	Next()
-//	Key() (key []byte)
-//	Value() (value []byte)
-//	Close()
-//}
-//
-//type DB interface {
-//	Get([]byte) []byte
-//	Iterator(start, end []byte) Iterator
-//	ReverseIterator(start, end []byte) Iterator
-//	Close()
-//	NewBatch() Batch
-//}
-
 const (
 	MaxCount     = 1024
 	DumpVersion  = byte(0)
@@ -77,22 +54,8 @@ type Pruneable interface {
 	GetPruneTimestamp() uint64
 }
 
-func limitCount(count int) int {
-	if count > MaxCount {
-		return MaxCount
-	}
-	return count
-}
-
-func int64ToBigEndianBytes(n int64) []byte {
-	var b [8]byte
-	binary.BigEndian.PutUint64(b[:], uint64(n))
-	return b[:]
-}
-
-func BigEndianBytesToInt64(bz []byte) int64 {
-	val := binary.BigEndian.Uint64(bz)
-	return int64(val)
+func (hub *Hub) getKeyFromBytes(firstByte byte, bz []byte, lastByte byte) []byte {
+	return hub.getKeyFromBytesAndTime(firstByte, bz, lastByte, hub.currBlockTime.Unix())
 }
 
 // Following are some functions to generate keys to access the KVStore
@@ -108,30 +71,6 @@ func (hub *Hub) getKeyFromBytesAndTime(firstByte byte, bz []byte, lastByte byte,
 	return res
 }
 
-func (hub *Hub) getKeyFromBytes(firstByte byte, bz []byte, lastByte byte) []byte {
-	return hub.getKeyFromBytesAndTime(firstByte, bz, lastByte, hub.currBlockTime.Unix())
-}
-
-func getStartKeyFromBytes(firstByte byte, bz []byte) []byte {
-	res := make([]byte, 0, 1+1+len(bz)+1)
-	res = append(res, firstByte)
-	res = append(res, byte(len(bz)))
-	res = append(res, bz...)
-	res = append(res, byte(0))
-	return res
-}
-
-func getEndKeyFromBytes(firstByte byte, bz []byte, time int64, sid int64) []byte {
-	res := make([]byte, 0, 1+1+len(bz)+1+16)
-	res = append(res, firstByte)
-	res = append(res, byte(len(bz)))
-	res = append(res, bz...)
-	res = append(res, byte(0))
-	res = append(res, int64ToBigEndianBytes(time)...)
-	res = append(res, int64ToBigEndianBytes(sid)...)
-	return res
-}
-
 //==========
 
 func (hub *Hub) getCandleStickKey(market string, timespan byte) []byte {
@@ -141,16 +80,6 @@ func (hub *Hub) getCandleStickKey(market string, timespan byte) []byte {
 
 func (hub *Hub) getLockedKey(addr string) []byte {
 	return hub.getKeyFromBytes(LockedByte, []byte(addr), 0)
-}
-
-func getCandleStickEndKey(market string, timespan byte, endTime int64, sid int64) []byte {
-	bz := append([]byte(market), []byte{0, timespan}...)
-	return getEndKeyFromBytes(CandleStickByte, bz, endTime, sid)
-}
-
-func getCandleStickStartKey(market string, timespan byte) []byte {
-	bz := append([]byte(market), []byte{0, timespan}...)
-	return getStartKeyFromBytes(CandleStickByte, bz)
 }
 
 func (hub *Hub) getDealKey(market string) []byte {
@@ -1285,14 +1214,32 @@ func (hub *Hub) pushDepthFull() {
 func (hub *Hub) PushDepthFullMsg(market string) {
 	info := hub.subMan.GetDepthSubscribeInfo()
 	targets, ok := info[market]
-	if ok {
-		for _, target := range targets {
-			level := target.Detail().(string)
-			if bz, err := getDepthFullData(hub, market, level, MaxCount); err == nil {
-				hub.subMan.PushDepthFullMsg(target, bz)
-			}
+	if !ok {
+		return
+	}
+	for _, target := range targets {
+		level := target.Detail().(string)
+		if bz, err := hub.getDepthFullData(market, level, MaxCount); err == nil {
+			hub.subMan.PushDepthFullMsg(target, bz)
 		}
 	}
+}
+
+func (hub *Hub) getDepthFullData(market string, level string, count int) ([]byte, error) {
+	var (
+		bz  []byte
+		err error
+	)
+	sell, buy := hub.QueryDepth(market, count)
+	if level == "all" {
+		bz, err = encodeDepthData(market, buy, sell)
+		return bz, err
+	}
+
+	buyLevel := mergePrice(buy, level, true)
+	sellLevel := mergePrice(sell, level, false)
+	bz, err = encodeDepthLevel(market, buyLevel, sellLevel)
+	return bz, err
 }
 
 func (hub *Hub) commitForDepth() {
@@ -1465,6 +1412,7 @@ func (hub *Hub) QueryCandleStick(market string, timespan byte, time int64, sid i
 }
 
 //=========
+
 func (hub *Hub) QueryOrder(account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
 	return hub.query(false, OrderByte, []byte(account), time, sid, count, nil)
 }
@@ -1670,7 +1618,7 @@ func (hub *Hub) query(fetchTxDetail bool, firstByteIn byte, bz []byte, time int6
 		sid := binary.BigEndian.Uint64(iKey[idx-8 : idx])
 		idx -= 8
 		timeBytes := iKey[idx-8 : idx]
-		time := binary.BigEndian.Uint64(timeBytes)
+		timeNum := binary.BigEndian.Uint64(timeBytes)
 		entry := json.RawMessage(iter.Value())
 		if filter != nil && !filter(tag, entry) {
 			continue
@@ -1687,7 +1635,7 @@ func (hub *Hub) query(fetchTxDetail bool, firstByteIn byte, bz []byte, time int6
 		}
 		data = append(data, entry)
 		tags = append(tags, tag)
-		timesid = append(timesid, []int64{int64(time), int64(sid)}...)
+		timesid = append(timesid, []int64{int64(timeNum), int64(sid)}...)
 		if firstByteIn == 0 ||
 			(firstByteIn == CreateOrderOnlyByte && tag == CreateOrderEndByte) ||
 			(firstByteIn == FillOrderOnlyByte && tag == FillOrderEndByte) ||
@@ -1851,13 +1799,6 @@ func (hub *Hub) LoadOffset(partition int32) int64 {
 		hub.offset = int64(binary.BigEndian.Uint64(offsetBuf))
 	}
 	return hub.offset
-}
-
-func getOffsetKey(partition int32) []byte {
-	key := make([]byte, 5)
-	key[0] = OffsetByte
-	binary.BigEndian.PutUint32(key[1:], uint32(partition))
-	return key
 }
 
 func (hub *Hub) Close() {

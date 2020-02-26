@@ -10,7 +10,7 @@ import (
 )
 
 func TestBaseCandleStick(t *testing.T) {
-	cs := NewBaseCandleStick()
+	cs := newBaseCandleStick()
 	//test update
 	cs.update(sdk.NewDec(50), 2)
 	cs.update(sdk.NewDec(10), 2)

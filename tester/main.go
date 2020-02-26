@@ -507,7 +507,7 @@ func findXTickers(priceList []sdk.Dec, amountList []sdk.Int) ([]core.XTicker, []
 func testXTicker(priceList []sdk.Dec, amountList []sdk.Int) {
 	fmt.Printf("Begin testXTicker\n")
 	refXTickers, refIdxList := findXTickers(priceList, amountList)
-	tkMan := core.DefaultXTickerManager("")
+	tkMan := core.NewXTickerManager("")
 	for i := 0; i < core.MinuteNumInDay; i++ {
 		tkMan.UpdateNewestPrice(priceList[i], i, amountList[i])
 	}

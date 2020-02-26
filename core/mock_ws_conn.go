@@ -17,7 +17,6 @@ func (m *mockWsConn) ReadMessage() (messageType int, p []byte, err error) {
 }
 
 func (m *mockWsConn) SetPingHandler(func(string) error) {
-	return
 }
 
 func (m *mockWsConn) PingHandler() func(string) error {

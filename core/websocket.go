@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -81,7 +80,7 @@ func (w *WebsocketManager) AddSubscribeConn(c *Conn, topic string, params []stri
 }
 
 func (w *WebsocketManager) PushFullInfo(hub *Hub, c *Conn, topic string, params []string, count int) error {
-	err := PushFullInformation(topic, params, count, ImplSubscriber{Conn: c}, hub)
+	err := pushFullInformation(topic, params, count, ImplSubscriber{Conn: c}, hub)
 	return err
 }
 
@@ -113,175 +112,6 @@ func (w *WebsocketManager) removeConnWithTopic(topic string, conn *Conn) {
 	if len(w.topics2Conns[topic]) == 0 {
 		delete(w.topics2Conns, topic)
 	}
-}
-
-func groupOfDataPacket(topic string, data []json.RawMessage) []byte {
-	bz := make([]byte, 0, len(data))
-	bz = append(bz, []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":[", topic))...)
-	for _, v := range data {
-		bz = append(bz, []byte(v)...)
-		bz = append(bz, []byte(",")...)
-	}
-	if len(data) > 0 {
-		bz[len(bz)-1] = byte(']')
-		bz = append(bz, []byte("}")...)
-	} else {
-		bz = append(bz, []byte("]}")...)
-	}
-	return bz
-}
-
-func PushFullInformation(topic string, params []string, count int, c Subscriber, hub *Hub) error {
-	var (
-		err        error
-		depthLevel = "all"
-	)
-	count = getCount(count)
-	type queryFunc func(string, int64, int64, int) ([]json.RawMessage, []int64)
-	queryAndPushFunc := func(typeKey string, param string, qf queryFunc) error {
-		data, _ := qf(param, hub.currBlockTime.Unix(), hub.sid, count)
-		bz := groupOfDataPacket(typeKey, data)
-		err = c.WriteMsg(bz)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	if len(params) == 2 && topic == DepthKey {
-		depthLevel = params[1]
-	}
-	switch topic {
-	case SlashKey:
-		err = querySlashAndPush(hub, c, count)
-	case KlineKey:
-		err = queryKlineAndpush(hub, c, params, count)
-	case DepthKey:
-		err = queryDepthAndPush(hub, c, params[0], depthLevel, count)
-	case OrderKey:
-		err = queryOrderAndPush(hub, c, params[0], count)
-	case TickerKey:
-		market := params[0]
-		if len(params) == 2 {
-			market = strings.Join(params, SeparateArgu)
-		}
-		err = queryTickerAndPush(hub, c, market)
-	case TxKey:
-		err = queryAndPushFunc(TxKey, params[0], hub.QueryTx)
-	case LockedKey:
-		err = queryAndPushFunc(LockedKey, params[0], hub.QueryLocked)
-	case UnlockKey:
-		err = queryAndPushFunc(UnlockKey, params[0], hub.QueryUnlock)
-	case IncomeKey:
-		err = queryAndPushFunc(IncomeKey, params[0], hub.QueryIncome)
-	case DealKey:
-		err = queryAndPushFunc(DealKey, params[0], hub.QueryDeal)
-	case BancorKey:
-		err = queryAndPushFunc(BancorKey, params[0], hub.QueryBancorInfo)
-	case BancorTradeKey:
-		err = queryAndPushFunc(BancorTradeKey, params[0], hub.QueryBancorTrade)
-	case BancorDealKey:
-		err = queryAndPushFunc(BancorDealKey, "B:"+params[0], hub.QueryBancorDeal)
-	case RedelegationKey:
-		err = queryAndPushFunc(RedelegationKey, params[0], hub.QueryRedelegation)
-	case UnbondingKey:
-		err = queryAndPushFunc(UnbondingKey, params[0], hub.QueryUnbonding)
-	case CommentKey:
-		err = queryAndPushFunc(CommentKey, params[0], hub.QueryComment)
-	}
-	return err
-}
-
-func queryTickerAndPush(hub *Hub, c Subscriber, market string) error {
-	tickers := hub.QueryTickers([]string{market})
-	baseData, err := json.Marshal(tickers)
-	if err != nil {
-		return err
-	}
-	err = c.WriteMsg([]byte(fmt.Sprintf("{\"type\":\"%s\","+
-		" \"payload\":%s}", TickerKey, string(baseData))))
-	return err
-}
-
-func queryOrderAndPush(hub *Hub, c Subscriber, account string, count int) error {
-	data, tags, _ := hub.QueryOrder(account, hub.currBlockTime.Unix(), hub.sid, count)
-	if len(data) != len(tags) {
-		return errors.Errorf("The number of orders and tags is not equal")
-	}
-	createData := make([]json.RawMessage, 0, len(data)/2)
-	fillData := make([]json.RawMessage, 0, len(data)/2)
-	cancelData := make([]json.RawMessage, 0, len(data)/2)
-	for i := len(data) - 1; i >= 0; i-- {
-		if tags[i] == CreateOrderEndByte {
-			createData = append(createData, data[i])
-		} else if tags[i] == FillOrderEndByte {
-			fillData = append(fillData, data[i])
-		} else if tags[i] == CancelOrderEndByte {
-			cancelData = append(cancelData, data[i])
-		}
-	}
-	bz := groupOfDataPacket(CreateOrderKey, createData)
-	if err := c.WriteMsg(bz); err != nil {
-		return err
-	}
-	bz = groupOfDataPacket(FillOrderKey, fillData)
-	if err := c.WriteMsg(bz); err != nil {
-		return err
-	}
-	bz = groupOfDataPacket(CancelOrderKey, cancelData)
-	err := c.WriteMsg(bz)
-	return err
-}
-
-func queryDepthAndPush(hub *Hub, c Subscriber, market string, level string, count int) error {
-	bz, err := getDepthFullData(hub, market, level, count)
-	if err != nil {
-		return err
-	}
-	if err := c.WriteMsg(bz); err != nil {
-		return err
-	}
-	return hub.AddLevel(market, level)
-}
-
-func getDepthFullData(hub *Hub, market string, level string, count int) ([]byte, error) {
-	var (
-		bz  []byte
-		err error
-	)
-	sell, buy := hub.QueryDepth(market, count)
-	if level == "all" {
-		bz, err = encodeDepthData(market, buy, sell)
-		return bz, err
-	}
-
-	buyLevel := mergePrice(buy, level, true)
-	sellLevel := mergePrice(sell, level, false)
-	bz, err = encodeDepthLevel(market, buyLevel, sellLevel)
-	return bz, nil
-}
-
-func queryKlineAndpush(hub *Hub, c Subscriber, params []string, count int) error {
-	tradingPair := params[0]
-	if len(params) == 3 {
-		tradingPair = strings.Join(params[:2], SeparateArgu)
-	}
-	candleBz := hub.QueryCandleStick(tradingPair, GetSpanFromSpanStr(params[1]), hub.currBlockTime.Unix(), hub.sid, count)
-	bz := groupOfDataPacket(KlineKey, candleBz)
-	err := c.WriteMsg(bz)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func querySlashAndPush(hub *Hub, c Subscriber, count int) error {
-	data, _ := hub.QuerySlash(hub.currBlockTime.Unix(), hub.sid, count)
-	bz := groupOfDataPacket(SlashKey, data)
-	err := c.WriteMsg(bz)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (w *WebsocketManager) GetSlashSubscribeInfo() []Subscriber {

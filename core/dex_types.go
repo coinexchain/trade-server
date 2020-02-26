@@ -8,35 +8,11 @@ import (
 	//	"github.com/coinexchain/dex/modules/market"
 
 	"encoding/json"
-	"sort"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 )
-
-//type (
-//	NewHeightInfo                    = market.NewHeightInfo
-//	CreateOrderInfo                  = market.CreateOrderInfo
-//	FillOrderInfo                    = market.FillOrderInfo
-//	CancelOrderInfo                  = market.CancelOrderInfo
-//	NotificationSlash                = app.NotificationSlash
-//	TransferRecord                   = app.TransferRecord
-//	NotificationTx                   = app.NotificationTx
-//	NotificationBeginRedelegation    = app.NotificationBeginRedelegation
-//	NotificationBeginUnbonding       = app.NotificationBeginUnbonding
-//	NotificationCompleteRedelegation = app.NotificationCompleteRedelegation
-//	NotificationCompleteUnbonding    = app.NotificationCompleteUnbonding
-//	NotificationUnlock               = authx.NotificationUnlock
-//	TokenComment                     = comment.TokenComment
-//	CommentRef                       = comment.CommentRef
-//	MsgBancorTradeInfoForKafka       = bancorlite.MsgBancorTradeInfoForKafka
-//	MsgBancorInfoForKafka            = bancorlite.MsgBancorInfoForKafka
-//)
-//
-//var (
-//	DecToBigEndianBytes = market.DecToBigEndianBytes
-//)
 
 const DecByteCount = 40
 const BUY = 1
@@ -272,71 +248,8 @@ type LockedSendMsg struct {
 	TxHash string `json:"tx_hash,omitempty"`
 }
 
-func DecToBigEndianBytes(d sdk.Dec) []byte {
-	var result [DecByteCount]byte
-	bytes := d.Int.Bytes() //  returns the absolute value of d as a big-endian byte slice.
-	for i := 1; i <= len(bytes); i++ {
-		result[DecByteCount-i] = bytes[len(bytes)-i]
-	}
-	return result[:]
-}
-
 type DepthDetails struct {
 	TradingPair string        `json:"trading_pair"`
 	Bids        []*PricePoint `json:"bids"`
 	Asks        []*PricePoint `json:"asks"`
-}
-
-type LevelsPricePoint map[string]map[string]*PricePoint // [level][priceBigEndian][*PricePoint]
-
-func encodeDepthLevels(market string, buyDepths, sellDepths LevelsPricePoint) map[string][]byte {
-	levelsData := make(map[string][]byte)
-	if len(buyDepths) == 0 && len(sellDepths) == 0 {
-		return levelsData
-	}
-	for level, depth := range buyDepths {
-		if sell, ok := sellDepths[level]; ok {
-			if bz, err := encodeDepthLevel(market, depth, sell); err == nil {
-				levelsData[level] = bz
-			}
-		} else {
-			if bz, err := encodeDepthLevel(market, depth, nil); err == nil {
-				levelsData[level] = bz
-			}
-		}
-	}
-	return levelsData
-}
-
-func encodeDepthLevel(market string, buyDepth map[string]*PricePoint, sellDepth map[string]*PricePoint) ([]byte, error) {
-	buyValues := make([]*PricePoint, 0, len(buyDepth))
-	sellValues := make([]*PricePoint, 0, len(sellDepth))
-	for _, p := range buyDepth {
-		buyValues = append(buyValues, p)
-	}
-	for _, p := range sellDepth {
-		sellValues = append(sellValues, p)
-	}
-	if len(buyValues) > 1 {
-		sort.Slice(buyValues, func(i, j int) bool {
-			return buyValues[i].Price.GT(buyValues[j].Price)
-		})
-	}
-	if len(sellValues) > 1 {
-		sort.Slice(sellValues, func(i, j int) bool {
-			return sellValues[i].Price.LT(sellValues[j].Price)
-		})
-	}
-	bz, err := encodeDepthData(market, buyValues, sellValues)
-	return bz, err
-}
-
-func encodeDepthData(market string, buy, sell []*PricePoint) ([]byte, error) {
-	depRes := DepthDetails{
-		TradingPair: market,
-		Bids:        buy,
-		Asks:        sell,
-	}
-	bz, err := json.Marshal(depRes)
-	return bz, err
 }

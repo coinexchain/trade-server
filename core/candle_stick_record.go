@@ -23,10 +23,10 @@ type CandleStickRecord struct {
 func NewCandleStickRecord(market string) *CandleStickRecord {
 	res := &CandleStickRecord{Market: market, LastUpdateTime: time.Unix(0, 0)}
 	for i := 0; i < len(res.MinuteCS); i++ {
-		res.MinuteCS[i] = NewBaseCandleStick()
+		res.MinuteCS[i] = newBaseCandleStick()
 	}
 	for i := 0; i < len(res.HourCS); i++ {
-		res.HourCS[i] = NewBaseCandleStick()
+		res.HourCS[i] = newBaseCandleStick()
 	}
 	res.LastMinutePrice = sdk.ZeroDec()
 	res.LastHourPrice = sdk.ZeroDec()
@@ -123,12 +123,12 @@ func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, t 
 
 	if isNewDay {
 		for i := 0; i < 24; i++ {
-			csr.HourCS[i] = NewBaseCandleStick()
+			csr.HourCS[i] = newBaseCandleStick()
 		}
 	}
 	if isNewDay || isNewHour {
 		for i := 0; i < 60; i++ {
-			csr.MinuteCS[i] = NewBaseCandleStick()
+			csr.MinuteCS[i] = newBaseCandleStick()
 		}
 	}
 	return res

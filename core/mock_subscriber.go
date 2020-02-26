@@ -145,7 +145,6 @@ type MocSubscribeManager struct {
 }
 
 func (sm *MocSubscribeManager) PushDepthFullMsg(subscriber Subscriber, info []byte) {
-	return
 }
 
 func (sm *MocSubscribeManager) showResult() {

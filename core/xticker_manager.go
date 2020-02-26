@@ -14,7 +14,7 @@ type XTickerManager struct {
 	OldPriceOneDayAgo sdk.Dec                 `json:"old_price"`
 }
 
-func DefaultXTickerManager(Market string) *XTickerManager {
+func NewXTickerManager(Market string) *XTickerManager {
 	return &XTickerManager{
 		Market:      Market,
 		TotalAmount: sdk.ZeroInt(),

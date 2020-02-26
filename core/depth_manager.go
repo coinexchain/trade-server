@@ -67,7 +67,7 @@ func (dm *DepthManager) DumpPricePoints() []*PricePoint {
 
 // positive amount for increment, negative amount for decrement
 func (dm *DepthManager) DeltaChange(price sdk.Dec, amount sdk.Int) {
-	s := string(DecToBigEndianBytes(price))
+	s := string(decToBigEndianBytes(price))
 	ptr, ok := dm.ppMap.Get(s)
 	var pp *PricePoint
 	if !ok {
