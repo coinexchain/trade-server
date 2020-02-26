@@ -194,6 +194,7 @@ func TestDepthLevel(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
 	subMan.compareResult(t, correct)
+	subMan.clearPushList()
 
 	hub.currBlockHeight = 99998
 	newHeightInfo = &NewHeightInfo{
@@ -206,9 +207,13 @@ func TestDepthLevel(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
 
-	str := "{\"type\":\"depth_full\", \"payload\":{\"trading_pair\":\"abc/cet\",\"bids\":[{\"p\":\"15.000000000000000000\",\"a\":\"300\"}],\"asks\":[{\"p\":\"12.000000000000000000\",\"a\":\"171\"}]}}"
-	depthSub := subMan.DepthSubscribeInfo["abc/cet"][0].(*DepthSubscriber)
-	depthSub.CompareRet(t, []string{str})
+	correct = `
+8: {"type":"depth_full", "payload":{"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"171"}]}}
+9: {"type":"depth_full", "payload":{"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"171"}]}}
+`
+	//depthSub := subMan.DepthSubscribeInfo["abc/cet"][0].(*DepthSubscriber)
+	//depthSub.CompareRet(t, []string{str})
+	subMan.compareResult(t, correct)
 
 }
 

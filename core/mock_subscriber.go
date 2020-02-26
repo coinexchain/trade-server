@@ -144,9 +144,6 @@ type MocSubscribeManager struct {
 	PushList []pushInfo
 }
 
-func (sm *MocSubscribeManager) PushDepthFullMsg(subscriber Subscriber, info []byte) {
-}
-
 func (sm *MocSubscribeManager) showResult() {
 	for _, info := range sm.PushList {
 		var id int64
@@ -277,12 +274,6 @@ func GetSubscribeManager(addr1, addr2 string) *MocSubscribeManager {
 	res.CandleStickSubscribeInfo["B:xyz/cet"][1] = NewCandleStickSubscriber(29, HourStr)
 	res.CandleStickSubscribeInfo["B:xyz/cet"][2] = NewCandleStickSubscriber(30, DayStr)
 	return res
-}
-
-func (sm *MocSubscribeManager) ClearPushInfoList() {
-	sm.Lock()
-	defer sm.Unlock()
-	sm.PushList = sm.PushList[:0]
 }
 
 func (sm *MocSubscribeManager) SetSkipOption(isSkip bool) {
@@ -436,6 +427,11 @@ func (sm *MocSubscribeManager) PushTx(subscriber Subscriber, info []byte) {
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
 }
 func (sm *MocSubscribeManager) PushComment(subscriber Subscriber, info []byte) {
+	sm.Lock()
+	defer sm.Unlock()
+	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})
+}
+func (sm *MocSubscribeManager) PushDepthFullMsg(subscriber Subscriber, info []byte) {
 	sm.Lock()
 	defer sm.Unlock()
 	sm.PushList = append(sm.PushList, pushInfo{Target: subscriber, Payload: string(info)})

@@ -1233,13 +1233,15 @@ func (hub *Hub) getDepthFullData(market string, level string, count int) ([]byte
 	sell, buy := hub.QueryDepth(market, count)
 	if level == "all" {
 		bz, err = encodeDepthData(market, buy, sell)
-		return bz, err
+		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(bz)))
+		return msg, err
 	}
 
 	buyLevel := mergePrice(buy, level, true)
 	sellLevel := mergePrice(sell, level, false)
 	bz, err = encodeDepthLevel(market, buyLevel, sellLevel)
-	return bz, err
+	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(bz)))
+	return msg, err
 }
 
 func (hub *Hub) commitForDepth() {
