@@ -8,6 +8,9 @@ import (
 	"github.com/pkg/errors"
 )
 
+// When a client subscribes something, we get the full information from rocksdb and push them to client.
+// After that, we begin to push delta/incremental information to clients
+
 func pushFullInformation(topic string, params []string, count int, c Subscriber, hub *Hub) error {
 	var (
 		err        error

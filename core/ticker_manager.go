@@ -9,13 +9,18 @@ import (
 const MinuteNumInDay = 24 * 60
 
 type TickerManager struct {
-	PriceList   [MinuteNumInDay]sdk.Dec `json:"price_list"`
-	Price1st    sdk.Dec                 `json:"price_1st"`
-	Minute1st   int                     `json:"minute_1st"`
-	Price2nd    sdk.Dec                 `json:"price_2nd"`
-	Minute2nd   int                     `json:"minute_2nd"`
-	Market      string                  `json:"market"`
-	Initialized bool                    `json:"initialized"`
+	// The prices in last 24 hours
+	PriceList [MinuteNumInDay]sdk.Dec `json:"price_list"`
+	// The following 4 members act like a small fifo
+	// new Price goes first into Price1st, then goes into Price2nd,
+	// finally Price2nd goes into PriceList
+	Price1st  sdk.Dec `json:"price_1st"`
+	Minute1st int     `json:"minute_1st"`
+	Price2nd  sdk.Dec `json:"price_2nd"`
+	Minute2nd int     `json:"minute_2nd"`
+
+	Market      string `json:"market"`
+	Initialized bool   `json:"initialized"`
 }
 
 func NewTickerManager(Market string) *TickerManager {
@@ -32,6 +37,7 @@ func (tm *TickerManager) UpdateNewestPrice(currPrice sdk.Dec, currMinute int) {
 		panic(fmt.Sprintf("Minute not Valid: %d", currMinute))
 	}
 	if !tm.Initialized {
+		// Initialize all the members with currPrice
 		tm.Initialized = true
 		for i := 0; i < MinuteNumInDay; i++ {
 			tm.PriceList[i] = currPrice
@@ -71,7 +77,9 @@ func (tm *TickerManager) GetTicker(currMinute int) *Ticker {
 	if lastMinute < 0 {
 		lastMinute = MinuteNumInDay - 1
 	}
+	// If the price changes at currMinute of today
 	if (tm.Minute1st == currMinute && !tm.Price1st.Equal(tm.Price2nd)) ||
+		// Or If price changes at currMinute of yesterday
 		!tm.PriceList[currMinute].Equal(tm.PriceList[lastMinute]) {
 		return &Ticker{
 			NewPrice:          tm.Price1st,
@@ -80,7 +88,7 @@ func (tm *TickerManager) GetTicker(currMinute int) *Ticker {
 			MinuteInDay:       currMinute,
 		}
 	}
-	if tm.Minute1st != currMinute { //flush the price
+	if tm.Minute1st != currMinute { //flush the price into the small fifo
 		tm.UpdateNewestPrice(tm.Price1st, currMinute)
 	}
 	return nil

@@ -2,6 +2,9 @@ package core
 
 import sdk "github.com/cosmos/cosmos-sdk/types"
 
+// This class models one candle stick in the K-line
+// When we add extra information (EndingUnixTime, TimeSpan and Market) to it,
+// it becomes a full CandleStick for display
 type baseCandleStick struct {
 	OpenPrice  sdk.Dec `json:"open"`
 	ClosePrice sdk.Dec `json:"close"`

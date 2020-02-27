@@ -16,20 +16,21 @@ type WsInterface interface {
 	PingHandler() func(string) error
 }
 
+// Conn models the connection to a client through websocket
 type Conn struct {
-	Conn            WsInterface
+	WsIfc           WsInterface
 	mtx             sync.RWMutex
 	allTopics       map[string]struct{}            // all the topics (with or without params)
 	topicWithParams map[string]map[string]struct{} // topic --> params
 
 	lastError error
 	msgChan   chan []byte
-	close     bool
+	closed    bool
 }
 
 func NewConn(c WsInterface) *Conn {
 	conn := &Conn{
-		Conn:            c,
+		WsIfc:           c,
 		msgChan:         make(chan []byte),
 		allTopics:       make(map[string]struct{}),
 		topicWithParams: make(map[string]map[string]struct{}),
@@ -41,18 +42,27 @@ func NewConn(c WsInterface) *Conn {
 	return conn
 }
 
+// Since WsIfc.WriteMessage is blocking, we'd like to wrap it into a goroutine
 func (c *Conn) sendMsg() {
 	for {
 		msg, ok := <-c.msgChan
 		if !ok {
 			break
 		}
-		c.lastError = c.Conn.WriteMessage(websocket.TextMessage, msg)
+		if c.lastError != nil {
+			err := c.WsIfc.WriteMessage(websocket.TextMessage, msg)
+			if err != nil {
+				c.mtx.Lock()
+				c.lastError = err
+				c.mtx.Unlock()
+			}
+		}
 	}
 }
 
+// Since WsIfc.ReadMessage is blocking, this function is only used in the handleConn goroutine
 func (c *Conn) ReadMsg(manager *WebsocketManager) (message []byte, err error) {
-	if _, message, err = c.Conn.ReadMessage(); err != nil {
+	if _, message, err = c.WsIfc.ReadMessage(); err != nil {
 		log.WithError(err).Error("read message failed")
 		manager.CloseWsConn(c)
 	}
@@ -60,10 +70,13 @@ func (c *Conn) ReadMsg(manager *WebsocketManager) (message []byte, err error) {
 }
 
 func (c *Conn) WriteMsg(v []byte) error {
-	if c.lastError != nil {
+	c.mtx.RLock()
+	hasErr := c.lastError != nil
+	c.mtx.RUnlock()
+	if hasErr {
 		return c.lastError
 	}
-	if c.close {
+	if c.closed { // Why? Should we return an error when writing to a closed Conn?
 		return nil
 	}
 	c.msgChan <- v
@@ -71,12 +84,10 @@ func (c *Conn) WriteMsg(v []byte) error {
 }
 
 func (c *Conn) PingHandler() func(string) error {
-	return c.Conn.PingHandler()
+	return c.WsIfc.PingHandler()
 }
 
 func (c *Conn) addTopicAndParams(topic string, params []string) {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
 	c.allTopics[topic] = struct{}{}
 	if len(params) != 0 {
 		if len(c.topicWithParams[topic]) == 0 {
@@ -91,28 +102,27 @@ func (c *Conn) addTopicAndParams(topic string, params []string) {
 }
 
 func (c *Conn) removeTopicAndParams(topic string, params []string) {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
 	if len(params) != 0 {
 		if len(params) == 1 {
 			delete(c.topicWithParams[topic], params[0])
 		} else {
 			tmpVal := strings.Join(params, SeparateArgu)
-			delete(c.topicWithParams[topic], tmpVal)
+			delete(c.topicWithParams[topic], tmpVal) // Why? The order of the params is important?
 		}
 	}
-	if c.isCleanedTopic(topic) {
+	if c.topicHasEmptyParamSet(topic) {
 		delete(c.allTopics, topic)
 		delete(c.topicWithParams, topic)
 	}
 }
 
-func (c *Conn) isCleanedTopic(topic string) bool {
+// if the param set of this topic is empty
+func (c *Conn) topicHasEmptyParamSet(topic string) bool {
 	return len(c.topicWithParams[topic]) == 0
 }
 
 func (c *Conn) Close() error {
-	c.close = true
+	c.closed = true
 	close(c.msgChan)
-	return c.Conn.Close()
+	return c.WsIfc.Close()
 }

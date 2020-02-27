@@ -69,6 +69,8 @@ func merge(subList []baseCandleStick) (cs baseCandleStick) {
 	return
 }
 
+// Merge the PricePoints at the granularity defined by 'level'
+// Returns a depth map
 func mergePrice(updated []*PricePoint, level string, isBuy bool) map[string]*PricePoint {
 	p, err := sdk.NewDecFromStr(level)
 	if err != nil {
@@ -82,6 +84,7 @@ func mergePrice(updated []*PricePoint, level string, isBuy bool) map[string]*Pri
 	return depth
 }
 
+// 'm' keeps a depth map, use 'point' to update it at the granularity defined by 'mulDec'
 func updateAmount(m map[string]*PricePoint, point *PricePoint, mulDec sdk.Dec, isBuy bool) {
 	price := point.Price.Mul(mulDec).Ceil()
 	if isBuy {
@@ -290,6 +293,13 @@ func getOffsetKey(partition int32) []byte {
 	key := make([]byte, 5)
 	key[0] = OffsetByte
 	binary.BigEndian.PutUint32(key[1:], uint32(partition))
+	return key
+}
+
+func getDumpKey() []byte {
+	key := make([]byte, 2)
+	key[0] = DumpByte
+	key[1] = DumpVersion
 	return key
 }
 

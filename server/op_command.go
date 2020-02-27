@@ -10,6 +10,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	Subscribe   = "subscribe"
+	Unsubscribe = "unsubscribe"
+	Ping        = "ping"
+)
+
 type OpCommand struct {
 	Op    string   `json:"op"`
 	Args  []string `json:"args"`

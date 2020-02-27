@@ -34,7 +34,7 @@ func (i ImplSubscriber) GetConn() *Conn {
 type WebsocketManager struct {
 	mtx sync.RWMutex
 
-	SkipPushed   bool
+	SkipPushed   bool // skip the messages to be pushed to subscribers, used during startup
 	wsConn2Conn  map[WsInterface]*Conn
 	topics2Conns map[string]map[*Conn]struct{}
 }
@@ -50,6 +50,8 @@ func (w *WebsocketManager) SetSkipOption(isSkip bool) {
 	w.SkipPushed = isSkip
 }
 
+// Wrap this WsInterface with 'Conn' and return this 'Conn'
+// The map 'wsConn2Conn' ensures for the same WsInterface, we only wrap it once
 func (w *WebsocketManager) AddWsConn(c WsInterface) *Conn {
 	w.mtx.Lock()
 	defer w.mtx.Unlock()
@@ -62,18 +64,26 @@ func (w *WebsocketManager) AddWsConn(c WsInterface) *Conn {
 func (w *WebsocketManager) CloseWsConn(c *Conn) {
 	w.mtx.Lock()
 	defer w.mtx.Unlock()
-	for topic := range c.allTopics {
-		if conns, ok := w.topics2Conns[topic]; ok {
-			delete(conns, c)
-		}
+	//for topic := range c.allTopics {
+	//	if conns, ok := w.topics2Conns[topic]; ok {
+	//		delete(conns, c)
+	//	}
+	//}
+	for topic := range w.topics2Conns { //Why? Do these code look more clear?
+		delete(w.topics2Conns[topic], c)
 	}
-	delete(w.wsConn2Conn, c.Conn)
+	delete(w.wsConn2Conn, c.WsIfc)
 	if err := c.Close(); err != nil {
 		log.WithError(err).Error(fmt.Sprintf("close connection failed"))
 	}
 }
 
 func (w *WebsocketManager) AddSubscribeConn(c *Conn, topic string, params []string) error {
+	//The modification to w and c should be atomic, so we need two locks before modification
+	w.mtx.Lock()
+	defer w.mtx.Unlock()
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 	w.addConnWithTopic(topic, c)
 	c.addTopicAndParams(topic, params)
 	return nil
@@ -85,8 +95,6 @@ func (w *WebsocketManager) PushFullInfo(hub *Hub, c *Conn, topic string, params 
 }
 
 func (w *WebsocketManager) addConnWithTopic(topic string, conn *Conn) {
-	w.mtx.Lock()
-	defer w.mtx.Unlock()
 	if len(w.topics2Conns[topic]) == 0 {
 		w.topics2Conns[topic] = make(map[*Conn]struct{})
 	}
@@ -94,22 +102,25 @@ func (w *WebsocketManager) addConnWithTopic(topic string, conn *Conn) {
 }
 
 func (w *WebsocketManager) RemoveSubscribeConn(c *Conn, topic string, params []string) error {
+	//The modification to w and c should be atomic, so we need two locks before modification
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	w.mtx.Lock()
+	defer w.mtx.Unlock()
 	c.removeTopicAndParams(topic, params)
 	w.removeConnWithTopic(topic, c)
 	return nil
 }
 
 func (w *WebsocketManager) removeConnWithTopic(topic string, conn *Conn) {
-	w.mtx.Lock()
-	defer w.mtx.Unlock()
 	if conns, ok := w.topics2Conns[topic]; ok {
 		if _, ok := conns[conn]; ok {
-			if conn.isCleanedTopic(topic) {
+			if conn.topicHasEmptyParamSet(topic) {
 				delete(conns, conn)
 			}
 		}
 	}
-	if len(w.topics2Conns[topic]) == 0 {
+	if len(w.topics2Conns[topic]) == 0 { // this topic has no Conns
 		delete(w.topics2Conns, topic)
 	}
 }
@@ -150,6 +161,7 @@ func (w *WebsocketManager) GetTickerSubscribeInfo() []Subscriber {
 	return res
 }
 
+// The key of the result map is market
 func (w *WebsocketManager) GetCandleStickSubscribeInfo() map[string][]Subscriber {
 	w.mtx.RLock()
 	defer w.mtx.RUnlock()
@@ -175,6 +187,7 @@ func (w *WebsocketManager) GetCandleStickSubscribeInfo() map[string][]Subscriber
 	return res
 }
 
+// Get the Subscribers which doesn't need detail information
 func (w *WebsocketManager) getNoDetailSubscribe(topic string) map[string][]Subscriber {
 	w.mtx.RLock()
 	defer w.mtx.RUnlock()
@@ -191,6 +204,7 @@ func (w *WebsocketManager) getNoDetailSubscribe(topic string) map[string][]Subsc
 	return res
 }
 
+// The key of the result map is market
 func (w *WebsocketManager) GetDepthSubscribeInfo() map[string][]Subscriber {
 	w.mtx.RLock()
 	defer w.mtx.RUnlock()

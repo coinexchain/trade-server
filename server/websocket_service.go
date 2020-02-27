@@ -9,12 +9,6 @@ import (
 	"github.com/coinexchain/trade-server/core"
 )
 
-const (
-	Subscribe   = "subscribe"
-	Unsubscribe = "unsubscribe"
-	Ping        = "ping"
-)
-
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -31,11 +25,11 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 			return
 		}
 		wsConn := wsManager.AddWsConn(c)
-		go handleConn(hub, wsManager, wsConn)
+		go handleConnIncomingMsg(hub, wsManager, wsConn)
 	}
 }
 
-func handleConn(hub *core.Hub, wsManager *core.WebsocketManager, wsConn *core.Conn) {
+func handleConnIncomingMsg(hub *core.Hub, wsManager *core.WebsocketManager, wsConn *core.Conn) {
 	for {
 		var (
 			err     error

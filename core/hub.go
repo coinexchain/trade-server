@@ -21,9 +21,11 @@ const (
 	DumpInterval = 1000
 	DumpMinTime  = 10 * time.Minute
 	//These bytes are used as the first byte in key
-	CandleStickByte  = byte(0x10) //-, ([]byte(market), []byte{0, timespan}...), 0, currBlockTime, hub.sid, lastByte=0
-	DealByte         = byte(0x12) //-, []byte(market), 0, currBlockTime, hub.sid, lastByte=0
-	OrderByte        = byte(0x14) //-, []byte(addr), 0, currBlockTime, hub.sid, lastByte=CreateOrderEndByte,FillOrderEndByte,CancelOrderEndByte
+	//The format of different kinds of keys are listed below:
+	CandleStickByte = byte(0x10) //-, ([]byte(market), []byte{0, timespan}...), 0, currBlockTime, hub.sid, lastByte=0
+	DealByte        = byte(0x12) //-, []byte(market), 0, currBlockTime, hub.sid, lastByte=0
+	OrderByte       = byte(0x14) //-, []byte(addr), 0, currBlockTime, hub.sid, lastByte=
+	//                                                          CreateOrderEndByte,FillOrderEndByte,CancelOrderEndByte
 	BancorInfoByte   = byte(0x16) //-, []byte(market), 0, currBlockTime, hub.sid, lastByte=0
 	BancorTradeByte  = byte(0x18) //-, []byte(addr), 0, currBlockTime, hub.sid, lastByte=0
 	IncomeByte       = byte(0x1A) //-, []byte(addr), 0, currBlockTime, hub.sid, lastByte=0
@@ -40,10 +42,13 @@ const (
 	LockedByte       = byte(0x36) //-, []byte(addr), 0, currBlockTime, hub.sid, lastByte=0
 	DonationByte     = byte(0x38) //-, []byte{}, 0, currBlockTime, hub.sid, lastByte=0
 	DelistByte       = byte(0x3A) //-, []byte(market), 0, currBlockTime, hub.sid, lastByte=0
-	DelistsByte      = byte(0x3B)
+
+	// Used to store meta information
 	OffsetByte       = byte(0xF0)
 	DumpByte         = byte(0xF1)
 
+	// Used to indicate query types, not used in the keys in rocksdb
+	DelistsByte         = byte(0x3B)
 	CreateOrderOnlyByte = byte(0x40)
 	FillOrderOnlyByte   = byte(0x42)
 	CancelOrderOnlyByte = byte(0x44)
@@ -65,8 +70,10 @@ func (hub *Hub) getKeyFromBytesAndTime(firstByte byte, bz []byte, lastByte byte,
 	res = append(res, byte(len(bz)))
 	res = append(res, bz...)
 	res = append(res, byte(0))
-	res = append(res, int64ToBigEndianBytes(unixTime)...) //the block's time at which the KV pair is generated
-	res = append(res, int64ToBigEndianBytes(hub.sid)...)  // the serial ID for a KV pair
+	//the block's time at which the KV pair is generated
+	res = append(res, int64ToBigEndianBytes(unixTime)...)
+	// the serial ID for a KV pair
+	res = append(res, int64ToBigEndianBytes(hub.sid)...)
 	res = append(res, lastByte)
 	return res
 }
@@ -134,20 +141,26 @@ func (hub *Hub) getEventKeyWithSidAndTime(firstByte byte, addr string, time int6
 	return res
 }
 
+// Each market needs three managers
 type TripleManager struct {
 	sell *DepthManager
 	buy  *DepthManager
 	tkm  *TickerManager
 
-	isChangedInCurrBlock bool
+	// Depth and ticker data are updated in a batch mode, i.e., one block applies as a whole
+	// So these data can not be queried during the execution of a block
+	// We use this mutex to protect them from being queried if they are during updating of a block
 	mutex                sync.RWMutex
+	isChangedInCurrBlock bool
 }
 
+// One entry of message from kafka
 type msgEntry struct {
 	msgType string
 	bz      []byte
 }
 
+// A message to be sent to websocket subscriber
 type MsgToPush struct {
 	topic string
 	extra interface{}
@@ -168,26 +181,30 @@ type Hub struct {
 
 	// Updating logic and query logic share these variables
 	managersMap map[string]*TripleManager
-	tickerMap   map[string]*Ticker
+	tickerMap   map[string]*Ticker // it caches the tickers from managersMap[*].tkm
 
 	// interface to the subscribe functions
 	subMan      SubscribeManager
 	msgsChannel chan MsgToPush
 
+	// buffers the messages from kafka to execute them in batch
 	msgEntryList    []msgEntry
-	currBlockHeight int64
+	// skip the repeating messages after restart
 	skipHeight      bool
+	currBlockHeight int64
 
 	currBlockTime time.Time
 	lastBlockTime time.Time
 
+	// every 'blocksInterval' blocks, we push full depth data and change rocksdb's prune info
 	blocksInterval int64
+	// in rocksdb, we only keep the records which are in the most recent 'keepRecent' seconds
 	keepRecent     int64
 
 	// cache for NotificationSlash
 	slashSlice []*NotificationSlash
 
-	// dump
+	// dump hub's in-memory information to file, which can not be stored in rocksdb
 	partition    int32
 	offset       int64
 	dumpFlag     bool
@@ -196,6 +213,7 @@ type Hub struct {
 
 	stopped bool
 
+	// this member is set during handleNotificationTx and is used to fill
 	currTxHashID string
 }
 
@@ -227,6 +245,8 @@ func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval 
 		return
 	}
 	go func() {
+		// this goroutine monitors the progress of trade-server
+		// if it is stuck, panic here
 		oldSid := hub.sid
 		for {
 			time.Sleep(time.Duration(monitorInterval * int64(time.Second)))
@@ -239,57 +259,6 @@ func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval 
 	return
 }
 
-func (hub *Hub) pushMsgToWebsocket() {
-	for {
-		entry := <-hub.msgsChannel
-		switch entry.topic {
-		case BlockInfoKey:
-			hub.PushHeightInfoMsg(entry.bz)
-		case KlineKey:
-			vals := entry.extra.([]string)
-			hub.PushCandleMsg(vals[0], entry.bz, vals[1])
-		case LockedKey:
-			hub.PushLockedCoinsMsg(entry.extra.(string), entry.bz)
-		case IncomeKey:
-			hub.PushInComeMsg(entry.extra.(string), entry.bz)
-		case TxKey:
-			hub.PushTxMsg(entry.extra.(string), entry.bz)
-		case RedelegationKey:
-			hub.PushRedelegationMsg(entry.extra.(TimeAndSidWithAddr))
-		case UnbondingKey:
-			hub.PushUnbondingMsg(entry.extra.(TimeAndSidWithAddr))
-		case UnlockKey:
-			hub.PushUnlockMsg(entry.extra.(string), entry.bz)
-		case CommentKey:
-			hub.PushCommentMsg(entry.extra.(string), entry.bz)
-		case CreateOrderKey:
-			hub.PushCreateOrderInfoMsg(entry.extra.(string), entry.bz)
-		case FillOrderKey:
-			hub.PushFillOrderInfoMsg(entry.extra.(string), entry.bz)
-		case DealKey:
-			hub.PushDealInfoMsg(entry.extra.(string), entry.bz)
-		case CancelOrderKey:
-			hub.PushCancelOrderMsg(entry.extra.(string), entry.bz)
-		case BancorTradeKey:
-			hub.PushBancorTradeInfoMsg(entry.extra.(string), entry.bz)
-		case BancorDealKey:
-			hub.PushBancorDealMsg(entry.extra.(string), entry.bz)
-		case BancorKey:
-			hub.PushBancorMsg(entry.extra.(string), entry.bz)
-		case SlashKey:
-			hub.PushSlashMsg(entry.bz)
-		case TickerKey:
-			hub.PushTickerMsg(entry.bz)
-		case DepthFull:
-			hub.PushDepthFullMsg(entry.extra.(string))
-		case DepthKey:
-			hub.PushDepthMsg(entry.bz, entry.extra.(map[string][]byte))
-		case OptionKey:
-			hub.subMan.SetSkipOption(entry.extra.(bool))
-		}
-	}
-}
-
 func (hub *Hub) HasMarket(market string) bool {
 	_, ok := hub.managersMap[market]
 	return ok
@@ -297,10 +266,12 @@ func (hub *Hub) HasMarket(market string) bool {
 
 func (hub *Hub) AddMarket(market string) {
 	if strings.HasPrefix(market, "B:") {
+		// A bancor market has no depth information
 		hub.managersMap[market] = &TripleManager{
 			tkm: NewTickerManager(market),
 		}
 	} else {
+		// A normal market
 		hub.managersMap[market] = &TripleManager{
 			sell: NewDepthManager("sell"),
 			buy:  NewDepthManager("buy"),
@@ -317,6 +288,7 @@ func (hub *Hub) Log(s string) {
 //============================================================
 var _ Consumer = &Hub{}
 
+// Record the Msgs in msgEntryList and handle them in batch after commit
 func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 	hub.preHandleNewHeightInfo(msgType, bz)
 	if hub.skipHeight {
@@ -329,6 +301,7 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 	hub.handleMsg()
 }
 
+// analyze height_info to decide whether to skip
 func (hub *Hub) preHandleNewHeightInfo(msgType string, bz []byte) {
 	if msgType != "height_info" {
 		return
@@ -341,12 +314,15 @@ func (hub *Hub) preHandleNewHeightInfo(msgType string, bz []byte) {
 	}
 
 	if hub.currBlockHeight >= v.Height {
+		//The incoming msg is lagging behind hub's internal state
 		hub.skipHeight = true
 		hub.Log(fmt.Sprintf("Skipping Height %d<%d\n", hub.currBlockHeight, v.Height))
 	} else if hub.currBlockHeight+1 == v.Height {
+		//The incoming msg catches up hub's internal state
 		hub.currBlockHeight = v.Height
 		hub.skipHeight = false
 	} else {
+		//The incoming msg can not be higher than hub's internal state
 		hub.skipHeight = true
 		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", hub.currBlockHeight, v.Height))
 		panic("here")
@@ -404,6 +380,7 @@ func (hub *Hub) handleMsg() {
 			hub.Log(fmt.Sprintf("Unknown Message Type:%s", entry.msgType))
 		}
 	}
+	// clear the recorded Msgs
 	hub.msgEntryList = hub.msgEntryList[:0]
 }
 
@@ -448,13 +425,6 @@ func (hub *Hub) pruneDB(height int64, timestamp uint64) {
 	}
 }
 
-func (hub *Hub) PushHeightInfoMsg(bz []byte) {
-	infos := hub.subMan.GetHeightSubscribeInfo()
-	for _, ss := range infos {
-		hub.subMan.PushHeight(ss, bz)
-	}
-}
-
 func (hub *Hub) beginForCandleSticks() {
 	candleSticks := hub.csMan.NewBlock(hub.currBlockTime)
 	var triman *TripleManager
@@ -493,22 +463,6 @@ func (hub *Hub) beginForCandleSticks() {
 	}
 }
 
-// TODO. Add test
-func (hub *Hub) PushCandleMsg(market string, bz []byte, timeSpan string) {
-	var targets []Subscriber
-	info := hub.subMan.GetCandleStickSubscribeInfo()
-	if info != nil {
-		targets = info[market]
-	}
-	for _, target := range targets {
-		ts, ok := target.Detail().(string)
-		if !ok || ts != timeSpan {
-			continue
-		}
-		hub.subMan.PushCandleStick(target, bz)
-	}
-}
-
 func formatCandleStick(info *CandleStick) []byte {
 	bz, err := json.Marshal(info)
 	if err != nil {
@@ -541,21 +495,11 @@ func (hub *Hub) handleLockedCoinsMsg(bz []byte) {
 	if err != nil {
 		hub.Log("Err in Unmarshal LockedSendMsg")
 	}
-	//v.TxHash = hub.currTxHashID
 	bz = appendHashID(bz, hub.currTxHashID)
 	key := hub.getLockedKey(v.ToAddress)
 	hub.batch.Set(key, bz)
 	hub.sid++
 	hub.msgsChannel <- MsgToPush{topic: LockedKey, bz: bz, extra: v.ToAddress}
-}
-
-func (hub *Hub) PushLockedCoinsMsg(addr string, bz []byte) {
-	infos := hub.subMan.GetLockedSubscribeInfo()
-	if conns, ok := infos[addr]; ok {
-		for _, c := range conns {
-			hub.subMan.PushLockedSendMsg(c, bz)
-		}
-	}
 }
 
 func (hub *Hub) analyzeMessages(MsgTypes []string, TxJSON string) {
@@ -685,26 +629,6 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 	}
 }
 
-func (hub *Hub) PushTxMsg(addr string, bz []byte) {
-	info := hub.subMan.GetTxSubscribeInfo()
-	targets, ok := info[addr]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushTx(target, bz)
-		}
-	}
-}
-
-func (hub *Hub) PushInComeMsg(receiver string, bz []byte) {
-	info := hub.subMan.GetIncomeSubscribeInfo()
-	targets, ok := info[receiver]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushIncome(target, bz)
-		}
-	}
-}
-
 func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
 	var v NotificationBeginRedelegation
 	err := json.Unmarshal(bz, &v)
@@ -712,7 +636,6 @@ func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
 		hub.Log("Error in Unmarshal NotificationBeginRedelegation")
 		return
 	}
-	//v.TxHash = hub.currTxHashID
 	bz = appendHashID(bz, hub.currTxHashID)
 	t, err := time.Parse(time.RFC3339, v.CompletionTime)
 	if err != nil {
@@ -732,7 +655,6 @@ func (hub *Hub) handleNotificationBeginUnbonding(bz []byte) {
 		hub.Log("Error in Unmarshal NotificationBeginUnbonding")
 		return
 	}
-	//v.TxHash = hub.currTxHashID
 	bz = appendHashID(bz, hub.currTxHashID)
 	t, err := time.Parse(time.RFC3339, v.CompletionTime)
 	if err != nil {
@@ -762,27 +684,6 @@ type TimeAndSidWithAddr struct {
 	addr     string
 }
 
-func (hub *Hub) PushRedelegationMsg(param TimeAndSidWithAddr) {
-	info := hub.subMan.GetRedelegationSubscribeInfo()
-	targets, ok := info[param.addr]
-	if ok {
-		// query the redelegations whose completion time is between current block and last block
-		end := hub.getEventKeyWithSidAndTime(RedelegationByte, param.addr, param.currTime, param.sid)
-		start := hub.getEventKeyWithSidAndTime(RedelegationByte, param.addr, param.lastTime-1, param.sid)
-		hub.dbMutex.RLock()
-		iter := hub.db.ReverseIterator(start, end)
-		defer func() {
-			iter.Close()
-			hub.dbMutex.RUnlock()
-		}()
-		for ; iter.Valid(); iter.Next() {
-			for _, target := range targets {
-				hub.subMan.PushRedelegation(target, iter.Value())
-			}
-		}
-	}
-}
-
 func (hub *Hub) handleNotificationCompleteUnbonding(bz []byte) {
 	var v NotificationCompleteUnbonding
 	err := json.Unmarshal(bz, &v)
@@ -792,27 +693,6 @@ func (hub *Hub) handleNotificationCompleteUnbonding(bz []byte) {
 	}
 	hub.msgsChannel <- MsgToPush{topic: UnbondingKey, bz: bz, extra: TimeAndSidWithAddr{addr: v.Delegator, sid: hub.sid,
 		currTime: hub.currBlockTime.Unix(), lastTime: hub.lastBlockTime.Unix()}}
-}
-
-func (hub *Hub) PushUnbondingMsg(param TimeAndSidWithAddr) {
-	info := hub.subMan.GetUnbondingSubscribeInfo()
-	targets, ok := info[param.addr]
-	if ok {
-		// query the unbondings whose completion time is between current block and last block
-		end := hub.getEventKeyWithSidAndTime(UnbondingByte, param.addr, param.currTime, param.sid)
-		start := hub.getEventKeyWithSidAndTime(UnbondingByte, param.addr, param.lastTime-1, param.sid)
-		hub.dbMutex.RLock()
-		iter := hub.db.ReverseIterator(start, end)
-		defer func() {
-			iter.Close()
-			hub.dbMutex.RUnlock()
-		}()
-		for ; iter.Valid(); iter.Next() {
-			for _, target := range targets {
-				hub.subMan.PushUnbonding(target, iter.Value())
-			}
-		}
-	}
 }
 
 func (hub *Hub) handleNotificationUnlock(bz []byte) {
@@ -829,16 +709,6 @@ func (hub *Hub) handleNotificationUnlock(bz []byte) {
 	hub.msgsChannel <- MsgToPush{topic: UnlockKey, bz: bz, extra: addr}
 }
 
-func (hub *Hub) PushUnlockMsg(addr string, bz []byte) {
-	info := hub.subMan.GetUnlockSubscribeInfo()
-	targets, ok := info[addr]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushUnlock(target, bz)
-		}
-	}
-}
-
 func (hub *Hub) handleTokenComment(bz []byte) {
 	var v TokenComment
 	err := json.Unmarshal(bz, &v)
@@ -846,22 +716,11 @@ func (hub *Hub) handleTokenComment(bz []byte) {
 		hub.Log("Error in Unmarshal TokenComment")
 		return
 	}
-	//v.TxHash = hub.currTxHashID
 	bz = appendHashID(bz, hub.currTxHashID)
 	key := hub.getCommentKey(v.Token)
 	hub.batch.Set(key, bz)
 	hub.sid++
 	hub.msgsChannel <- MsgToPush{topic: CommentKey, bz: bz, extra: v.Token}
-}
-
-func (hub *Hub) PushCommentMsg(token string, bz []byte) {
-	info := hub.subMan.GetCommentSubscribeInfo()
-	targets, ok := info[token]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushComment(target, bz)
-		}
-	}
 }
 
 func (hub *Hub) handleCreateOrderInfo(bz []byte) {
@@ -871,7 +730,6 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 		hub.Log("Error in Unmarshal CreateOrderInfo")
 		return
 	}
-	//v.TxHash = hub.currTxHashID
 	bz = appendHashID(bz, hub.currTxHashID)
 	// Add a new market which is seen for the first time
 	if !hub.HasMarket(v.TradingPair) {
@@ -898,17 +756,6 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 		triman.sell.DeltaChange(v.Price, amount)
 	} else {
 		triman.buy.DeltaChange(v.Price, amount)
-	}
-}
-
-func (hub *Hub) PushCreateOrderInfoMsg(addr string, bz []byte) {
-	//Push to subscribers
-	info := hub.subMan.GetOrderSubscribeInfo()
-	targets, ok := info[addr]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushCreateOrder(target, bz)
-		}
 	}
 }
 
@@ -968,27 +815,6 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 	}
 }
 
-func (hub *Hub) PushFillOrderInfoMsg(addr string, bz []byte) {
-	//Push to subscribers
-	info := hub.subMan.GetOrderSubscribeInfo()
-	targets, ok := info[addr]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushFillOrder(target, bz)
-		}
-	}
-}
-
-func (hub *Hub) PushDealInfoMsg(tradingPair string, bz []byte) {
-	info := hub.subMan.GetDealSubscribeInfo()
-	targets, ok := info[tradingPair]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushDeal(target, bz)
-		}
-	}
-}
-
 func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 	var v CancelOrderInfo
 	err := json.Unmarshal(bz, &v)
@@ -997,7 +823,6 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 		return
 	}
 	if v.DelReason == "Manually cancel the order" {
-		//v.TxHash = hub.currTxHashID
 		bz = appendHashID(bz, hub.currTxHashID)
 	}
 	// Add a new market which is seen for the first time
@@ -1031,16 +856,6 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 	hub.msgsChannel <- MsgToPush{topic: CancelOrderKey, bz: bz, extra: accAndSeq[0]}
 }
 
-func (hub *Hub) PushCancelOrderMsg(addr string, bz []byte) {
-	info := hub.subMan.GetOrderSubscribeInfo()
-	targets, ok := info[addr]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushCancelOrder(target, bz)
-		}
-	}
-}
-
 func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 	var v MsgBancorTradeInfoForKafka
 	err := json.Unmarshal(bz, &v)
@@ -1048,7 +863,6 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 		hub.Log("Error in Unmarshal MsgBancorTradeInfoForKafka")
 		return
 	}
-	//v.TxHash = hub.currTxHashID
 	bz = appendHashID(bz, hub.currTxHashID)
 	//Create market if not exist
 	marketName := "B:" + v.Stock + "/" + v.Money
@@ -1072,26 +886,6 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 	hub.msgsChannel <- MsgToPush{topic: BancorDealKey, bz: bz, extra: v.Stock + "/" + v.Money}
 }
 
-func (hub *Hub) PushBancorTradeInfoMsg(addr string, bz []byte) {
-	info := hub.subMan.GetBancorTradeSubscribeInfo()
-	targets, ok := info[addr]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushBancorTrade(target, bz)
-		}
-	}
-}
-
-func (hub *Hub) PushBancorDealMsg(tradingPair string, bz []byte) {
-	info := hub.subMan.GetBancorDealSubscribeInfo()
-	targets, ok := info[tradingPair]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushBancorDeal(target, bz)
-		}
-	}
-}
-
 func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
 	var v MsgBancorInfoForKafka
 	err := json.Unmarshal(bz, &v)
@@ -1110,16 +904,6 @@ func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
 	hub.sid++
 	//Push to subscribers
 	hub.msgsChannel <- MsgToPush{topic: BancorKey, bz: bz, extra: v.Stock + "/" + v.Money}
-}
-
-func (hub *Hub) PushBancorMsg(tradingPair string, bz []byte) {
-	info := hub.subMan.GetBancorInfoSubscribeInfo()
-	targets, ok := info[tradingPair]
-	if ok {
-		for _, target := range targets {
-			hub.subMan.PushBancorInfo(target, bz)
-		}
-	}
 }
 
 func (hub *Hub) commitForSlash() {
@@ -1143,16 +927,10 @@ func (hub *Hub) commitForSlash() {
 	hub.slashSlice = hub.slashSlice[:0]
 }
 
-func (hub *Hub) PushSlashMsg(bz []byte) {
-	infos := hub.subMan.GetSlashSubscribeInfo()
-	for _, ss := range infos {
-		hub.subMan.PushSlash(ss, bz)
-	}
-}
-
 func (hub *Hub) commitForTicker() {
 	tkMap := make(map[string]*Ticker)
-	isNewMinute := hub.currBlockTime.UTC().Minute() != hub.lastBlockTime.UTC().Minute() || hub.currBlockTime.Unix()-hub.lastBlockTime.Unix() > 60
+	isNewMinute := hub.currBlockTime.UTC().Minute() != hub.lastBlockTime.UTC().Minute() ||
+		hub.currBlockTime.Unix()-hub.lastBlockTime.Unix() > 60
 	if !isNewMinute {
 		return
 	}
@@ -1174,30 +952,6 @@ func (hub *Hub) commitForTicker() {
 	hub.tickerMapMutex.Unlock()
 }
 
-// TODO, Add test for map marshal and unmarshal
-func (hub *Hub) PushTickerMsg(bz []byte) {
-	tkMap := make(map[string]*Ticker)
-	err := json.Unmarshal(bz, &tkMap)
-	if err != nil {
-		hub.Log(err.Error())
-		return
-	}
-
-	infos := hub.subMan.GetTickerSubscribeInfo()
-	for _, subscriber := range infos {
-		marketList := subscriber.Detail().(map[string]struct{})
-		tickerList := make([]*Ticker, 0, len(marketList))
-		for market := range marketList {
-			if ticker, ok := tkMap[market]; ok {
-				tickerList = append(tickerList, ticker)
-			}
-		}
-		if len(tickerList) != 0 {
-			hub.subMan.PushTicker(subscriber, tickerList)
-		}
-	}
-}
-
 func (hub *Hub) pushDepthFull() {
 	if hub.currBlockHeight%hub.blocksInterval != 0 {
 		return
@@ -1207,21 +961,6 @@ func (hub *Hub) pushDepthFull() {
 			continue
 		}
 		hub.msgsChannel <- MsgToPush{topic: DepthFull, extra: market}
-	}
-}
-
-// TODO, will check topic
-func (hub *Hub) PushDepthFullMsg(market string) {
-	info := hub.subMan.GetDepthSubscribeInfo()
-	targets, ok := info[market]
-	if !ok {
-		return
-	}
-	for _, target := range targets {
-		level := target.Detail().(string)
-		if bz, err := hub.getDepthFullData(market, level, MaxCount); err == nil {
-			hub.subMan.PushDepthFullMsg(target, bz)
-		}
 	}
 }
 
@@ -1278,25 +1017,6 @@ func (hub *Hub) commitForDepth() {
 			levelsData["all"] = bz
 		}
 		hub.msgsChannel <- MsgToPush{topic: DepthKey, bz: []byte(market), extra: levelsData}
-	}
-}
-
-// TODO, will replace string with interface
-func (hub *Hub) PushDepthMsg(data []byte, levelsData map[string][]byte) {
-	market := string(data)
-	info := hub.subMan.GetDepthSubscribeInfo()
-	targets, ok := info[market]
-	if ok {
-		for _, target := range targets {
-			level := target.Detail().(string)
-			if len(levelsData[level]) != 0 {
-				if level == "all" {
-					hub.subMan.PushDepthWithChange(target, levelsData[level])
-				} else {
-					hub.subMan.PushDepthWithDelta(target, levelsData[level])
-				}
-			}
-		}
 	}
 }
 
@@ -1415,7 +1135,8 @@ func (hub *Hub) QueryCandleStick(market string, timespan byte, time int64, sid i
 
 //=========
 
-func (hub *Hub) QueryOrder(account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
+func (hub *Hub) QueryOrder(account string, time int64, sid int64, count int) (
+	data []json.RawMessage, tags []byte, timesid []int64) {
 	return hub.query(false, OrderByte, []byte(account), time, sid, count, nil)
 }
 
@@ -1495,7 +1216,8 @@ func (hub *Hub) QueryDelists(time int64, sid int64, count int) (data []json.RawM
 
 // --------------
 
-func (hub *Hub) QueryOrderAboutToken(tag, token, account string, time int64, sid int64, count int) (data []json.RawMessage, tags []byte, timesid []int64) {
+func (hub *Hub) QueryOrderAboutToken(tag, token, account string, time int64, sid int64, count int) (
+	data []json.RawMessage, tags []byte, timesid []int64) {
 	firstByte := OrderByte
 	if tag == CreateOrderStr {
 		firstByte = CreateOrderOnlyByte
@@ -1518,71 +1240,81 @@ func (hub *Hub) QueryOrderAboutToken(tag, token, account string, time int64, sid
 
 }
 
-func (hub *Hub) QueryLockedAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+func (hub *Hub) QueryLockedAboutToken(token, account string, time int64, sid int64, count int) (
+	data []json.RawMessage, timesid []int64) {
 	if token == "" {
 		data, _, timesid = hub.query(false, LockedByte, []byte(account), time, sid, count, nil)
 		return
 	}
-	data, _, timesid = hub.query(false, LockedByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-		s := fmt.Sprintf("\"denom\":\"%s\",\"amount\":", token)
-		return strings.Index(string(entry), s) > 0
-	})
+	data, _, timesid = hub.query(false, LockedByte, []byte(account),
+		time, sid, count, func(tag byte, entry []byte) bool {
+			s := fmt.Sprintf("\"denom\":\"%s\",\"amount\":", token)
+			return strings.Index(string(entry), s) > 0
+		})
 	return
 
 }
 
-func (hub *Hub) QueryBancorTradeAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+func (hub *Hub) QueryBancorTradeAboutToken(token, account string, time int64, sid int64, count int) (
+	data []json.RawMessage, timesid []int64) {
 	if token == "" {
 		data, _, timesid = hub.query(false, BancorTradeByte, []byte(account), time, sid, count, nil)
 		return
 	}
-	data, _, timesid = hub.query(false, BancorTradeByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-		s1 := fmt.Sprintf("\"money\":\"%s\"", token)
-		s2 := fmt.Sprintf("\"stock\":\"%s\"", token)
-		return strings.Index(string(entry), s1) > 0 || strings.Index(string(entry), s2) > 0
-	})
+	data, _, timesid = hub.query(false, BancorTradeByte, []byte(account), time, sid,
+		count, func(tag byte, entry []byte) bool {
+			s1 := fmt.Sprintf("\"money\":\"%s\"", token)
+			s2 := fmt.Sprintf("\"stock\":\"%s\"", token)
+			return strings.Index(string(entry), s1) > 0 || strings.Index(string(entry), s2) > 0
+		})
 	return
 
 }
 
-func (hub *Hub) QueryUnlockAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+func (hub *Hub) QueryUnlockAboutToken(token, account string, time int64, sid int64, count int) (
+	data []json.RawMessage, timesid []int64) {
 	if token == "" {
 		data, _, timesid = hub.query(false, UnlockByte, []byte(account), time, sid, count, nil)
 		return
 	}
-	data, _, timesid = hub.query(false, UnlockByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-		entryStr := string(entry)
-		ending := strings.Index(entryStr, "\"locked_coins\":")
-		if ending < 0 {
-			return false
-		}
-		s := fmt.Sprintf("\"denom\":\"%s\",\"amount\":", token)
-		return strings.Index(entryStr[:ending], s) > 0
-	})
+	data, _, timesid = hub.query(false, UnlockByte, []byte(account), time, sid, count,
+		func(tag byte, entry []byte) bool {
+			entryStr := string(entry)
+			ending := strings.Index(entryStr, "\"locked_coins\":")
+			if ending < 0 {
+				return false
+			}
+			s := fmt.Sprintf("\"denom\":\"%s\",\"amount\":", token)
+			return strings.Index(entryStr[:ending], s) > 0
+		})
 	return
 
 }
 
-func (hub *Hub) QueryIncomeAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+func (hub *Hub) QueryIncomeAboutToken(token, account string, time int64, sid int64, count int) (
+	data []json.RawMessage, timesid []int64) {
 	if token == "" {
 		data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count, nil)
 		return
 	}
-	data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-		return strings.Contains(string(entry), "|"+token+"|")
-	})
+	data, _, timesid = hub.query(true, IncomeByte, []byte(account), time, sid, count,
+		func(tag byte, entry []byte) bool {
+			return strings.Contains(string(entry), "|"+token+"|")
+		})
 	return
 
 }
 
-func (hub *Hub) QueryTxAboutToken(token, account string, time int64, sid int64, count int) (data []json.RawMessage, timesid []int64) {
+func (hub *Hub) QueryTxAboutToken(token, account string, time int64, sid int64, count int) (
+	data []json.RawMessage, timesid []int64) {
 	if token == "" {
 		data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count, nil)
 		return
 	}
-	data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count, func(tag byte, entry []byte) bool {
-		return strings.Contains(string(entry), "|"+token+"|")
-	})
+	data, _, timesid = hub.query(true, TxByte, []byte(account), time, sid, count,
+		func(tag byte, entry []byte) bool {
+			return strings.Contains(string(entry), "|"+token+"|")
+		})
 	return
 }
 
@@ -1631,7 +1363,6 @@ func (hub *Hub) query(fetchTxDetail bool, firstByteIn byte, bz []byte, time int6
 			key = append(key, timeBytes...)
 			entry = hub.db.Get(key)
 		}
-		//if firstByteIn
 		if firstByteIn == DelistsByte {
 			data = append(data, iKey[2:iKey[1]+2]) // length = iKey[1], market name = iKey[2:length+2]
 		}
@@ -1764,13 +1495,6 @@ func (hub *Hub) commitForDump() {
 
 	hub.lastDumpTime = time.Now()
 	log.Infof("dump data at offset: %v", hub.offset)
-}
-
-func getDumpKey() []byte {
-	key := make([]byte, 2)
-	key[0] = DumpByte
-	key[1] = DumpVersion
-	return key
 }
 
 //===================================

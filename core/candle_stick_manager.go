@@ -20,6 +20,8 @@ func (manager *CandleStickManager) AddMarket(market string) {
 	manager.CsrMap[market] = NewCandleStickRecord(market)
 }
 
+// When a new blocks come at 't', flush out all the finished candle sticks util 't'
+// The recorded manager.LastBlockTime will be used as the EndingTime of candle sticks
 func (manager *CandleStickManager) NewBlock(t time.Time) []CandleStick {
 	res := make([]CandleStick, 0, 100)
 	isNewDay := t.UTC().Day() != manager.LastBlockTime.UTC().Day() || t.Unix()-manager.LastBlockTime.Unix() > 60*60*24
