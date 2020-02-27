@@ -147,3 +147,12 @@ func (dm *DepthManager) GetLowest(n int) []*PricePoint {
 	}
 	return res
 }
+
+func (dm *DepthManager) Clone() *DepthManager {
+	manager := NewDepthManager(dm.Side)
+	dm.ppMap.All(func(key interface{}, value interface{}) bool {
+		manager.ppMap.Put(key, value)
+		return true
+	})
+	return manager
+}
