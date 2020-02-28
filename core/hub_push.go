@@ -1,7 +1,5 @@
 package core
 
-import "encoding/json"
-
 func (hub *Hub) pushMsgToWebsocket() {
 	for {
 		entry := <-hub.msgsChannel
@@ -42,7 +40,7 @@ func (hub *Hub) pushMsgToWebsocket() {
 		case SlashKey:
 			hub.PushSlashMsg(entry.bz)
 		case TickerKey:
-			hub.PushTickerMsg(entry.bz)
+			hub.PushTickerMsg(entry.extra) // TODO. will modify param type
 		case DepthFull:
 			hub.PushDepthFullMsg(entry.extra.(string))
 		case DepthKey:
@@ -246,15 +244,8 @@ func (hub *Hub) PushSlashMsg(bz []byte) {
 	}
 }
 
-// TODO, Add test for map marshal and unmarshal
-func (hub *Hub) PushTickerMsg(bz []byte) {
-	tkMap := make(map[string]*Ticker)
-	err := json.Unmarshal(bz, &tkMap)
-	if err != nil {
-		hub.Log(err.Error())
-		return
-	}
-
+func (hub *Hub) PushTickerMsg(msg interface{}) {
+	tkMap := msg.(map[string]*Ticker)
 	infos := hub.subMan.GetTickerSubscribeInfo()
 	for _, subscriber := range infos {
 		marketList := subscriber.Detail().(map[string]struct{})
@@ -303,4 +294,3 @@ func (hub *Hub) PushDepthMsg(data []byte, levelsData map[string][]byte) {
 		}
 	}
 }
-

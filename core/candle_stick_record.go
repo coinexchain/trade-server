@@ -12,10 +12,10 @@ import (
 type CandleStickRecord struct {
 	MinuteCS         [60]baseCandleStick `json:"minute_cs"`
 	HourCS           [24]baseCandleStick `json:"hour_cs"`
-	LastUpdateTime   time.Time           `json:"last_update"`         //The last time that 'Update' was invoked
-	LastMinuteCSTime int64               `json:"last_minute_cs_time"` // the last time a non-empty minute candle stick was generated
-	LastHourCSTime   int64               `json:"last_hour_cs_time"`   // the last time a non-empty hour candle stick was generated
-	LastDayCSTime    int64               `json:"last_day_cs_time"`    // the last time a non-empty day candle stick was generated
+	LastUpdateTime   time.Time           `json:"last_update"`         //the last time that 'Update' was invoked
+	LastMinuteCSTime int64               `json:"last_minute_cs_time"` //the last time a non-empty minute candle stick was generated
+	LastHourCSTime   int64               `json:"last_hour_cs_time"`   //the last time a non-empty hour candle stick was generated
+	LastDayCSTime    int64               `json:"last_day_cs_time"`    //the last time a non-empty day candle stick was generated
 	LastMinutePrice  sdk.Dec             `json:"last_minute_price"`   //the last price of a non-empty minute candle stick
 	LastHourPrice    sdk.Dec             `json:"last_hour_price"`     //the last price of a non-empty hour candle stick
 	LastDayPrice     sdk.Dec             `json:"last_day_price"`      //the last price of a non-empty day candle stick
@@ -34,19 +34,6 @@ func NewCandleStickRecord(market string) *CandleStickRecord {
 	res.LastHourPrice = sdk.ZeroDec()
 	res.LastDayPrice = sdk.ZeroDec()
 	return res
-}
-
-func (csr *CandleStickRecord) newCandleStick(cs baseCandleStick, endTime int64, span byte) CandleStick {
-	return CandleStick{
-		OpenPrice:      cs.OpenPrice,
-		ClosePrice:     cs.ClosePrice,
-		HighPrice:      cs.HighPrice,
-		LowPrice:       cs.LowPrice,
-		TotalDeal:      cs.TotalDeal,
-		EndingUnixTime: endTime,
-		TimeSpan:       getSpanStrFromSpan(span),
-		Market:         csr.Market,
-	}
 }
 
 // When a new block comes, flush the pending candle sticks
@@ -140,6 +127,19 @@ func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, en
 		}
 	}
 	return res
+}
+
+func (csr *CandleStickRecord) newCandleStick(cs baseCandleStick, endTime int64, span byte) CandleStick {
+	return CandleStick{
+		OpenPrice:      cs.OpenPrice,
+		ClosePrice:     cs.ClosePrice,
+		HighPrice:      cs.HighPrice,
+		LowPrice:       cs.LowPrice,
+		TotalDeal:      cs.TotalDeal,
+		EndingUnixTime: endTime,
+		TimeSpan:       getSpanStrFromSpan(span),
+		Market:         csr.Market,
+	}
 }
 
 // Update when there is a new deal

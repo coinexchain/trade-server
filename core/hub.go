@@ -943,11 +943,7 @@ func (hub *Hub) commitForTicker() {
 			tkMap[ticker.Market] = ticker
 		}
 	}
-	bz, err := json.Marshal(tkMap)
-	if err != nil {
-		return
-	}
-	hub.msgsChannel <- MsgToPush{topic: TickerKey, bz: bz}
+	hub.msgsChannel <- MsgToPush{topic: TickerKey, extra: tkMap}
 	hub.tickerMapMutex.Lock()
 	defer hub.tickerMapMutex.Unlock()
 	for market, ticker := range tkMap {
