@@ -44,8 +44,8 @@ const (
 	DelistByte       = byte(0x3A) //-, []byte(market), 0, currBlockTime, hub.sid, lastByte=0
 
 	// Used to store meta information
-	OffsetByte = byte(0xF0)
-	DumpByte   = byte(0xF1)
+	OffsetByte       = byte(0xF0)
+	DumpByte         = byte(0xF1)
 
 	// Used to indicate query types, not used in the keys in rocksdb
 	DelistsByte         = byte(0x3B)
@@ -143,31 +143,15 @@ func (hub *Hub) getEventKeyWithSidAndTime(firstByte byte, addr string, time int6
 
 // Each market needs three managers
 type TripleManager struct {
-	sell       *DepthManager
-	buy        *DepthManager
-	steadyBuy  *DepthManager
-	steadySell *DepthManager
-	mutex      sync.RWMutex
+	sell *DepthManager
+	buy  *DepthManager
+	tkm  *TickerManager
 
-	tkm                  *TickerManager
+	// Depth and ticker data are updated in a batch mode, i.e., one block applies as a whole
+	// So these data can not be queried during the execution of a block
+	// We use this mutex to protect them from being queried if they are during updating of a block
+	mutex                sync.RWMutex
 	isChangedInCurrBlock bool
-}
-
-func (t *TripleManager) Buy() *DepthManager {
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
-	return t.steadyBuy
-}
-func (t *TripleManager) Sell() *DepthManager {
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
-	return t.steadySell
-}
-func (t *TripleManager) StoreUpdatedData() {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
-	t.steadySell = t.sell.Clone()
-	t.steadyBuy = t.buy.Clone()
 }
 
 // One entry of message from kafka
@@ -204,7 +188,7 @@ type Hub struct {
 	msgsChannel chan MsgToPush
 
 	// buffers the messages from kafka to execute them in batch
-	msgEntryList []msgEntry
+	msgEntryList    []msgEntry
 	// skip the repeating messages after restart
 	skipHeight      bool
 	currBlockHeight int64
@@ -215,7 +199,7 @@ type Hub struct {
 	// every 'blocksInterval' blocks, we push full depth data and change rocksdb's prune info
 	blocksInterval int64
 	// in rocksdb, we only keep the records which are in the most recent 'keepRecent' seconds
-	keepRecent int64
+	keepRecent     int64
 
 	// cache for NotificationSlash
 	slashSlice []*NotificationSlash
@@ -246,15 +230,17 @@ func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval 
 		slashSlice:     make([]*NotificationSlash, 0, 10),
 		partition:      0,
 		offset:         0,
-		stopped:        false,
 		dumpFlag:       false,
 		lastDumpTime:   time.Now(),
+		stopped:        false,
 		msgEntryList:   make([]msgEntry, 0, 1000),
 		blocksInterval: interval,
 		keepRecent:     keepRecent,
 		msgsChannel:    make(chan MsgToPush, 10000),
 	}
+
 	go hub.pushMsgToWebsocket()
+
 	if monitorInterval <= 0 {
 		return
 	}
@@ -287,11 +273,9 @@ func (hub *Hub) AddMarket(market string) {
 	} else {
 		// A normal market
 		hub.managersMap[market] = &TripleManager{
-			sell:       NewDepthManager("sell"),
-			buy:        NewDepthManager("buy"),
-			tkm:        NewTickerManager(market),
-			steadySell: NewDepthManager("sell"),
-			steadyBuy:  NewDepthManager("buy"),
+			sell: NewDepthManager("sell"),
+			buy:  NewDepthManager("buy"),
+			tkm:  NewTickerManager(market),
 		}
 	}
 	hub.csMan.AddMarket(market)
@@ -763,7 +747,9 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 		return
 	}
 	amount := sdk.NewInt(v.Quantity)
+
 	if !triman.isChangedInCurrBlock {
+		triman.mutex.Lock()
 		triman.isChangedInCurrBlock = true
 	}
 	if v.Side == SELL {
@@ -818,6 +804,7 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 		return
 	}
 	if !triman.isChangedInCurrBlock {
+		triman.mutex.Lock()
 		triman.isChangedInCurrBlock = true
 	}
 	negStock := sdk.NewInt(-v.CurrStock)
@@ -856,6 +843,7 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 		return
 	}
 	if !triman.isChangedInCurrBlock {
+		triman.mutex.Lock()
 		triman.isChangedInCurrBlock = true
 	}
 	negStock := sdk.NewInt(-v.LeftStock)
@@ -1000,13 +988,14 @@ func (hub *Hub) commitForDepth() {
 		if strings.HasPrefix(market, "B:") {
 			continue
 		}
+
 		if triman.isChangedInCurrBlock {
 			triman.isChangedInCurrBlock = false
+			triman.mutex.Unlock()
 		} else {
 			continue
 		}
 
-		triman.StoreUpdatedData()
 		depthDeltaSell, mergeDeltaSell := triman.sell.EndBlock()
 		depthDeltaBuy, mergeDeltaBuy := triman.buy.EndBlock()
 		if len(depthDeltaSell) == 0 && len(depthDeltaBuy) == 0 {
@@ -1041,25 +1030,17 @@ func (hub *Hub) commit() {
 	hub.commitForTicker()
 	hub.commitForDepth()
 	hub.pushDepthFull()
-	hub.dumpState()
+	hub.dumpFlagLock.Lock()
+	if hub.dumpFlag {
+		hub.commitForDump()
+		hub.dumpFlag = false
+	}
+	hub.dumpFlagLock.Unlock()
 	hub.dbMutex.Lock()
 	hub.batch.WriteSync()
 	hub.batch.Close()
 	hub.batch = hub.db.NewBatch()
 	hub.dbMutex.Unlock()
-}
-
-func (hub *Hub) dumpState() {
-	hub.dumpFlagLock.Lock()
-	flag := hub.dumpFlag
-	if hub.dumpFlag {
-		hub.dumpFlag = false
-	}
-	hub.dumpFlagLock.Unlock()
-
-	if flag {
-		hub.commitForDump()
-	}
 }
 
 //============================================================
@@ -1113,8 +1094,10 @@ func (hub *Hub) QueryDepth(market string, count int) (sell []*PricePoint, buy []
 		return
 	}
 	tripleMan := hub.managersMap[market]
-	sell = tripleMan.Sell().GetLowest(count)
-	buy = tripleMan.Buy().GetHighest(count)
+	tripleMan.mutex.RLock()
+	sell = tripleMan.sell.GetLowest(count)
+	buy = tripleMan.buy.GetHighest(count)
+	tripleMan.mutex.RUnlock()
 	return
 }
 
@@ -1562,5 +1545,4 @@ func (hub *Hub) Close() {
 	hub.db.Close()
 	hub.stopped = true
 	hub.dbMutex.Unlock()
-
 }
