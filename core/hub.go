@@ -153,16 +153,12 @@ type TripleManager struct {
 	isChangedInCurrBlock bool
 }
 
-func (t *TripleManager) Buy() *DepthManager {
+func (t *TripleManager) GetBuyAndSellManager() (buy, sell *DepthManager) {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
-	return t.steadyBuy
+	return t.steadyBuy, t.steadySell
 }
-func (t *TripleManager) Sell() *DepthManager {
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
-	return t.steadySell
-}
+
 func (t *TripleManager) StoreUpdatedData() {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -1113,8 +1109,9 @@ func (hub *Hub) QueryDepth(market string, count int) (sell []*PricePoint, buy []
 		return
 	}
 	tripleMan := hub.managersMap[market]
-	sell = tripleMan.Sell().GetLowest(count)
-	buy = tripleMan.Buy().GetHighest(count)
+	buyM, sellM := tripleMan.GetBuyAndSellManager()
+	buy = buyM.GetHighest(count)
+	sell = sellM.GetLowest(count)
 	return
 }
 
