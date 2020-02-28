@@ -50,12 +50,7 @@ func (c *Conn) sendMsg() {
 			break
 		}
 		if c.lastError != nil {
-			err := c.WsIfc.WriteMessage(websocket.TextMessage, msg)
-			if err != nil {
-				c.mtx.Lock()
-				c.lastError = err
-				c.mtx.Unlock()
-			}
+			c.lastError = c.WsIfc.WriteMessage(websocket.TextMessage, msg)
 		}
 	}
 }
@@ -70,10 +65,7 @@ func (c *Conn) ReadMsg(manager *WebsocketManager) (message []byte, err error) {
 }
 
 func (c *Conn) WriteMsg(v []byte) error {
-	c.mtx.RLock()
-	hasErr := c.lastError != nil
-	c.mtx.RUnlock()
-	if hasErr {
+	if c.lastError != nil {
 		return c.lastError
 	}
 	if c.closed { // Why? Should we return an error when writing to a closed Conn?
