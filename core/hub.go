@@ -141,6 +141,13 @@ func (hub *Hub) getEventKeyWithSidAndTime(firstByte byte, addr string, time int6
 	return res
 }
 
+
+type DeltaChangeEntry struct {
+	isSell bool
+	price  sdk.Dec
+	amount sdk.Int
+}
+
 // Each market needs three managers
 type TripleManager struct {
 	sell *DepthManager
@@ -151,7 +158,25 @@ type TripleManager struct {
 	// So these data can not be queried during the execution of a block
 	// We use this mutex to protect them from being queried if they are during updating of a block
 	mutex                sync.RWMutex
-	isChangedInCurrBlock bool
+
+	entryList []DeltaChangeEntry
+}
+
+func (triman *TripleManager) AddDeltaChange(isSell bool, price sdk.Dec, amount sdk.Int) {
+	triman.entryList = append(triman.entryList, DeltaChangeEntry{isSell, price, amount})
+}
+
+func (triman *TripleManager) Update() {
+	triman.mutex.Lock()
+	defer triman.mutex.Unlock()
+	for _, e := range triman.entryList {
+		if e.isSell {
+			triman.sell.DeltaChange(e.price, e.amount)
+		} else {
+			triman.buy.DeltaChange(e.price, e.amount)
+		}
+	}
+	triman.entryList = triman.entryList[:0]
 }
 
 // One entry of message from kafka
@@ -748,15 +773,7 @@ func (hub *Hub) handleCreateOrderInfo(bz []byte) {
 	}
 	amount := sdk.NewInt(v.Quantity)
 
-	if !triman.isChangedInCurrBlock {
-		triman.mutex.Lock()
-		triman.isChangedInCurrBlock = true
-	}
-	if v.Side == SELL {
-		triman.sell.DeltaChange(v.Price, amount)
-	} else {
-		triman.buy.DeltaChange(v.Price, amount)
-	}
+	triman.AddDeltaChange(v.Side == SELL, v.Price, amount)
 }
 
 func (hub *Hub) handleFillOrderInfo(bz []byte) {
@@ -803,16 +820,8 @@ func (hub *Hub) handleFillOrderInfo(bz []byte) {
 	if !ok {
 		return
 	}
-	if !triman.isChangedInCurrBlock {
-		triman.mutex.Lock()
-		triman.isChangedInCurrBlock = true
-	}
 	negStock := sdk.NewInt(-v.CurrStock)
-	if v.Side == SELL {
-		triman.sell.DeltaChange(v.Price, negStock)
-	} else {
-		triman.buy.DeltaChange(v.Price, negStock)
-	}
+	triman.AddDeltaChange(v.Side == SELL, v.Price, negStock)
 }
 
 func (hub *Hub) handleCancelOrderInfo(bz []byte) {
@@ -842,16 +851,8 @@ func (hub *Hub) handleCancelOrderInfo(bz []byte) {
 	if !ok {
 		return
 	}
-	if !triman.isChangedInCurrBlock {
-		triman.mutex.Lock()
-		triman.isChangedInCurrBlock = true
-	}
 	negStock := sdk.NewInt(-v.LeftStock)
-	if v.Side == SELL {
-		triman.sell.DeltaChange(v.Price, negStock)
-	} else {
-		triman.buy.DeltaChange(v.Price, negStock)
-	}
+	triman.AddDeltaChange(v.Side == SELL, v.Price, negStock)
 
 	hub.msgsChannel <- MsgToPush{topic: CancelOrderKey, bz: bz, extra: accAndSeq[0]}
 }
@@ -946,10 +947,10 @@ func (hub *Hub) commitForTicker() {
 	}
 	hub.msgsChannel <- MsgToPush{topic: TickerKey, bz: bz}
 	hub.tickerMapMutex.Lock()
+	defer hub.tickerMapMutex.Unlock()
 	for market, ticker := range tkMap {
 		hub.tickerMap[market] = ticker
 	}
-	hub.tickerMapMutex.Unlock()
 }
 
 func (hub *Hub) pushDepthFull() {
@@ -989,12 +990,7 @@ func (hub *Hub) commitForDepth() {
 			continue
 		}
 
-		if triman.isChangedInCurrBlock {
-			triman.isChangedInCurrBlock = false
-			triman.mutex.Unlock()
-		} else {
-			continue
-		}
+		triman.Update()
 
 		depthDeltaSell, mergeDeltaSell := triman.sell.EndBlock()
 		depthDeltaBuy, mergeDeltaBuy := triman.buy.EndBlock()
@@ -1021,11 +1017,17 @@ func (hub *Hub) commitForDepth() {
 }
 
 func (hub *Hub) commit() {
+	//hub.dbMutex.RLock() Why? maybe bug here!
+	//if hub.stopped {
+	//	return
+	//}
+	//hub.dbMutex.RUnlock()
 	hub.dbMutex.RLock()
-	if hub.stopped {
+	stopped := hub.stopped
+	hub.dbMutex.RUnlock()
+	if stopped {
 		return
 	}
-	hub.dbMutex.RUnlock()
 	hub.commitForSlash()
 	hub.commitForTicker()
 	hub.commitForDepth()
@@ -1037,10 +1039,10 @@ func (hub *Hub) commit() {
 	}
 	hub.dumpFlagLock.Unlock()
 	hub.dbMutex.Lock()
+	defer hub.dbMutex.Unlock()
 	hub.batch.WriteSync()
 	hub.batch.Close()
 	hub.batch = hub.db.NewBatch()
-	hub.dbMutex.Unlock()
 }
 
 //============================================================
@@ -1095,9 +1097,9 @@ func (hub *Hub) QueryDepth(market string, count int) (sell []*PricePoint, buy []
 	}
 	tripleMan := hub.managersMap[market]
 	tripleMan.mutex.RLock()
+	defer tripleMan.mutex.RUnlock()
 	sell = tripleMan.sell.GetLowest(count)
 	buy = tripleMan.buy.GetHighest(count)
-	tripleMan.mutex.RUnlock()
 	return
 }
 
