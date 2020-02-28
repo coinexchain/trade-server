@@ -167,6 +167,9 @@ func (triman *TripleManager) AddDeltaChange(isSell bool, price sdk.Dec, amount s
 }
 
 func (triman *TripleManager) Update() {
+	if len(triman.entryList) == 0 {
+		return
+	}
 	triman.mutex.Lock()
 	defer triman.mutex.Unlock()
 	for _, e := range triman.entryList {
