@@ -25,6 +25,7 @@ func ServeWsHandleFn(wsManager *core.WebsocketManager, hub *core.Hub) http.Handl
 			return
 		}
 		wsConn := wsManager.AddWsConn(c)
+
 		go handleConnIncomingMsg(hub, wsManager, wsConn)
 	}
 }

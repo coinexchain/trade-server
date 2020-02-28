@@ -44,8 +44,8 @@ const (
 	DelistByte       = byte(0x3A) //-, []byte(market), 0, currBlockTime, hub.sid, lastByte=0
 
 	// Used to store meta information
-	OffsetByte       = byte(0xF0)
-	DumpByte         = byte(0xF1)
+	OffsetByte = byte(0xF0)
+	DumpByte   = byte(0xF1)
 
 	// Used to indicate query types, not used in the keys in rocksdb
 	DelistsByte         = byte(0x3B)
@@ -141,7 +141,6 @@ func (hub *Hub) getEventKeyWithSidAndTime(firstByte byte, addr string, time int6
 	return res
 }
 
-
 type DeltaChangeEntry struct {
 	isSell bool
 	price  sdk.Dec
@@ -157,7 +156,7 @@ type TripleManager struct {
 	// Depth and ticker data are updated in a batch mode, i.e., one block applies as a whole
 	// So these data can not be queried during the execution of a block
 	// We use this mutex to protect them from being queried if they are during updating of a block
-	mutex                sync.RWMutex
+	mutex sync.RWMutex
 
 	entryList []DeltaChangeEntry
 }
@@ -216,7 +215,7 @@ type Hub struct {
 	msgsChannel chan MsgToPush
 
 	// buffers the messages from kafka to execute them in batch
-	msgEntryList    []msgEntry
+	msgEntryList []msgEntry
 	// skip the repeating messages after restart
 	skipHeight      bool
 	currBlockHeight int64
@@ -227,7 +226,7 @@ type Hub struct {
 	// every 'blocksInterval' blocks, we push full depth data and change rocksdb's prune info
 	blocksInterval int64
 	// in rocksdb, we only keep the records which are in the most recent 'keepRecent' seconds
-	keepRecent     int64
+	keepRecent int64
 
 	// cache for NotificationSlash
 	slashSlice []*NotificationSlash
@@ -1020,27 +1019,33 @@ func (hub *Hub) commitForDepth() {
 }
 
 func (hub *Hub) commit() {
-	//hub.dbMutex.RLock() Why? maybe bug here!
-	//if hub.stopped {
-	//	return
-	//}
-	//hub.dbMutex.RUnlock()
-	hub.dbMutex.RLock()
-	stopped := hub.stopped
-	hub.dbMutex.RUnlock()
-	if stopped {
+	if hub.isStopped() {
 		return
 	}
 	hub.commitForSlash()
 	hub.commitForTicker()
 	hub.commitForDepth()
 	hub.pushDepthFull()
+	hub.dumpHubState()
+	hub.refreshDB()
+}
+
+func (hub *Hub) isStopped() bool {
+	hub.dbMutex.RLock()
+	defer hub.dbMutex.RUnlock()
+	return hub.stopped
+}
+
+func (hub *Hub) dumpHubState() {
 	hub.dumpFlagLock.Lock()
+	defer hub.dumpFlagLock.Unlock()
 	if hub.dumpFlag {
-		hub.commitForDump()
 		hub.dumpFlag = false
+		hub.commitForDump()
 	}
-	hub.dumpFlagLock.Unlock()
+}
+
+func (hub *Hub) refreshDB() {
 	hub.dbMutex.Lock()
 	defer hub.dbMutex.Unlock()
 	hub.batch.WriteSync()
@@ -1511,8 +1516,8 @@ func (hub *Hub) UpdateOffset(partition int32, offset int64) {
 	// dump data every <interval> offset
 	if offset%DumpInterval == 0 && now.Sub(hub.lastDumpTime) > DumpMinTime {
 		hub.dumpFlagLock.Lock()
+		defer hub.dumpFlagLock.Unlock()
 		hub.dumpFlag = true
-		hub.dumpFlagLock.Unlock()
 	}
 }
 
@@ -1539,15 +1544,19 @@ func (hub *Hub) Close() {
 	hub.dumpFlagLock.Unlock()
 	for i := 0; i < 5; i++ {
 		time.Sleep(time.Second)
-		hub.dumpFlagLock.Lock()
-		if !hub.dumpFlag {
+		if !hub.isDumped() {
 			break
 		}
-		hub.dumpFlagLock.Unlock()
 	}
 	// close db
 	hub.dbMutex.Lock()
+	defer hub.dbMutex.Unlock()
 	hub.db.Close()
 	hub.stopped = true
-	hub.dbMutex.Unlock()
+}
+
+func (hub *Hub) isDumped() bool {
+	hub.dumpFlagLock.Lock()
+	defer hub.dumpFlagLock.Unlock()
+	return hub.dumpFlag
 }
