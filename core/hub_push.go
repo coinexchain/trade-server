@@ -1,5 +1,7 @@
 package core
 
+// We offload the logic of pushing subscribers to this goroutine,
+// such that ConsumeMessage can run a little faster
 func (hub *Hub) pushMsgToWebsocket() {
 	for {
 		entry := <-hub.msgsChannel
@@ -8,43 +10,43 @@ func (hub *Hub) pushMsgToWebsocket() {
 			hub.PushHeightInfoMsg(entry.bz)
 		case KlineKey:
 			vals := entry.extra.([]string)
-			hub.PushCandleMsg(vals[0], entry.bz, vals[1])
+			hub.PushCandleMsg(/*market*/vals[0], entry.bz, /*timespan*/vals[1])
 		case LockedKey:
-			hub.PushLockedCoinsMsg(entry.extra.(string), entry.bz)
+			hub.PushLockedCoinsMsg(/*addr*/entry.extra.(string), entry.bz)
 		case IncomeKey:
-			hub.PushInComeMsg(entry.extra.(string), entry.bz)
+			hub.PushIncomeMsg(/*receiver*/entry.extra.(string), entry.bz)
 		case TxKey:
-			hub.PushTxMsg(entry.extra.(string), entry.bz)
+			hub.PushTxMsg(/*addr*/entry.extra.(string), entry.bz)
 		case RedelegationKey:
 			hub.PushRedelegationMsg(entry.extra.(TimeAndSidWithAddr))
 		case UnbondingKey:
 			hub.PushUnbondingMsg(entry.extra.(TimeAndSidWithAddr))
 		case UnlockKey:
-			hub.PushUnlockMsg(entry.extra.(string), entry.bz)
+			hub.PushUnlockMsg(/*addr*/entry.extra.(string), entry.bz)
 		case CommentKey:
-			hub.PushCommentMsg(entry.extra.(string), entry.bz)
+			hub.PushCommentMsg(/*token*/entry.extra.(string), entry.bz)
 		case CreateOrderKey:
-			hub.PushCreateOrderInfoMsg(entry.extra.(string), entry.bz)
+			hub.PushCreateOrderInfoMsg(/*addr*/entry.extra.(string), entry.bz)
 		case FillOrderKey:
-			hub.PushFillOrderInfoMsg(entry.extra.(string), entry.bz)
+			hub.PushFillOrderInfoMsg(/*addr*/entry.extra.(string), entry.bz)
 		case DealKey:
-			hub.PushDealInfoMsg(entry.extra.(string), entry.bz)
+			hub.PushDealInfoMsg(/*market*/entry.extra.(string), entry.bz)
 		case CancelOrderKey:
-			hub.PushCancelOrderMsg(entry.extra.(string), entry.bz)
+			hub.PushCancelOrderMsg(/*addr*/entry.extra.(string), entry.bz)
 		case BancorTradeKey:
-			hub.PushBancorTradeInfoMsg(entry.extra.(string), entry.bz)
+			hub.PushBancorTradeInfoMsg(/*addr*/entry.extra.(string), entry.bz)
 		case BancorDealKey:
-			hub.PushBancorDealMsg(entry.extra.(string), entry.bz)
+			hub.PushBancorDealMsg(/*market*/entry.extra.(string), entry.bz)
 		case BancorKey:
-			hub.PushBancorMsg(entry.extra.(string), entry.bz)
+			hub.PushBancorMsg(/*market*/entry.extra.(string), entry.bz)
 		case SlashKey:
 			hub.PushSlashMsg(entry.bz)
 		case TickerKey:
 			hub.PushTickerMsg(entry.extra) // TODO. will modify param type
 		case DepthFull:
-			hub.PushDepthFullMsg(entry.extra.(string))
+			hub.PushDepthFullMsg(/*market*/entry.extra.(string))
 		case DepthKey:
-			hub.PushDepthMsg(entry.bz, entry.extra.(map[string][]byte))
+			hub.PushDepthMsg(/*market*/entry.bz, entry.extra.(map[string][]byte))
 		case OptionKey:
 			hub.subMan.SetSkipOption(entry.extra.(bool))
 		}
@@ -83,7 +85,7 @@ func (hub *Hub) PushLockedCoinsMsg(addr string, bz []byte) {
 	}
 }
 
-func (hub *Hub) PushInComeMsg(receiver string, bz []byte) {
+func (hub *Hub) PushIncomeMsg(receiver string, bz []byte) {
 	info := hub.subMan.GetIncomeSubscribeInfo()
 	targets, ok := info[receiver]
 	if ok {
@@ -187,9 +189,9 @@ func (hub *Hub) PushFillOrderInfoMsg(addr string, bz []byte) {
 	}
 }
 
-func (hub *Hub) PushDealInfoMsg(tradingPair string, bz []byte) {
+func (hub *Hub) PushDealInfoMsg(market string, bz []byte) {
 	info := hub.subMan.GetDealSubscribeInfo()
-	targets, ok := info[tradingPair]
+	targets, ok := info[market]
 	if ok {
 		for _, target := range targets {
 			hub.subMan.PushDeal(target, bz)
@@ -217,9 +219,9 @@ func (hub *Hub) PushBancorTradeInfoMsg(addr string, bz []byte) {
 	}
 }
 
-func (hub *Hub) PushBancorDealMsg(tradingPair string, bz []byte) {
+func (hub *Hub) PushBancorDealMsg(market string, bz []byte) {
 	info := hub.subMan.GetBancorDealSubscribeInfo()
-	targets, ok := info[tradingPair]
+	targets, ok := info[market]
 	if ok {
 		for _, target := range targets {
 			hub.subMan.PushBancorDeal(target, bz)
@@ -227,9 +229,9 @@ func (hub *Hub) PushBancorDealMsg(tradingPair string, bz []byte) {
 	}
 }
 
-func (hub *Hub) PushBancorMsg(tradingPair string, bz []byte) {
+func (hub *Hub) PushBancorMsg(market string, bz []byte) {
 	info := hub.subMan.GetBancorInfoSubscribeInfo()
-	targets, ok := info[tradingPair]
+	targets, ok := info[market]
 	if ok {
 		for _, target := range targets {
 			hub.subMan.PushBancorInfo(target, bz)
