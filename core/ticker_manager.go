@@ -48,21 +48,25 @@ func (tm *TickerManager) UpdateNewestPrice(currPrice sdk.Dec, currMinute int) {
 		tm.Minute2nd = currMinute
 		return
 	}
-	tm.PriceList[tm.Minute2nd] = tm.Price2nd
-	for {
-		tm.Minute2nd++
-		if tm.Minute2nd >= MinuteNumInDay {
-			tm.Minute2nd = 0
-		}
-		if tm.Minute2nd == tm.Minute1st {
-			break
-		}
-		tm.PriceList[tm.Minute2nd] = tm.Price2nd
-	}
+
+	tm.fillHistory(tm.Minute2nd, tm.Minute1st, tm.Price2nd)
 	tm.Price2nd = tm.Price1st
 	tm.Minute2nd = tm.Minute1st
 	tm.Price1st = currPrice
 	tm.Minute1st = currMinute
+}
+
+func (tm *TickerManager) fillHistory(beginTime, endTime int, price sdk.Dec) {
+	for {
+		tm.PriceList[beginTime] = price
+		beginTime++
+		if beginTime >= MinuteNumInDay {
+			beginTime = 0
+		}
+		if beginTime == endTime {
+			break
+		}
+	}
 }
 
 // Return a Ticker if NewPrice or OldPriceOneDayAgo is different from its previous minute
