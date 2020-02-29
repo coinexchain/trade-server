@@ -475,33 +475,18 @@ func (hub *Hub) pruneDB(height int64, timestamp uint64) {
 
 // When a block begins, we need to run some logic related to Kline and Ticker
 func (hub *Hub) beginForCandleSticks() {
-	candleSticks := hub.csMan.NewBlock(hub.currBlockTime)
-	var triman *TripleManager
-	currMarket := ""
-	var ok bool
+	// maybe have minute, hour, day candle stick before the current block time
+	var candleSticks = hub.csMan.NewBlock(hub.currBlockTime)
 	for _, cs := range candleSticks {
-		if currMarket != cs.Market {
-			triman, ok = hub.managersMap[cs.Market]
-			if !ok {
-				currMarket = ""
-				continue
-			}
-			currMarket = cs.Market
-		}
-		if len(currMarket) == 0 { // if cannot find this market, do nothing
+		if !hub.updateTripleManager(cs) {
 			continue
 		}
-		// Update tickers' prices
-		t := time.Unix(cs.EndingUnixTime, 0)
-		csMinute := t.UTC().Hour() * 60 + t.UTC().Minute()
-		if cs.TimeSpan == MinuteStr {
-			triman.tkm.UpdateNewestPrice(cs.ClosePrice, csMinute)
-		}
-		bz := formatCandleStick(&cs)
+		// push candle stick data to ws
+		bz := formatCandleStick(cs)
 		if bz == nil {
 			continue
 		}
-		extra := []string{currMarket, cs.TimeSpan}
+		extra := []string{cs.Market, cs.TimeSpan}
 		hub.msgsChannel <- MsgToPush{topic: KlineKey, bz: bz, extra: extra}
 		// Save candle sticks to KVStore
 		key := hub.getCandleStickKey(cs.Market, GetSpanFromSpanStr(cs.TimeSpan))
@@ -511,6 +496,20 @@ func (hub *Hub) beginForCandleSticks() {
 		hub.batch.Set(key, bz)
 		hub.sid++
 	}
+}
+
+func (hub *Hub) updateTripleManager(candleStick *CandleStick) bool {
+	tripleManager, ok := hub.managersMap[candleStick.Market]
+	if !ok {
+		return false
+	}
+	// Update tickers' prices
+	t := time.Unix(candleStick.EndingUnixTime, 0)
+	csMinute := t.UTC().Hour()*60 + t.UTC().Minute() // minute of the data
+	if candleStick.TimeSpan == MinuteStr {
+		tripleManager.tkm.UpdateNewestPrice(candleStick.ClosePrice, csMinute)
+	}
+	return true
 }
 
 func formatCandleStick(info *CandleStick) []byte {
@@ -527,7 +526,7 @@ func appendHashID(bz []byte, hashID string) []byte {
 	if len(hashID) == 0 {
 		return bz
 	}
-	bz = bz[0:len(bz)-1] // Delete the last character: '}'
+	bz = bz[0 : len(bz)-1] // Delete the last character: '}'
 	return append(bz, []byte(fmt.Sprintf(`,"tx_hash":"%s"}`, hashID))...)
 }
 
@@ -736,8 +735,8 @@ func (hub *Hub) handleNotificationCompleteRedelegation(bz []byte) {
 	hub.msgsChannel <- MsgToPush{
 		topic: RedelegationKey,
 		extra: TimeAndSidWithAddr{
-			addr: v.Delegator,
-			sid: hub.sid,
+			addr:     v.Delegator,
+			sid:      hub.sid,
 			currTime: hub.currBlockTime.Unix(),
 			lastTime: hub.lastBlockTime.Unix(),
 		},
@@ -978,7 +977,7 @@ func (hub *Hub) commitForTicker() {
 	if !isNewMinute {
 		return
 	}
-	currMinute := hub.currBlockTime.UTC().Hour() * 60 + hub.currBlockTime.UTC().Minute() - 1
+	currMinute := hub.currBlockTime.UTC().Hour()*60 + hub.currBlockTime.UTC().Minute() - 1
 	if currMinute < 0 {
 		currMinute = MinuteNumInDay - 1
 	}
@@ -1563,7 +1562,7 @@ func (hub *Hub) UpdateOffset(partition int32, offset int64) {
 
 	now := time.Now()
 	// dump data every <interval> offset
-	if hub.offset - hub.lastOffset >= DumpInterval && now.Sub(hub.lastDumpTime) > DumpMinTime {
+	if hub.offset-hub.lastOffset >= DumpInterval && now.Sub(hub.lastDumpTime) > DumpMinTime {
 		hub.dumpFlagLock.Lock()
 		defer hub.dumpFlagLock.Unlock()
 		atomic.StoreInt32(&hub.dumpFlag, 1)
