@@ -235,6 +235,7 @@ type Hub struct {
 	// dump hub's in-memory information to file, which can not be stored in rocksdb
 	partition    int32
 	offset       int64
+	lastOffset   int64
 	dumpFlag     int32
 	dumpFlagLock sync.Mutex
 	lastDumpTime time.Time
@@ -258,6 +259,7 @@ func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval 
 		slashSlice:     make([]*NotificationSlash, 0, 10),
 		partition:      0,
 		offset:         0,
+		lastOffset:     -1,
 		dumpFlag:       0,
 		lastDumpTime:   time.Now(),
 		stopped:        false,
@@ -1536,11 +1538,12 @@ func (hub *Hub) commitForDump() {
 //===================================
 func (hub *Hub) UpdateOffset(partition int32, offset int64) {
 	hub.partition = partition
+	hub.lastOffset = hub.offset
 	hub.offset = offset
 
 	now := time.Now()
 	// dump data every <interval> offset
-	if offset%DumpInterval == 0 && now.Sub(hub.lastDumpTime) > DumpMinTime {
+	if hub.offset - hub.lastOffset > DumpInterval && now.Sub(hub.lastDumpTime) > DumpMinTime {
 		hub.dumpFlagLock.Lock()
 		defer hub.dumpFlagLock.Unlock()
 		atomic.StoreInt32(&hub.dumpFlag, 1)
