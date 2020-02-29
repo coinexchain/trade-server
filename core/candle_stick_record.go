@@ -80,18 +80,17 @@ func (csr *CandleStickRecord) getMinuteCandleStick(isNewMinute bool, lastBlockTi
 				csr.LastMinutePrice = cs.ClosePrice
 				return cs
 			}
-
-			// When the volume is 0, fill the last price
-			return &CandleStick{
-				OpenPrice:      csr.LastMinutePrice,
-				ClosePrice:     csr.LastMinutePrice,
-				HighPrice:      csr.LastMinutePrice,
-				LowPrice:       csr.LastMinutePrice,
-				TotalDeal:      sdk.ZeroInt(),
-				EndingUnixTime: lastBlockTime,
-				TimeSpan:       MinuteStr,
-				Market:         csr.Market,
-			}
+		}
+		// When the volume is 0, fill the last price
+		return &CandleStick{
+			OpenPrice:      csr.LastMinutePrice,
+			ClosePrice:     csr.LastMinutePrice,
+			HighPrice:      csr.LastMinutePrice,
+			LowPrice:       csr.LastMinutePrice,
+			TotalDeal:      sdk.ZeroInt(),
+			EndingUnixTime: lastBlockTime,
+			TimeSpan:       MinuteStr,
+			Market:         csr.Market,
 		}
 	}
 	return nil
@@ -111,17 +110,17 @@ func (csr *CandleStickRecord) getHourCandleStick(isNewHour bool, lastBlockTime i
 				return cs
 			}
 
-			// When the volume is 0, fill the last price
-			return &CandleStick{
-				OpenPrice:      csr.LastHourPrice,
-				ClosePrice:     csr.LastHourPrice,
-				HighPrice:      csr.LastHourPrice,
-				LowPrice:       csr.LastHourPrice,
-				TotalDeal:      sdk.ZeroInt(),
-				EndingUnixTime: lastBlockTime,
-				TimeSpan:       HourStr,
-				Market:         csr.Market,
-			}
+		}
+		// When the volume is 0, fill the last price
+		return &CandleStick{
+			OpenPrice:      csr.LastHourPrice,
+			ClosePrice:     csr.LastHourPrice,
+			HighPrice:      csr.LastHourPrice,
+			LowPrice:       csr.LastHourPrice,
+			TotalDeal:      sdk.ZeroInt(),
+			EndingUnixTime: lastBlockTime,
+			TimeSpan:       HourStr,
+			Market:         csr.Market,
 		}
 	}
 	return nil
@@ -139,18 +138,17 @@ func (csr *CandleStickRecord) getDayCandleStick(isNewDay bool, lastBlockTime int
 				csr.LastDayPrice = cs.ClosePrice
 				return cs
 			}
-
-			// When the volume is 0, fill the last price
-			return &CandleStick{
-				OpenPrice:      csr.LastDayPrice,
-				ClosePrice:     csr.LastDayPrice,
-				HighPrice:      csr.LastDayPrice,
-				LowPrice:       csr.LastDayPrice,
-				TotalDeal:      sdk.ZeroInt(),
-				EndingUnixTime: lastBlockTime,
-				TimeSpan:       DayStr,
-				Market:         csr.Market,
-			}
+		}
+		// When the volume is 0, fill the last price
+		return &CandleStick{
+			OpenPrice:      csr.LastDayPrice,
+			ClosePrice:     csr.LastDayPrice,
+			HighPrice:      csr.LastDayPrice,
+			LowPrice:       csr.LastDayPrice,
+			TotalDeal:      sdk.ZeroInt(),
+			EndingUnixTime: lastBlockTime,
+			TimeSpan:       DayStr,
+			Market:         csr.Market,
 		}
 	}
 	return nil

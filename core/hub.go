@@ -478,7 +478,7 @@ func (hub *Hub) beginForCandleSticks() {
 	// maybe have minute, hour, day candle stick before the current block time
 	var candleSticks = hub.csMan.NewBlock(hub.currBlockTime)
 	for _, cs := range candleSticks {
-		if !hub.updateTripleManager(cs) {
+		if !hub.updateTicker(cs) {
 			continue
 		}
 		// push candle stick data to ws
@@ -498,7 +498,7 @@ func (hub *Hub) beginForCandleSticks() {
 	}
 }
 
-func (hub *Hub) updateTripleManager(candleStick *CandleStick) bool {
+func (hub *Hub) updateTicker(candleStick *CandleStick) bool {
 	tripleManager, ok := hub.managersMap[candleStick.Market]
 	if !ok {
 		return false
