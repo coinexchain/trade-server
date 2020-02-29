@@ -460,7 +460,6 @@ func (hub *Hub) beginForCandleSticks() {
 	var triman *TripleManager
 	currMarket := ""
 	var ok bool
-	currMinute := hub.currBlockTime.UTC().Hour() * 60 + hub.currBlockTime.UTC().Minute()
 	for _, cs := range candleSticks {
 		if currMarket != cs.Market {
 			triman, ok = hub.managersMap[cs.Market]
@@ -474,8 +473,10 @@ func (hub *Hub) beginForCandleSticks() {
 			continue
 		}
 		// Update tickers' prices
+		t := time.Unix(cs.EndingUnixTime, 0)
+		csMinute := t.UTC().Hour() * 60 + t.UTC().Minute()
 		if cs.TimeSpan == MinuteStr {
-			triman.tkm.UpdateNewestPrice(cs.ClosePrice, currMinute) //Why? should not use currMinute, use cs.EndingUnixTime
+			triman.tkm.UpdateNewestPrice(cs.ClosePrice, csMinute)
 		}
 		bz := formatCandleStick(&cs)
 		if bz == nil {
@@ -958,7 +959,10 @@ func (hub *Hub) commitForTicker() {
 	if !isNewMinute {
 		return
 	}
-	currMinute := hub.currBlockTime.UTC().Hour() * 60 + hub.currBlockTime.UTC().Minute()
+	currMinute := hub.currBlockTime.UTC().Hour() * 60 + hub.currBlockTime.UTC().Minute() - 1
+	if currMinute < 0 {
+		currMinute = MinuteNumInDay - 1
+	}
 	for _, triman := range hub.managersMap {
 		if ticker := triman.tkm.GetTicker(currMinute); ticker != nil {
 			tkMap[ticker.Market] = ticker

@@ -782,7 +782,6 @@ func Test1(t *testing.T) {
 30: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179350,"time_span":"1day","market":"B:xyz/cet"}
 15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"110.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25,"fill_price":"0.125000000000000000"}
 16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"110.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25,"fill_price":"0.125000000000000000"}
-0: [{"market":"abc/cet","new":"0.125000000000000000","old":"0.100000000000000000","minute_in_day":1}]
 8: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"110.000000000000000000","a":"-200"}]}
 9: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"110.000000000000000000","a":"-200"}]}
 `
@@ -925,7 +924,7 @@ func Test1(t *testing.T) {
 	correct = `
 3: {"height":1008,"timestamp":"2019-07-15T08:40:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
 4: {"height":1008,"timestamp":"2019-07-15T08:40:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
-27: [{"market":"B:xyz/cet","new":"3.000000000000000000","old":"2.000000000000000000","minute_in_day":520}]
+27: [{"market":"B:xyz/cet","new":"3.000000000000000000","old":"2.000000000000000000","minute_in_day":519}]
 28: {"open":"3.000000000000000000","close":"3.000000000000000000","high":"3.000000000000000000","low":"3.000000000000000000","total":"2","unix_time":1563179950,"time_span":"1min","market":"B:xyz/cet"}
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"0","unix_time":1563179950,"time_span":"1min","market":"abc/cet"}
 `
@@ -934,16 +933,10 @@ func Test1(t *testing.T) {
 
 	correctTickers := []*Ticker{
 		{
-			Market:            "abc/cet",
-			NewPrice:          sdk.NewDec(125).Quo(sdk.NewDec(1000)),
-			OldPriceOneDayAgo: sdk.NewDec(100).Quo(sdk.NewDec(1000)),
-			MinuteInDay:       1,
-		},
-		{
 			Market:            "B:xyz/cet",
 			NewPrice:          sdk.NewDec(3),
 			OldPriceOneDayAgo: sdk.NewDec(2),
-			MinuteInDay:       520,
+			MinuteInDay:       519,
 		},
 	}
 	tickers := hub.QueryTickers([]string{"abc/cet", "B:xyz/cet"})
