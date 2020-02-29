@@ -22,16 +22,16 @@ func (manager *CandleStickManager) AddMarket(market string) {
 
 // When a new blocks come at 't', flush out all the finished candle sticks util 't'
 // The recorded manager.LastBlockTime will be used as the EndingTime of candle sticks
-func (manager *CandleStickManager) NewBlock(t time.Time) []CandleStick {
-	res := make([]CandleStick, 0, 100)
-	isNewDay := t.UTC().Day() != manager.LastBlockTime.UTC().Day() || t.Unix()-manager.LastBlockTime.Unix() > 60*60*24
-	isNewHour := t.UTC().Hour() != manager.LastBlockTime.UTC().Hour() || t.Unix()-manager.LastBlockTime.Unix() > 60*60
-	isNewMinute := t.UTC().Minute() != manager.LastBlockTime.UTC().Minute() || t.Unix()-manager.LastBlockTime.Unix() > 60
+func (manager *CandleStickManager) NewBlock(currBlockTime time.Time) []*CandleStick {
+	res := make([]*CandleStick, 0, 100)
+	isNewDay := currBlockTime.UTC().Day() != manager.LastBlockTime.UTC().Day() || currBlockTime.UTC().Unix()-manager.LastBlockTime.UTC().Unix() > 60*60*24
+	isNewHour := currBlockTime.UTC().Hour() != manager.LastBlockTime.UTC().Hour() || currBlockTime.UTC().Unix()-manager.LastBlockTime.UTC().Unix() > 60*60
+	isNewMinute := currBlockTime.UTC().Minute() != manager.LastBlockTime.UTC().Minute() || currBlockTime.UTC().Unix()-manager.LastBlockTime.UTC().Unix() > 60
 	for _, csr := range manager.CsrMap {
 		csSlice := csr.newBlock(isNewDay, isNewHour, isNewMinute, manager.LastBlockTime)
 		res = append(res, csSlice...)
 	}
-	manager.LastBlockTime = t
+	manager.LastBlockTime = currBlockTime
 	return res
 }
 

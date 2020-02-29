@@ -22,19 +22,19 @@ By comparing LastMinuteCSTime and LastUpdateTime, we'll know whether there is an
 // It can provide three granularities: minute, hour and day.
 // If the client side wants other granularities, we need to merge several candle sticks into one.
 type CandleStickRecord struct {
-	MinuteCS         [60]baseCandleStick `json:"minute_cs"`
-	HourCS           [24]baseCandleStick `json:"hour_cs"`
-	LastUpdateTime   time.Time           `json:"last_update"`         //the last time that 'Update' was invoked
+	MinuteCS       [60]baseCandleStick `json:"minute_cs"`
+	HourCS         [24]baseCandleStick `json:"hour_cs"`
+	LastUpdateTime time.Time           `json:"last_update"` //the last time that 'Update' was invoked
 	//the last time a non-empty minute/hour/day candle stick was "flushed out"
 	//A candle stick is NOT "flushed out" UNTIL a new minute/hour/day comes
-	LastMinuteCSTime int64               `json:"last_minute_cs_time"`
-	LastHourCSTime   int64               `json:"last_hour_cs_time"`
-	LastDayCSTime    int64               `json:"last_day_cs_time"`
+	LastMinuteCSTime int64 `json:"last_minute_cs_time"`
+	LastHourCSTime   int64 `json:"last_hour_cs_time"`
+	LastDayCSTime    int64 `json:"last_day_cs_time"`
 	//the last price of a non-empty minute/hour/day candle stick
-	LastMinutePrice  sdk.Dec             `json:"last_minute_price"`
-	LastHourPrice    sdk.Dec             `json:"last_hour_price"`
-	LastDayPrice     sdk.Dec             `json:"last_day_price"`
-	Market           string              `json:"Market"`
+	LastMinutePrice sdk.Dec `json:"last_minute_price"`
+	LastHourPrice   sdk.Dec `json:"last_hour_price"`
+	LastDayPrice    sdk.Dec `json:"last_day_price"`
+	Market          string  `json:"Market"`
 }
 
 func NewCandleStickRecord(market string) *CandleStickRecord {
@@ -51,84 +51,112 @@ func NewCandleStickRecord(market string) *CandleStickRecord {
 	return res
 }
 
-// When a new block comes, flush the pending candle sticks
-func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, endTime time.Time) []CandleStick {
-	res := make([]CandleStick, 0, 3)
-	lastTime := csr.LastUpdateTime.Unix()
-	if isNewMinute && lastTime != 0 {
-		cs := csr.newCandleStick(csr.MinuteCS[csr.LastUpdateTime.UTC().Minute()], csr.LastUpdateTime.Unix(), Minute)
-		if !cs.TotalDeal.IsZero() && /* the function Update has changed it, so the deal is not zero */
-			csr.LastUpdateTime.Unix() != csr.LastMinuteCSTime /*Has new updates after last minute-candle-stick*/ {
-			// generate new candle stick and record its time
-			res = append(res, cs)
-			csr.LastMinuteCSTime = csr.LastUpdateTime.Unix()
-			csr.LastMinutePrice = cs.ClosePrice
-		} else {
-			res = append(res, CandleStick{ //generate an empty candle stick
+// When a new block comes, gets the k-line data before the block time
+func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, lastBlockTime time.Time) []*CandleStick {
+	res := make([]*CandleStick, 0, 3)
+	lastBlockUnixTime := lastBlockTime.UTC().Unix()
+	if mcs := csr.getMinuteCandleStick(isNewMinute, lastBlockUnixTime); mcs != nil {
+		res = append(res, mcs)
+	}
+	if hcs := csr.getHourCandleStick(isNewHour, lastBlockUnixTime); hcs != nil {
+		res = append(res, hcs)
+	}
+	if dcs := csr.getDayCandleStick(isNewDay, lastBlockUnixTime); dcs != nil {
+		res = append(res, dcs)
+	}
+
+	csr.clearRecords(isNewHour, isNewDay)
+	return res
+}
+
+func (csr *CandleStickRecord) getMinuteCandleStick(isNewMinute bool, lastBlockTime int64) *CandleStick {
+	lastUpdateTime := csr.LastUpdateTime.UTC().Unix()
+	if isNewMinute && lastUpdateTime != 0 {
+		if lastUpdateTime != csr.LastMinuteCSTime {
+			lastUpdateCandleStick := csr.MinuteCS[csr.LastUpdateTime.UTC().Minute()]
+			cs := csr.newCandleStick(lastUpdateCandleStick, lastUpdateTime, Minute)
+			if !cs.TotalDeal.IsZero() {
+				csr.LastMinuteCSTime = cs.EndingUnixTime
+				csr.LastMinutePrice = cs.ClosePrice
+				return cs
+			}
+
+			// When the volume is 0, fill the last price
+			return &CandleStick{
 				OpenPrice:      csr.LastMinutePrice,
 				ClosePrice:     csr.LastMinutePrice,
 				HighPrice:      csr.LastMinutePrice,
 				LowPrice:       csr.LastMinutePrice,
 				TotalDeal:      sdk.ZeroInt(),
-				EndingUnixTime: endTime.Unix(),
+				EndingUnixTime: lastBlockTime,
 				TimeSpan:       MinuteStr,
 				Market:         csr.Market,
-			})
-		}
-	}
-	if isNewHour && lastTime != 0 {
-		gotResult := false
-		if csr.LastUpdateTime.Unix() != csr.LastHourCSTime { //Has new updates after last hour-candle-stick
-			// merge minute-candle-sticks to hour-candle-sticks
-			csr.HourCS[csr.LastUpdateTime.UTC().Hour()] = merge(csr.MinuteCS[:])
-			cs := csr.newCandleStick(csr.HourCS[csr.LastUpdateTime.UTC().Hour()], csr.LastUpdateTime.Unix(), Hour)
-			if !cs.TotalDeal.IsZero() {
-				res = append(res, cs)
-				csr.LastHourCSTime = csr.LastUpdateTime.Unix()
-				csr.LastHourPrice = cs.ClosePrice
-				gotResult = true
 			}
 		}
-		if !gotResult {
-			res = append(res, CandleStick{
+	}
+	return nil
+}
+
+func (csr *CandleStickRecord) getHourCandleStick(isNewHour bool, lastBlockTime int64) *CandleStick {
+	lastUpdateTime := csr.LastUpdateTime.UTC().Unix()
+	if isNewHour && lastUpdateTime != 0 {
+		if lastUpdateTime != csr.LastHourCSTime { //Has new updates after last hour-candle-stick
+			// merge minute-candle-sticks to hour-candle-sticks
+			hour := csr.LastUpdateTime.UTC().Hour()
+			csr.HourCS[hour] = merge(csr.MinuteCS[:])
+			cs := csr.newCandleStick(csr.HourCS[hour], lastUpdateTime, Hour)
+			if !cs.TotalDeal.IsZero() {
+				csr.LastHourCSTime = cs.EndingUnixTime
+				csr.LastHourPrice = cs.ClosePrice
+				return cs
+			}
+
+			// When the volume is 0, fill the last price
+			return &CandleStick{
 				OpenPrice:      csr.LastHourPrice,
 				ClosePrice:     csr.LastHourPrice,
 				HighPrice:      csr.LastHourPrice,
 				LowPrice:       csr.LastHourPrice,
 				TotalDeal:      sdk.ZeroInt(),
-				EndingUnixTime: endTime.Unix(),
+				EndingUnixTime: lastBlockTime,
 				TimeSpan:       HourStr,
 				Market:         csr.Market,
-			})
+			}
 		}
 	}
-	if isNewDay && lastTime != 0 {
-		gotResult := false
+	return nil
+}
+
+func (csr *CandleStickRecord) getDayCandleStick(isNewDay bool, lastBlockTime int64) *CandleStick {
+	lastUpdateTime := csr.LastUpdateTime.UTC().Unix()
+	if isNewDay && lastUpdateTime != 0 {
 		if csr.LastUpdateTime.Unix() != csr.LastDayCSTime { //Has new updates after last day-candle-stick
 			// merge hour-candle-sticks to day-candle-sticks
 			dayCS := merge(csr.HourCS[:])
-			cs := csr.newCandleStick(dayCS, csr.LastUpdateTime.Unix(), Day)
+			cs := csr.newCandleStick(dayCS, lastUpdateTime, Day)
 			if !cs.TotalDeal.IsZero() {
-				res = append(res, cs)
-				csr.LastDayCSTime = csr.LastUpdateTime.Unix()
+				csr.LastDayCSTime = cs.EndingUnixTime
 				csr.LastDayPrice = cs.ClosePrice
-				gotResult = true
+				return cs
 			}
-		}
-		if !gotResult {
-			res = append(res, CandleStick{
+
+			// When the volume is 0, fill the last price
+			return &CandleStick{
 				OpenPrice:      csr.LastDayPrice,
 				ClosePrice:     csr.LastDayPrice,
 				HighPrice:      csr.LastDayPrice,
 				LowPrice:       csr.LastDayPrice,
 				TotalDeal:      sdk.ZeroInt(),
-				EndingUnixTime: endTime.Unix(),
+				EndingUnixTime: lastBlockTime,
 				TimeSpan:       DayStr,
 				Market:         csr.Market,
-			})
+			}
 		}
 	}
+	return nil
+}
 
+func (csr *CandleStickRecord) clearRecords(isNewHour, isNewDay bool) {
 	if isNewDay {
 		for i := 0; i < 24; i++ {
 			// clear the hour-candle-sticks of last day
@@ -141,17 +169,16 @@ func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, en
 			csr.MinuteCS[i] = newBaseCandleStick()
 		}
 	}
-	return res
 }
 
-func (csr *CandleStickRecord) newCandleStick(cs baseCandleStick, endTime int64, span byte) CandleStick {
-	return CandleStick{
-		OpenPrice:      cs.OpenPrice,
-		ClosePrice:     cs.ClosePrice,
-		HighPrice:      cs.HighPrice,
-		LowPrice:       cs.LowPrice,
-		TotalDeal:      cs.TotalDeal,
-		EndingUnixTime: endTime,
+func (csr *CandleStickRecord) newCandleStick(updateCS baseCandleStick, updateTime int64, span byte) *CandleStick {
+	return &CandleStick{
+		OpenPrice:      updateCS.OpenPrice,
+		ClosePrice:     updateCS.ClosePrice,
+		HighPrice:      updateCS.HighPrice,
+		LowPrice:       updateCS.LowPrice,
+		TotalDeal:      updateCS.TotalDeal,
+		EndingUnixTime: updateTime,
 		TimeSpan:       getSpanStrFromSpan(span),
 		Market:         csr.Market,
 	}

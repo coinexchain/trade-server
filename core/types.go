@@ -21,6 +21,7 @@ const (
 	CancelOrderStr     = "cancel"
 )
 
+// push candle stick msg to ws
 type CandleStick struct {
 	OpenPrice      sdk.Dec `json:"open"`
 	ClosePrice     sdk.Dec `json:"close"`

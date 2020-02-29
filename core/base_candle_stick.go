@@ -31,9 +31,6 @@ func (cs *baseCandleStick) hasDeal() bool {
 func (cs *baseCandleStick) update(price sdk.Dec, amount int64) {
 	if !cs.hasDeal() {
 		cs.OpenPrice = price
-	}
-	cs.ClosePrice = price
-	if !cs.hasDeal() {
 		cs.HighPrice = price
 		cs.LowPrice = price
 	} else {
@@ -44,5 +41,6 @@ func (cs *baseCandleStick) update(price sdk.Dec, amount int64) {
 			cs.LowPrice = price
 		}
 	}
+	cs.ClosePrice = price
 	cs.TotalDeal = cs.TotalDeal.AddRaw(amount)
 }

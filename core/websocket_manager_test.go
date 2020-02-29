@@ -198,24 +198,3 @@ func TestWebsocketManager_AddWsConnAndCloseConn_SigThread(t *testing.T) {
 	wsManager.CloseWsConn(c1)
 	require.EqualValues(t, 0, len(wsManager.wsConn2Conn))
 }
-
-func TestDecToBigEndianBytes(t *testing.T) {
-	var (
-		num   int
-		wg    sync.WaitGroup
-		mutex sync.Mutex
-	)
-	for i := 0; i < 1000; i++ {
-		wg.Add(1)
-		go add(&mutex, &wg, &num)
-	}
-	wg.Wait()
-	require.EqualValues(t, 1000, num)
-}
-
-func add(mutex *sync.Mutex, wg *sync.WaitGroup, num *int) {
-	mutex.Lock()
-	defer mutex.Unlock()
-	*num++
-	wg.Done()
-}
