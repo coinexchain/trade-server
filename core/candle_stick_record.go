@@ -6,6 +6,18 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+/*
+We generate the minute-candle-sticks in a "equipping and flushing" mode.
+Within a minute M, the 'Update' function can be invoked multiple times and the minute-candle-stick of M is equipped
+with more and more deals.
+When a new minute comes, 'newBlock' functions will be invoked. Please note, this moment is not always M+1, instead,
+it can be M+1, M+2 or any time later.
+When 'newBlock' is invoked, we must flush out the minute-candle-stick which is getting equipped. Is there always
+such a minute-candle-stick? Not always. In some cases, there has been no deals since last flush. The
+moment of last flush is recorded in LastMinuteCSTime. The last time 'Update' is invoked is recorded in LastUpdateTime.
+By comparing LastMinuteCSTime and LastUpdateTime, we'll know whether there is an equipping minute-candle-stick or not.
+*/
+
 // Record the candle sticks within one day
 // It can provide three granularities: minute, hour and day.
 // If the client side wants other granularities, we need to merge several candle sticks into one.
@@ -13,12 +25,15 @@ type CandleStickRecord struct {
 	MinuteCS         [60]baseCandleStick `json:"minute_cs"`
 	HourCS           [24]baseCandleStick `json:"hour_cs"`
 	LastUpdateTime   time.Time           `json:"last_update"`         //the last time that 'Update' was invoked
-	LastMinuteCSTime int64               `json:"last_minute_cs_time"` //the last time a non-empty minute candle stick was generated
-	LastHourCSTime   int64               `json:"last_hour_cs_time"`   //the last time a non-empty hour candle stick was generated
-	LastDayCSTime    int64               `json:"last_day_cs_time"`    //the last time a non-empty day candle stick was generated
-	LastMinutePrice  sdk.Dec             `json:"last_minute_price"`   //the last price of a non-empty minute candle stick
-	LastHourPrice    sdk.Dec             `json:"last_hour_price"`     //the last price of a non-empty hour candle stick
-	LastDayPrice     sdk.Dec             `json:"last_day_price"`      //the last price of a non-empty day candle stick
+	//the last time a non-empty minute/hour/day candle stick was "flushed out"
+	//A candle stick is NOT "flushed out" UNTIL a new minute/hour/day comes
+	LastMinuteCSTime int64               `json:"last_minute_cs_time"`
+	LastHourCSTime   int64               `json:"last_hour_cs_time"`
+	LastDayCSTime    int64               `json:"last_day_cs_time"`
+	//the last price of a non-empty minute/hour/day candle stick
+	LastMinutePrice  sdk.Dec             `json:"last_minute_price"`
+	LastHourPrice    sdk.Dec             `json:"last_hour_price"`
+	LastDayPrice     sdk.Dec             `json:"last_day_price"`
 	Market           string              `json:"Market"`
 }
 
@@ -41,8 +56,8 @@ func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, en
 	res := make([]CandleStick, 0, 3)
 	lastTime := csr.LastUpdateTime.Unix()
 	if isNewMinute && lastTime != 0 {
-		cs := csr.newCandleStick(csr.MinuteCS[csr.LastUpdateTime.UTC().Minute()], endTime.Unix(), Minute)
-		if !cs.TotalDeal.IsZero() &&
+		cs := csr.newCandleStick(csr.MinuteCS[csr.LastUpdateTime.UTC().Minute()], csr.LastUpdateTime.Unix(), Minute)
+		if !cs.TotalDeal.IsZero() && /* the function Update has changed it, so the deal is not zero */
 			csr.LastUpdateTime.Unix() != csr.LastMinuteCSTime /*Has new updates after last minute-candle-stick*/ {
 			// generate new candle stick and record its time
 			res = append(res, cs)
@@ -66,7 +81,7 @@ func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, en
 		if csr.LastUpdateTime.Unix() != csr.LastHourCSTime { //Has new updates after last hour-candle-stick
 			// merge minute-candle-sticks to hour-candle-sticks
 			csr.HourCS[csr.LastUpdateTime.UTC().Hour()] = merge(csr.MinuteCS[:])
-			cs := csr.newCandleStick(csr.HourCS[csr.LastUpdateTime.UTC().Hour()], endTime.Unix(), Hour)
+			cs := csr.newCandleStick(csr.HourCS[csr.LastUpdateTime.UTC().Hour()], csr.LastUpdateTime.Unix(), Hour)
 			if !cs.TotalDeal.IsZero() {
 				res = append(res, cs)
 				csr.LastHourCSTime = csr.LastUpdateTime.Unix()
@@ -92,7 +107,7 @@ func (csr *CandleStickRecord) newBlock(isNewDay, isNewHour, isNewMinute bool, en
 		if csr.LastUpdateTime.Unix() != csr.LastDayCSTime { //Has new updates after last day-candle-stick
 			// merge hour-candle-sticks to day-candle-sticks
 			dayCS := merge(csr.HourCS[:])
-			cs := csr.newCandleStick(dayCS, endTime.Unix(), Day)
+			cs := csr.newCandleStick(dayCS, csr.LastUpdateTime.Unix(), Day)
 			if !cs.TotalDeal.IsZero() {
 				res = append(res, cs)
 				csr.LastDayCSTime = csr.LastUpdateTime.Unix()

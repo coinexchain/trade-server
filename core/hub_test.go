@@ -778,8 +778,8 @@ func Test1(t *testing.T) {
 7: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1hour","market":"abc/cet"}
 5: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1day","market":"abc/cet"}
 28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563179470,"time_span":"1min","market":"B:xyz/cet"}
-29: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179470,"time_span":"1hour","market":"B:xyz/cet"}
-30: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179470,"time_span":"1day","market":"B:xyz/cet"}
+29: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179350,"time_span":"1hour","market":"B:xyz/cet"}
+30: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179350,"time_span":"1day","market":"B:xyz/cet"}
 15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"110.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25,"fill_price":"0.125000000000000000"}
 16: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"110.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25,"fill_price":"0.125000000000000000"}
 0: [{"market":"abc/cet","new":"0.125000000000000000","old":"0.100000000000000000","minute_in_day":0}]
@@ -791,7 +791,7 @@ func Test1(t *testing.T) {
 
 	unixTime = T("2019-07-25T08:39:10Z").Unix()
 	data = hub.QueryCandleStick("B:xyz/cet", Hour, unixTime, 0, 20)
-	correct = `{"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179470,"time_span":"1hour","market":"B:xyz/cet"}`
+	correct = `{"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179350,"time_span":"1hour","market":"B:xyz/cet"}`
 	assert.Equal(t, correct, toStr(data))
 
 	data = hub.QueryCandleStick("abc/cet", Hour, unixTime, 0, 20)
