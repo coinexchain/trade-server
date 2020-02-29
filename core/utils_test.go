@@ -98,18 +98,16 @@ func TestCandleStickRecord(t *testing.T) {
 	lastTimeOld := lastTime
 
 	csSlice = csrMan.NewBlock(T("2019-07-15T08:09:10Z"))
-	require.Equal(t, []CandleStick{
-		{
-			OpenPrice:      sdk.NewDec(50),
-			ClosePrice:     sdk.NewDec(10),
-			HighPrice:      sdk.NewDec(50),
-			LowPrice:       sdk.NewDec(10),
-			TotalDeal:      sdk.NewInt(4),
-			EndingUnixTime: lastTimeOld.Unix(),
-			TimeSpan:       getSpanStrFromSpan(Minute),
-			Market:         market1,
-		},
-	}, csSlice)
+	require.Equal(t, CandleStick{
+		OpenPrice:      sdk.NewDec(50),
+		ClosePrice:     sdk.NewDec(10),
+		HighPrice:      sdk.NewDec(50),
+		LowPrice:       sdk.NewDec(10),
+		TotalDeal:      sdk.NewInt(4),
+		EndingUnixTime: lastTimeOld.Unix(),
+		TimeSpan:       getSpanStrFromSpan(Minute),
+		Market:         market1,
+	}, *(csSlice[0]))
 
 	csSlice = csrMan.NewBlock(T("2019-07-15T08:09:10Z"))
 	require.Equal(t, 0, len(csSlice))
@@ -125,18 +123,16 @@ func TestCandleStickRecord(t *testing.T) {
 	lastTimeOld = lastTime
 
 	csSlice = csrMan.NewBlock(T("2019-07-15T08:10:40Z"))
-	require.Equal(t, []CandleStick{
-		{
-			OpenPrice:      sdk.NewDec(10),
-			ClosePrice:     sdk.NewDec(20),
-			HighPrice:      sdk.NewDec(40),
-			LowPrice:       sdk.NewDec(10),
-			TotalDeal:      sdk.NewInt(6),
-			EndingUnixTime: lastTimeOld.Unix(),
-			TimeSpan:       getSpanStrFromSpan(Minute),
-			Market:         market1,
-		},
-	}, csSlice)
+	require.Equal(t, CandleStick{
+		OpenPrice:      sdk.NewDec(10),
+		ClosePrice:     sdk.NewDec(20),
+		HighPrice:      sdk.NewDec(40),
+		LowPrice:       sdk.NewDec(10),
+		TotalDeal:      sdk.NewInt(6),
+		EndingUnixTime: lastTimeOld.Unix(),
+		TimeSpan:       getSpanStrFromSpan(Minute),
+		Market:         market1,
+	}, *(csSlice[0]))
 
 	csSlice = csrMan.NewBlock(T("2019-07-15T08:10:40Z"))
 	require.Equal(t, 0, len(csSlice))
@@ -144,28 +140,27 @@ func TestCandleStickRecord(t *testing.T) {
 	lastTimeOld = lastTime
 
 	csSlice = csrMan.NewBlock(T("2019-07-15T09:00:40Z"))
-	require.Equal(t, []CandleStick{
-		{
-			OpenPrice:      sdk.NewDec(80),
-			ClosePrice:     sdk.NewDec(80),
-			HighPrice:      sdk.NewDec(80),
-			LowPrice:       sdk.NewDec(80),
-			TotalDeal:      sdk.NewInt(10),
-			EndingUnixTime: lastTimeOld.Unix(),
-			TimeSpan:       getSpanStrFromSpan(Minute),
-			Market:         market1,
-		},
-		{
-			OpenPrice:      sdk.NewDec(50),
-			ClosePrice:     sdk.NewDec(80),
-			HighPrice:      sdk.NewDec(80),
-			LowPrice:       sdk.NewDec(10),
-			TotalDeal:      sdk.NewInt(20),
-			EndingUnixTime: lastTimeOld.Unix(),
-			TimeSpan:       getSpanStrFromSpan(Hour),
-			Market:         market1,
-		},
-	}, csSlice)
+	require.Equal(t, CandleStick{
+		OpenPrice:      sdk.NewDec(80),
+		ClosePrice:     sdk.NewDec(80),
+		HighPrice:      sdk.NewDec(80),
+		LowPrice:       sdk.NewDec(80),
+		TotalDeal:      sdk.NewInt(10),
+		EndingUnixTime: lastTimeOld.Unix(),
+		TimeSpan:       getSpanStrFromSpan(Minute),
+		Market:         market1,
+	}, *(csSlice[0]))
+
+	require.Equal(t, CandleStick{
+		OpenPrice:      sdk.NewDec(50),
+		ClosePrice:     sdk.NewDec(80),
+		HighPrice:      sdk.NewDec(80),
+		LowPrice:       sdk.NewDec(10),
+		TotalDeal:      sdk.NewInt(20),
+		EndingUnixTime: lastTimeOld.Unix(),
+		TimeSpan:       getSpanStrFromSpan(Hour),
+		Market:         market1,
+	}, *(csSlice[1]))
 }
 
 func TestDepthManager(t *testing.T) {
