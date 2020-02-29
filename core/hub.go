@@ -460,7 +460,7 @@ func (hub *Hub) beginForCandleSticks() {
 	var triman *TripleManager
 	currMarket := ""
 	var ok bool
-	currMinute := hub.currBlockTime.UTC().Hour() * hub.currBlockTime.UTC().Minute() // Why? Bug here?
+	currMinute := hub.currBlockTime.UTC().Hour() * 60 + hub.currBlockTime.UTC().Minute()
 	for _, cs := range candleSticks {
 		if currMarket != cs.Market {
 			triman, ok = hub.managersMap[cs.Market]
@@ -958,7 +958,7 @@ func (hub *Hub) commitForTicker() {
 	if !isNewMinute {
 		return
 	}
-	currMinute := hub.currBlockTime.UTC().Hour() * hub.currBlockTime.UTC().Minute()
+	currMinute := hub.currBlockTime.UTC().Hour() * 60 + hub.currBlockTime.UTC().Minute()
 	for _, triman := range hub.managersMap {
 		if ticker := triman.tkm.GetTicker(currMinute); ticker != nil {
 			tkMap[ticker.Market] = ticker
