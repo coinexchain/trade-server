@@ -1568,7 +1568,7 @@ func (hub *Hub) Close() {
 	hub.dumpFlagLock.Lock()
 	atomic.StoreInt32(&hub.dumpFlag, 1)
 	hub.dumpFlagLock.Unlock()
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 5; i++ { // Why? is 5 seconds enough?
 		time.Sleep(time.Second)
 		if !hub.isDumped() {
 			break
