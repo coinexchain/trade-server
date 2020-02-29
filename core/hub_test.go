@@ -966,7 +966,7 @@ func TestDumpOffset(t *testing.T) {
 	// offset % 1000 != 0 && last dumptime < 10min
 	hub.lastDumpTime = time.Now().Add(-1 * time.Minute)
 	hub.UpdateOffset(0, 1)
-	require.EqualValues(t, false, hub.dumpFlag)
+	require.EqualValues(t, 0, hub.dumpFlag)
 	newHeightInfo := &NewHeightInfo{
 		Height:        1,
 		TimeStamp:     T("2019-07-15T08:40:10Z"),
@@ -981,7 +981,7 @@ func TestDumpOffset(t *testing.T) {
 	// offset % 1000 == 0 && last dumptime < 10min
 	hub.lastDumpTime = time.Now().Add(-1 * time.Minute)
 	hub.UpdateOffset(0, 1000)
-	require.EqualValues(t, false, hub.dumpFlag)
+	require.EqualValues(t, 0, hub.dumpFlag)
 	newHeightInfo.Height++
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
@@ -992,7 +992,7 @@ func TestDumpOffset(t *testing.T) {
 	// offset % 1000 == 0 && last dumptime > 10min
 	hub.lastDumpTime = time.Now().Add(-11 * time.Minute)
 	hub.UpdateOffset(0, 1000)
-	require.EqualValues(t, true, hub.dumpFlag)
+	require.EqualValues(t, 1, hub.dumpFlag)
 	newHeightInfo.Height++
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
@@ -1008,7 +1008,7 @@ func TestDumpOffset(t *testing.T) {
 	// offset % 1000 != 0 && last dumptime > 10min
 	hub.lastDumpTime = time.Now().Add(-11 * time.Minute)
 	hub.UpdateOffset(0, 1001)
-	require.EqualValues(t, false, hub.dumpFlag)
+	require.EqualValues(t, 0, hub.dumpFlag)
 	newHeightInfo.Height++
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)

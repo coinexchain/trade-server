@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -234,7 +235,7 @@ type Hub struct {
 	// dump hub's in-memory information to file, which can not be stored in rocksdb
 	partition    int32
 	offset       int64
-	dumpFlag     bool
+	dumpFlag     int32
 	dumpFlagLock sync.Mutex
 	lastDumpTime time.Time
 
@@ -257,7 +258,7 @@ func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval 
 		slashSlice:     make([]*NotificationSlash, 0, 10),
 		partition:      0,
 		offset:         0,
-		dumpFlag:       false,
+		dumpFlag:       0,
 		lastDumpTime:   time.Now(),
 		stopped:        false,
 		msgEntryList:   make([]msgEntry, 0, 1000),
@@ -1063,8 +1064,8 @@ func (hub *Hub) isStopped() bool {
 func (hub *Hub) dumpHubState() {
 	hub.dumpFlagLock.Lock()
 	defer hub.dumpFlagLock.Unlock()
-	if hub.dumpFlag {
-		hub.dumpFlag = false
+	if atomic.LoadInt32(&hub.dumpFlag) != 0 {
+		atomic.StoreInt32(&hub.dumpFlag, 0)
 		hub.commitForDump()
 	}
 }
@@ -1541,7 +1542,7 @@ func (hub *Hub) UpdateOffset(partition int32, offset int64) {
 	if offset%DumpInterval == 0 && now.Sub(hub.lastDumpTime) > DumpMinTime {
 		hub.dumpFlagLock.Lock()
 		defer hub.dumpFlagLock.Unlock()
-		hub.dumpFlag = true
+		atomic.StoreInt32(&hub.dumpFlag, 1)
 	}
 }
 
@@ -1564,7 +1565,7 @@ func (hub *Hub) LoadOffset(partition int32) int64 {
 func (hub *Hub) Close() {
 	// try to dump the latest block
 	hub.dumpFlagLock.Lock()
-	hub.dumpFlag = true
+	atomic.StoreInt32(&hub.dumpFlag, 1)
 	hub.dumpFlagLock.Unlock()
 	for i := 0; i < 5; i++ {
 		time.Sleep(time.Second)
@@ -1582,5 +1583,5 @@ func (hub *Hub) Close() {
 func (hub *Hub) isDumped() bool {
 	hub.dumpFlagLock.Lock()
 	defer hub.dumpFlagLock.Unlock()
-	return hub.dumpFlag
+	return atomic.LoadInt32(&hub.dumpFlag) != 0
 }
