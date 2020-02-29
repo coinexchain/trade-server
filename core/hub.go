@@ -1563,7 +1563,7 @@ func (hub *Hub) UpdateOffset(partition int32, offset int64) {
 
 	now := time.Now()
 	// dump data every <interval> offset
-	if hub.offset - hub.lastOffset > DumpInterval && now.Sub(hub.lastDumpTime) > DumpMinTime {
+	if hub.offset - hub.lastOffset >= DumpInterval && now.Sub(hub.lastDumpTime) > DumpMinTime {
 		hub.dumpFlagLock.Lock()
 		defer hub.dumpFlagLock.Unlock()
 		atomic.StoreInt32(&hub.dumpFlag, 1)
