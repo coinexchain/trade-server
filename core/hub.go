@@ -1434,8 +1434,9 @@ func (hub *Hub) QueryTxByHashID(hexHashID string) json.RawMessage {
 	if !iter.Valid() {
 		return json.RawMessage([]byte{})
 	}
+	key = iter.Key()
 	value := iter.Value()
-	if len(value) > 1+len(hexHashID) && string(value[1:1+len(hexHashID)]) == hexHashID {
+	if len(key) > 1+len(hexHashID) && string(key[1:1+len(hexHashID)]) == hexHashID {
 		return json.RawMessage(value)
 	}
 	return json.RawMessage([]byte{})
