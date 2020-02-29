@@ -166,12 +166,13 @@ func (triman *TripleManager) AddDeltaChange(isSell bool, price sdk.Dec, amount s
 	triman.entryList = append(triman.entryList, DeltaChangeEntry{isSell, price, amount})
 }
 
-func (triman *TripleManager) Update() {
+func (triman *TripleManager) Update(lockCount *int64) {
 	if len(triman.entryList) == 0 {
 		return
 	}
 	triman.mutex.Lock()
 	defer triman.mutex.Unlock()
+	atomic.AddInt64(lockCount, 1)
 	for _, e := range triman.entryList {
 		if e.isSell {
 			triman.sell.DeltaChange(e.price, e.amount)
@@ -244,6 +245,11 @@ type Hub struct {
 
 	// this member is set during handleNotificationTx and is used to fill
 	currTxHashID string
+
+	// Count how many times the mutexes are locked
+	dbLockCount        int64
+	tickerMapLockCount int64
+	trimanLockCount    int64
 }
 
 func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval int64, keepRecent int64) (hub *Hub) {
@@ -277,13 +283,23 @@ func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval 
 	go func() {
 		// this goroutine monitors the progress of trade-server
 		// if it is stuck, panic here
-		oldSid := hub.sid
+		oldDbLockCount := hub.dbLockCount
+		oldTickerMapLockCount := hub.tickerMapLockCount
+		oldTrimanLockCount := hub.trimanLockCount
 		for {
 			time.Sleep(time.Duration(monitorInterval * int64(time.Second)))
-			if oldSid == hub.sid {
-				panic("No progress for a long time")
+			if oldTrimanLockCount == hub.trimanLockCount {
+				hub.Log("No progress for a long time for triman lock count")
 			}
-			oldSid = hub.sid
+			if oldTickerMapLockCount == hub.tickerMapLockCount {
+				hub.Log("No progress for a long time for ticker map lock count")
+			}
+			if oldDbLockCount == hub.dbLockCount {
+				panic("No progress for a long time for db lock count")
+			}
+			oldDbLockCount = hub.dbLockCount
+			oldTickerMapLockCount = hub.tickerMapLockCount
+			oldTrimanLockCount = hub.trimanLockCount
 		}
 	}()
 	return
@@ -974,6 +990,7 @@ func (hub *Hub) commitForTicker() {
 	hub.msgsChannel <- MsgToPush{topic: TickerKey, extra: tkMap}
 	hub.tickerMapMutex.Lock()
 	defer hub.tickerMapMutex.Unlock()
+	atomic.AddInt64(&hub.tickerMapLockCount, 1)
 	for market, ticker := range tkMap {
 		hub.tickerMap[market] = ticker
 	}
@@ -1019,7 +1036,7 @@ func (hub *Hub) commitForDepth() {
 			continue
 		}
 
-		triman.Update() // consumes the recorded delta changes
+		triman.Update(&hub.trimanLockCount) // consumes the recorded delta changes
 
 		depthDeltaSell, mergeDeltaSell := triman.sell.EndBlock()
 		depthDeltaBuy, mergeDeltaBuy := triman.buy.EndBlock()
@@ -1075,6 +1092,7 @@ func (hub *Hub) dumpHubState() {
 func (hub *Hub) refreshDB() {
 	hub.dbMutex.Lock()
 	defer hub.dbMutex.Unlock()
+	atomic.AddInt64(&hub.dbLockCount, 1)
 	hub.batch.WriteSync()
 	hub.batch.Close()
 	hub.batch = hub.db.NewBatch()
@@ -1086,6 +1104,7 @@ var _ Querier = &Hub{}
 func (hub *Hub) QueryTickers(marketList []string) []*Ticker {
 	tickerList := make([]*Ticker, 0, len(marketList))
 	hub.tickerMapMutex.RLock()
+	atomic.AddInt64(&hub.tickerMapLockCount, 1)
 	for _, market := range marketList {
 		ticker, ok := hub.tickerMap[market]
 		if ok {
@@ -1133,6 +1152,7 @@ func (hub *Hub) QueryDepth(market string, count int) (sell []*PricePoint, buy []
 	tripleMan := hub.managersMap[market]
 	tripleMan.mutex.RLock()
 	defer tripleMan.mutex.RUnlock()
+	atomic.AddInt64(&hub.trimanLockCount, 1)
 	sell = tripleMan.sell.GetLowest(count)
 	buy = tripleMan.buy.GetHighest(count)
 	return
