@@ -10,43 +10,43 @@ func (hub *Hub) pushMsgToWebsocket() {
 			hub.PushHeightInfoMsg(entry.bz)
 		case KlineKey:
 			vals := entry.extra.([]string)
-			hub.PushCandleMsg(/*market*/vals[0], entry.bz, /*timespan*/vals[1])
+			hub.PushCandleMsg( /*market*/ vals[0], entry.bz /*timespan*/, vals[1])
 		case LockedKey:
-			hub.PushLockedCoinsMsg(/*addr*/entry.extra.(string), entry.bz)
+			hub.PushLockedCoinsMsg( /*addr*/ entry.extra.(string), entry.bz)
 		case IncomeKey:
-			hub.PushIncomeMsg(/*receiver*/entry.extra.(string), entry.bz)
+			hub.PushIncomeMsg( /*receiver*/ entry.extra.(string), entry.bz)
 		case TxKey:
-			hub.PushTxMsg(/*addr*/entry.extra.(string), entry.bz)
+			hub.PushTxMsg( /*addr*/ entry.extra.(string), entry.bz)
 		case RedelegationKey:
 			hub.PushRedelegationMsg(entry.extra.(TimeAndSidWithAddr))
 		case UnbondingKey:
 			hub.PushUnbondingMsg(entry.extra.(TimeAndSidWithAddr))
 		case UnlockKey:
-			hub.PushUnlockMsg(/*addr*/entry.extra.(string), entry.bz)
+			hub.PushUnlockMsg( /*addr*/ entry.extra.(string), entry.bz)
 		case CommentKey:
-			hub.PushCommentMsg(/*token*/entry.extra.(string), entry.bz)
+			hub.PushCommentMsg( /*token*/ entry.extra.(string), entry.bz)
 		case CreateOrderKey:
-			hub.PushCreateOrderInfoMsg(/*addr*/entry.extra.(string), entry.bz)
+			hub.PushCreateOrderInfoMsg( /*addr*/ entry.extra.(string), entry.bz)
 		case FillOrderKey:
-			hub.PushFillOrderInfoMsg(/*addr*/entry.extra.(string), entry.bz)
+			hub.PushFillOrderInfoMsg( /*addr*/ entry.extra.(string), entry.bz)
 		case DealKey:
-			hub.PushDealInfoMsg(/*market*/entry.extra.(string), entry.bz)
+			hub.PushDealInfoMsg( /*market*/ entry.extra.(string), entry.bz)
 		case CancelOrderKey:
-			hub.PushCancelOrderMsg(/*addr*/entry.extra.(string), entry.bz)
+			hub.PushCancelOrderMsg( /*addr*/ entry.extra.(string), entry.bz)
 		case BancorTradeKey:
-			hub.PushBancorTradeInfoMsg(/*addr*/entry.extra.(string), entry.bz)
+			hub.PushBancorTradeInfoMsg( /*addr*/ entry.extra.(string), entry.bz)
 		case BancorDealKey:
-			hub.PushBancorDealMsg(/*market*/entry.extra.(string), entry.bz)
+			hub.PushBancorDealMsg( /*market*/ entry.extra.(string), entry.bz)
 		case BancorKey:
-			hub.PushBancorMsg(/*market*/entry.extra.(string), entry.bz)
+			hub.PushBancorMsg( /*market*/ entry.extra.(string), entry.bz)
 		case SlashKey:
 			hub.PushSlashMsg(entry.bz)
 		case TickerKey:
 			hub.PushTickerMsg(entry.extra) // TODO. will modify param type
 		case DepthFull:
-			hub.PushDepthFullMsg(/*market*/entry.extra.(string))
+			hub.PushDepthFullMsg( /*market*/ entry.extra.(string))
 		case DepthKey:
-			hub.PushDepthMsg(/*market*/entry.bz, entry.extra.(map[string][]byte))
+			hub.PushDepthMsg( /*market*/ entry.bz, entry.extra.(map[string][]byte))
 		case OptionKey:
 			hub.subMan.SetSkipOption(entry.extra.(bool))
 		}

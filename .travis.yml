@@ -14,7 +14,7 @@ cache:
     - ${TRAVIS_BUILD_DIR}/vendor
     - $GOPATH/src
     - $GOPATH/pkg
-    - $HOME/rocksdb-6.6.4
+#    - $HOME/rocksdb-6.6.4
 
 before_cache:
   - find $HOME/.glide/cache -name ORIG_HEAD -exec rm {} \;
