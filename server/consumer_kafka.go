@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -19,16 +20,17 @@ type TradeConsumer struct {
 	writer   MsgWriter
 }
 
-func NewKafkaConsumer(svrConfig *toml.Tree, topic string, hub *core.Hub) *TradeConsumer {
+func NewKafkaConsumer(svrConfig *toml.Tree, topic string, hub *core.Hub) (*TradeConsumer, error) {
 	var (
 		writer   MsgWriter
+		err      error
 		consumer sarama.Consumer
 	)
-	if writer = initBackupWriter(svrConfig); writer == nil {
-		return nil
+	if writer, err = initBackupWriter(svrConfig); err != nil {
+		return nil, err
 	}
-	if consumer = newKafka(svrConfig); consumer == nil {
-		return nil
+	if consumer, err = newKafka(svrConfig); err != nil {
+		return nil, err
 	}
 	return &TradeConsumer{
 		Consumer: consumer,
@@ -37,22 +39,22 @@ func NewKafkaConsumer(svrConfig *toml.Tree, topic string, hub *core.Hub) *TradeC
 		quitChan: make(chan byte, 1),
 		hub:      hub,
 		writer:   writer,
-	}
+	}, nil
 }
 
-func newKafka(svrConfig *toml.Tree) sarama.Consumer {
+func newKafka(svrConfig *toml.Tree) (sarama.Consumer, error) {
 	addrs := svrConfig.GetDefault("kafka-addrs", "").(string)
 	if len(addrs) == 0 {
 		log.Error("kafka address is empty")
-		return nil
+		return nil, fmt.Errorf("kafka address is empty")
 	}
 	sarama.Logger = log.StandardLogger()
 	consumer, err := sarama.NewConsumer(strings.Split(addrs, ","), nil)
 	if err != nil {
 		log.WithError(err).Error("create consumer error")
-		return nil
+		return nil, err
 	}
-	return consumer
+	return consumer, nil
 
 }
 

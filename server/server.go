@@ -52,7 +52,8 @@ func NewServer(svrConfig *toml.Tree) *TradeServer {
 		log.WithError(err).Error("init web service failed")
 		return nil
 	}
-	if consumer = NewConsumer(svrConfig, hub); consumer == nil {
+	if consumer, err = NewConsumer(svrConfig, hub); err != nil {
+		log.WithError(err).Errorf("new consumer failed")
 		return nil
 	}
 	return &TradeServer{

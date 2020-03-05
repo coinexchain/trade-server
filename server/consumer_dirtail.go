@@ -17,21 +17,23 @@ type TradeConsumerWithDirTail struct {
 	writer     MsgWriter
 }
 
-func NewConsumerWithDirTail(svrConfig *toml.Tree, hub *core.Hub) Consumer {
+func NewConsumerWithDirTail(svrConfig *toml.Tree, hub *core.Hub) (Consumer, error) {
 	var (
 		dataDir string
+		err     error
 		writer  MsgWriter
 	)
 	dataDir = svrConfig.GetDefault("dir", "").(string)
-	if writer = initBackupWriter(svrConfig); writer == nil {
-		return nil
+	if writer, err = initBackupWriter(svrConfig); err != nil {
+		log.WithError(err).Errorf("init backup writer failed")
+		return nil, err
 	}
 	return &TradeConsumerWithDirTail{
 		dirName:    dataDir,
 		filePrefix: FilePrefix,
 		hub:        hub,
 		writer:     writer,
-	}
+	}, nil
 }
 
 func (tc *TradeConsumerWithDirTail) String() string {
