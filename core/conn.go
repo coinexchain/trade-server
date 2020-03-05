@@ -49,7 +49,7 @@ func (c *Conn) sendMsg() {
 		if !ok {
 			break
 		}
-		if c.lastError != nil {
+		if c.lastError == nil {
 			c.lastError = c.WsIfc.WriteMessage(websocket.TextMessage, msg)
 		}
 	}
