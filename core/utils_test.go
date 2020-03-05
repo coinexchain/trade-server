@@ -299,3 +299,24 @@ func TestMergePrice(t *testing.T) {
 		}
 	}
 }
+
+func TestGetTopicAndParams(t *testing.T) {
+	subMsg := "blockinfo"
+	topic, params, err := GetTopicAndParams(subMsg)
+	require.Nil(t, err)
+	require.EqualValues(t, BlockInfoKey, topic)
+	require.EqualValues(t, 0, len(params))
+
+	//ticker:abc/cet; ticker:B:abc/cet
+	subMsg = "ticker:abc/cet"
+	topic, params, err = GetTopicAndParams(subMsg)
+	require.Nil(t, err)
+	require.EqualValues(t, TickerKey, topic)
+	require.EqualValues(t, 1, len(params))
+
+	subMsg = "ticker:B:abc/cet"
+	topic, params, err = GetTopicAndParams(subMsg)
+	require.Nil(t, err)
+	require.EqualValues(t, TickerKey, topic)
+	require.EqualValues(t, 2, len(params))
+}
