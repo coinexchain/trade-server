@@ -119,7 +119,7 @@ func GetTopicAndParams(subscriptionTopic string) (topic string, params []string,
 	if len(values) < 1 || len(values) > MaxArguNum+1 {
 		return "", nil, fmt.Errorf("Invalid params count : [%s] ", subscriptionTopic)
 	}
-	if !checkTopicValid(topic, params) {
+	if !checkTopicValid(values[0], values[1:]) {
 		return "", nil, fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
 	}
 	return values[0], values[1:], nil
@@ -245,7 +245,7 @@ func groupOfDataPacket(topic string, data []json.RawMessage) []byte {
 	return bz
 }
 
-func int64ToBigEndianBytes(n int64) []byte {
+func Int64ToBigEndianBytes(n int64) []byte {
 	var b [8]byte
 	binary.BigEndian.PutUint64(b[:], uint64(n))
 	return b[:]
@@ -284,8 +284,8 @@ func getEndKeyFromBytes(firstByte byte, bz []byte, time int64, sid int64) []byte
 	res = append(res, byte(len(bz)))
 	res = append(res, bz...)
 	res = append(res, byte(0))
-	res = append(res, int64ToBigEndianBytes(time)...)
-	res = append(res, int64ToBigEndianBytes(sid)...)
+	res = append(res, Int64ToBigEndianBytes(time)...)
+	res = append(res, Int64ToBigEndianBytes(sid)...)
 	return res
 }
 
