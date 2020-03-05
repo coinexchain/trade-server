@@ -82,7 +82,8 @@ func initHub(svrConfig *toml.Tree, db dbm.DB, wsManager *core.WebsocketManager) 
 	interval := svrConfig.GetDefault("interval", int64(60)).(int64)
 	keepRecent := svrConfig.GetDefault("keepRecent", int64(-1)).(int64)
 	monitorInterval := svrConfig.GetDefault("monitorinterval", int64(0)).(int64)
-	hub := core.NewHub(db, wsManager, interval, monitorInterval, keepRecent)
+	initChainHeight := svrConfig.GetDefault("initChainHeight", int64(0)).(int64)
+	hub := core.NewHub(db, wsManager, interval, monitorInterval, keepRecent, initChainHeight)
 	if err := restoreHub(hub); err != nil {
 		return nil, err
 	}
@@ -182,6 +183,7 @@ func newLevelDB(name string, dir string) (db dbm.DB, err error) {
 func restoreHub(hub *core.Hub) error {
 	data := hub.LoadDumpData()
 	if data == nil {
+		hub.StoreLeastHeight()
 		log.Info("dump data does not exist, init new hub")
 		return nil
 	}

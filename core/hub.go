@@ -72,9 +72,9 @@ func (hub *Hub) getKeyFromBytesAndTime(firstByte byte, bz []byte, lastByte byte,
 	res = append(res, bz...)
 	res = append(res, byte(0))
 	//the block's time at which the KV pair is generated
-	res = append(res, int64ToBigEndianBytes(unixTime)...)
+	res = append(res, Int64ToBigEndianBytes(unixTime)...)
 	// the serial ID for a KV pair
-	res = append(res, int64ToBigEndianBytes(hub.sid)...)
+	res = append(res, Int64ToBigEndianBytes(hub.sid)...)
 	res = append(res, lastByte)
 	return res
 }
@@ -136,8 +136,8 @@ func (hub *Hub) getEventKeyWithSidAndTime(firstByte byte, addr string, time int6
 	res = append(res, byte(len(addr)))
 	res = append(res, []byte(addr)...)
 	res = append(res, byte(0))
-	res = append(res, int64ToBigEndianBytes(time)...) //the block's time at which the KV pair is generated
-	res = append(res, int64ToBigEndianBytes(sid)...)  // the serial ID for a KV pair
+	res = append(res, Int64ToBigEndianBytes(time)...) //the block's time at which the KV pair is generated
+	res = append(res, Int64ToBigEndianBytes(sid)...)  // the serial ID for a KV pair
 	res = append(res, 0)
 	return res
 }
@@ -252,27 +252,28 @@ type Hub struct {
 	trimanLockCount    int64
 }
 
-func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval int64, keepRecent int64) (hub *Hub) {
+func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval int64, keepRecent int64, initChainHeight int64) (hub *Hub) {
 	hub = &Hub{
-		db:             db,
-		batch:          db.NewBatch(),
-		subMan:         subMan,
-		managersMap:    make(map[string]*TripleManager),
-		csMan:          NewCandleStickManager(nil),
-		currBlockTime:  time.Unix(0, 0),
-		lastBlockTime:  time.Unix(0, 0),
-		tickerMap:      make(map[string]*Ticker),
-		slashSlice:     make([]*NotificationSlash, 0, 10),
-		partition:      0,
-		offset:         0,
-		lastOffset:     -1,
-		dumpFlag:       0,
-		lastDumpTime:   time.Now(),
-		stopped:        false,
-		msgEntryList:   make([]msgEntry, 0, 1000),
-		blocksInterval: interval,
-		keepRecent:     keepRecent,
-		msgsChannel:    make(chan MsgToPush, 10000),
+		db:              db,
+		batch:           db.NewBatch(),
+		subMan:          subMan,
+		managersMap:     make(map[string]*TripleManager),
+		csMan:           NewCandleStickManager(nil),
+		currBlockTime:   time.Unix(0, 0),
+		lastBlockTime:   time.Unix(0, 0),
+		tickerMap:       make(map[string]*Ticker),
+		slashSlice:      make([]*NotificationSlash, 0, 10),
+		partition:       0,
+		offset:          0,
+		lastOffset:      -1,
+		dumpFlag:        0,
+		lastDumpTime:    time.Now(),
+		stopped:         false,
+		msgEntryList:    make([]msgEntry, 0, 1000),
+		blocksInterval:  interval,
+		keepRecent:      keepRecent,
+		msgsChannel:     make(chan MsgToPush, 10000),
+		currBlockHeight: initChainHeight,
 	}
 
 	go hub.pushMsgToWebsocket()
@@ -303,6 +304,12 @@ func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval 
 		}
 	}()
 	return
+}
+
+// Not safe for concurrency; Only be used in init
+func (hub *Hub) StoreLeastHeight() {
+	heightBytes := Int64ToBigEndianBytes(hub.currBlockHeight)
+	hub.db.Set([]byte{LatestHeightByte}, heightBytes)
 }
 
 func (hub *Hub) HasMarket(market string) bool {
@@ -362,7 +369,7 @@ func (hub *Hub) preHandleNewHeightInfo(msgType string, bz []byte) {
 	if hub.currBlockHeight >= v.Height {
 		//The incoming msg is lagging behind hub's internal state
 		hub.skipHeight = true
-		hub.Log(fmt.Sprintf("Skipping Height %d<%d\n", hub.currBlockHeight, v.Height))
+		log.Info(fmt.Sprintf("Skipping Height %d<%d\n", hub.currBlockHeight, v.Height))
 	} else if hub.currBlockHeight+1 == v.Height {
 		//The incoming msg catches up hub's internal state
 		hub.currBlockHeight = v.Height
@@ -370,7 +377,7 @@ func (hub *Hub) preHandleNewHeightInfo(msgType string, bz []byte) {
 	} else {
 		//The incoming msg can not be higher than hub's internal state
 		hub.skipHeight = true
-		hub.Log(fmt.Sprintf("Invalid Height! %d+1!=%d\n", hub.currBlockHeight, v.Height))
+		log.Info(fmt.Sprintf("Invalid Height! %d+1!=%d\n", hub.currBlockHeight, v.Height))
 		panic("here")
 	}
 
@@ -447,6 +454,7 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 		hub.Log(fmt.Sprintf("Skipping Height websocket %d<%d\n", latestHeight, v.Height))
 	} else if latestHeight+1 == v.Height || latestHeight < 0 {
 		hub.msgsChannel <- MsgToPush{topic: OptionKey, extra: false}
+		log.Info("push height info, height : ", v.Height)
 	} else {
 		hub.msgsChannel <- MsgToPush{topic: OptionKey, extra: true}
 		hub.Log(fmt.Sprintf("Invalid Height! websocket %d+1!=%d\n", latestHeight, v.Height))
@@ -454,7 +462,7 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b[:], timestamp)
-	heightBytes := int64ToBigEndianBytes(v.Height)
+	heightBytes := Int64ToBigEndianBytes(v.Height)
 	key := append([]byte{BlockHeightByte}, heightBytes...)
 	hub.batch.Set(key, b)
 	hub.batch.Set([]byte{LatestHeightByte}, heightBytes)
@@ -619,7 +627,7 @@ func (hub *Hub) analyzeMessages(MsgTypes []string, TxJSON string) {
 			// see https://stackoverflow.com/questions/22343083/json-unmarshaling-with-long-numbers-gives-floating-point-number
 			effTime := msg["effective_time"].(float64)
 			key := hub.getKeyFromBytes(DelistByte, []byte(market), 0)
-			hub.batch.Set(key, int64ToBigEndianBytes(int64(effTime)))
+			hub.batch.Set(key, Int64ToBigEndianBytes(int64(effTime)))
 			hub.sid++
 		}
 	}
@@ -649,7 +657,7 @@ func (hub *Hub) handleNotificationTx(bz []byte) {
 	hub.currTxHashID = v.Hash
 
 	// Use the transaction's hashid as key, save its detail
-	timeBytes := int64ToBigEndianBytes(hub.currBlockTime.Unix())
+	timeBytes := Int64ToBigEndianBytes(hub.currBlockTime.Unix())
 	key := append([]byte{DetailByte}, []byte(v.Hash)...)
 	key = append(key, timeBytes...)
 	hub.batch.Set(key, bz)
@@ -1125,7 +1133,7 @@ func (hub *Hub) QueryLatestHeight() int64 {
 func (hub *Hub) QueryBlockTime(height int64, count int) []int64 {
 	count = limitCount(count)
 	data := make([]int64, 0, count)
-	end := append([]byte{BlockHeightByte}, int64ToBigEndianBytes(height)...)
+	end := append([]byte{BlockHeightByte}, Int64ToBigEndianBytes(height)...)
 	start := []byte{BlockHeightByte}
 	hub.dbMutex.RLock()
 	iter := hub.db.ReverseIterator(start, end)
@@ -1547,7 +1555,7 @@ func (hub *Hub) commitForDump() {
 
 	// save offset
 	offsetKey := getOffsetKey(hub.partition)
-	offsetBuf := int64ToBigEndianBytes(hub.offset)
+	offsetBuf := Int64ToBigEndianBytes(hub.offset)
 	hub.batch.Set(offsetKey, offsetBuf)
 
 	hub.lastDumpTime = time.Now()

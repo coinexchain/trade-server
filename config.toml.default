@@ -15,6 +15,10 @@ data-dir = "data"
 cert-dir = "cert"
 https-toggle = false
 
+# init chain height 
+initChainHeight=0
+
+
 # log
 log-dir = "log"
 # log level: debug | info | warn | error
