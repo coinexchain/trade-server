@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -9,14 +10,17 @@ import (
 )
 
 type MockWif struct {
+	mtx    sync.Mutex
 	recode [][]byte
 }
 
 func (m *MockWif) Close() error {
-	panic("implement me")
+	return nil
 }
 
 func (m *MockWif) WriteMessage(msgType int, data []byte) error {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
 	m.recode = append(m.recode, data)
 	return nil
 }
@@ -33,21 +37,26 @@ func (m *MockWif) PingHandler() func(string) error {
 	panic("implement me")
 }
 
+func (m *MockWif) GetRecords() [][]byte {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	ret := make([][]byte, len(m.recode))
+	copy(ret, m.recode)
+	return ret
+}
+
 func TestSendMsg(t *testing.T) {
 	mockWsIf := MockWif{}
 	c := NewConn(&mockWsIf)
-
-	go func() {
-		c.sendMsg()
-	}()
 	for i := 0; i < 5; i++ {
 		c.WriteMsg([]byte(fmt.Sprintf("%d", i)))
 	}
-	time.Sleep(time.Second * 3)
-	close(c.msgChan)
+	time.Sleep(time.Second * 2)
+	c.Close()
 
-	require.EqualValues(t, 5, len(mockWsIf.recode))
+	records := mockWsIf.GetRecords()
+	require.EqualValues(t, 5, len(records))
 	for i := 0; i < 5; i++ {
-		require.EqualValues(t, fmt.Sprintf("%d", i), string(mockWsIf.recode[i]))
+		require.EqualValues(t, fmt.Sprintf("%d", i), string(records[i]))
 	}
 }

@@ -3,6 +3,7 @@ package core
 import (
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -23,7 +24,7 @@ type Conn struct {
 	allTopics       map[string]struct{}            // all the topics (with or without params)
 	topicWithParams map[string]map[string]struct{} // topic --> params
 
-	lastError error
+	lastError atomic.Value
 	msgChan   chan []byte
 	closed    bool
 }
@@ -49,8 +50,11 @@ func (c *Conn) sendMsg() {
 		if !ok {
 			break
 		}
-		if c.lastError == nil {
-			c.lastError = c.WsIfc.WriteMessage(websocket.TextMessage, msg)
+
+		if c.lastError.Load() == nil {
+			if err := c.WsIfc.WriteMessage(websocket.TextMessage, msg); err != nil {
+				c.lastError.Store(err)
+			}
 		}
 	}
 }
@@ -65,8 +69,8 @@ func (c *Conn) ReadMsg(manager *WebsocketManager) (message []byte, err error) {
 }
 
 func (c *Conn) WriteMsg(v []byte) error {
-	if c.lastError != nil {
-		return c.lastError
+	if val := c.lastError.Load(); val != nil {
+		return val.(error)
 	}
 	if c.closed { // Why? Should we return an error when writing to a closed Conn?
 		return nil
