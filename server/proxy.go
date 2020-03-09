@@ -3,6 +3,7 @@ package server
 import (
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -18,6 +19,22 @@ type RestSwagger struct {
 	Paths map[string]interface{} `yaml:"paths"`
 }
 
+func registerProxyHandlerLegacy(prefix, lcd string, router *mux.Router) error {
+	paths, err := getRestPaths(lcd)
+	if err != nil {
+		log.WithError(err).Fatal("get rest paths failed")
+		return err
+	}
+	for _, path := range paths {
+		if strings.HasPrefix(path, "/txs/") ||
+			strings.HasPrefix(path, "/blocks/") ||
+			strings.HasPrefix(path, "/validatorsets/") {
+			router.HandleFunc(prefix+path, httpProxy(lcd, prefix))
+		}
+	}
+	return nil
+}
+
 func registerProxyHandler(lcd string, router *mux.Router) error {
 	paths, err := getRestPaths(lcd)
 	if err != nil {
@@ -25,7 +42,7 @@ func registerProxyHandler(lcd string, router *mux.Router) error {
 		return err
 	}
 	for _, path := range paths {
-		router.HandleFunc(path, httpProxy(lcd))
+		router.HandleFunc(path, httpProxy(lcd, ""))
 	}
 	return nil
 }
@@ -54,10 +71,11 @@ func getRestPaths(lcd string) ([]string, error) {
 	return paths, nil
 }
 
-func httpProxy(lcd string) http.HandlerFunc {
+func httpProxy(lcd, prefix string) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		client := &http.Client{}
-		req, err := http.NewRequest("GET", lcd+request.URL.Path, nil)
+		path := strings.TrimPrefix(request.URL.Path, prefix)
+		req, err := http.NewRequest("GET", lcd+path, nil)
 		if err != nil {
 			log.WithError(err).Error("http new request error")
 			return

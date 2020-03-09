@@ -1,0 +1,131 @@
+==================
+WARNING: DATA RACE
+Read at 0x00c0009308a0 by goroutine 34:
+  github.com/coinexchain/trade-server/core.(*MockWif).WriteMessage()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn_test.go:20 +0x3e
+  github.com/coinexchain/trade-server/core.(*Conn).sendMsg()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn.go:53 +0x18d
+  github.com/coinexchain/trade-server/core.TestSendMsg.func1()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn_test.go:41 +0x38
+
+Previous write at 0x00c0009308a0 by goroutine 33:
+  github.com/coinexchain/trade-server/core.(*MockWif).WriteMessage()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn_test.go:20 +0xcf
+  github.com/coinexchain/trade-server/core.(*Conn).sendMsg()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn.go:53 +0x18d
+
+Goroutine 34 (running) created at:
+  github.com/coinexchain/trade-server/core.TestSendMsg()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn_test.go:40 +0xb9
+  testing.tRunner()
+      /usr/local/go/src/testing/testing.go:909 +0x199
+
+Goroutine 33 (running) created at:
+  github.com/coinexchain/trade-server/core.NewConn()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn.go:41 +0x249
+  github.com/coinexchain/trade-server/core.TestSendMsg()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn_test.go:38 +0x97
+  testing.tRunner()
+      /usr/local/go/src/testing/testing.go:909 +0x199
+==================
+==================
+WARNING: DATA RACE
+Write at 0x00c00037ce78 by goroutine 33:
+  github.com/coinexchain/trade-server/core.(*Conn).sendMsg()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn.go:53 +0x1af
+
+Previous read at 0x00c00037ce78 by goroutine 32:
+  github.com/coinexchain/trade-server/core.(*Conn).WriteMsg()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn.go:68 +0x5f
+  github.com/coinexchain/trade-server/core.TestSendMsg()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn_test.go:44 +0x17a
+  testing.tRunner()
+      /usr/local/go/src/testing/testing.go:909 +0x199
+
+Goroutine 33 (running) created at:
+  github.com/coinexchain/trade-server/core.NewConn()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn.go:41 +0x249
+  github.com/coinexchain/trade-server/core.TestSendMsg()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn_test.go:38 +0x97
+  testing.tRunner()
+      /usr/local/go/src/testing/testing.go:909 +0x199
+
+Goroutine 32 (running) created at:
+  testing.(*T).Run()
+      /usr/local/go/src/testing/testing.go:960 +0x651
+  testing.runTests.func1()
+      /usr/local/go/src/testing/testing.go:1202 +0xa6
+  testing.tRunner()
+      /usr/local/go/src/testing/testing.go:909 +0x199
+  testing.runTests()
+      /usr/local/go/src/testing/testing.go:1200 +0x521
+  testing.(*M).Run()
+      /usr/local/go/src/testing/testing.go:1117 +0x2ff
+  main.main()
+      _testmain.go:168 +0x337
+==================
+WARNING: DATA RACE
+Read at 0x00c00000f440 by goroutine 34:
+  runtime.growslice()
+      /usr/local/go/src/runtime/slice.go:76 +0x0
+  github.com/coinexchain/trade-server/core.(*MockWif).WriteMessage()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn_test.go:20 +0x15c
+  github.com/coinexchain/trade-server/core.(*Conn).sendMsg()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn.go:53 +0x18d
+  github.com/coinexchain/trade-server/core.TestSendMsg.func1()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn_test.go:41 +0x38
+
+Previous write at 0x00c00000f440 by goroutine 33:
+  github.com/coinexchain/trade-server/core.(*MockWif).WriteMessage()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn_test.go:20 +0x88
+  github.com/coinexchain/trade-server/core.(*Conn).sendMsg()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn.go:53 +0x18d
+
+Goroutine 34 (running) created at:
+  github.com/coinexchain/trade-server/core.TestSendMsg()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn_test.go:40 +0xb9
+  testing.tRunner()
+      /usr/local/go/src/testing/testing.go:909 +0x199
+
+Goroutine 33 (running) created at:
+  github.com/coinexchain/trade-server/core.NewConn()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn.go:41 +0x249
+  github.com/coinexchain/trade-server/core.TestSendMsg()
+      /Users/a/GoNew/src/github.com/coinexchain/trade-server/core/conn_test.go:38 +0x97
+  testing.tRunner()
+      /usr/local/go/src/testing/testing.go:909 +0x199
+==================
+--- FAIL: TestSendMsg (3.00s)
+    conn_test.go:49: 
+        	Error Trace:	conn_test.go:49
+        	Error:      	Not equal: 
+        	            	expected: 5
+        	            	actual  : 2
+        	Test:       	TestSendMsg
+    testing.go:853: race detected during execution of test
+map[]
+time="2020-03-09T17:20:28+08:00" level=error msg="Invalid Height! websocket 0+1!=1000\n"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 1001"
+time="2020-03-09T17:20:28+08:00" level=error msg="Error! 1001 sel_low:12.000000000000000000 buy_high:15.000000000000000000\n"
+time="2020-03-09T17:20:28+08:00" level=error msg="Invalid Height! websocket 1001+1!=99999\n"
+time="2020-03-09T17:20:28+08:00" level=error msg="Invalid Height! websocket 0+1!=1000\n"
+time="2020-03-09T17:20:28+08:00" level=error msg="Error! 1000 sel_low:100.000000000000000000 buy_high:100.000000000000000000\n"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 1001"
+time="2020-03-09T17:20:28+08:00" level=error msg="Error! 1001 sel_low:100.000000000000000000 buy_high:100.000000000000000000\n"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 1002"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 1003"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 1004"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 1005"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 1006"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 1007"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 1008"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 1"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 2"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 3"
+time="2020-03-09T17:20:28+08:00" level=info msg="dump data at offset: 1000"
+time="2020-03-09T17:20:28+08:00" level=info msg="push height info, height : 4"
+{"cet":{"market":"cet","new":"3.000000000000000000","old":"98.000000000000000000","minute_in_day":87}}
+0xc00049e8a0, &{cet 3.000000000000000000 98.000000000000000000 87}
+0xc00049e990, &{cet 3.000000000000000000 98.000000000000000000 87}
+FAIL
+

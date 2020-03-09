@@ -112,7 +112,8 @@ func checkHTTPSOption(svrConfig *toml.Tree) error {
 func initHTTPService(svrConfig *toml.Tree, hub *core.Hub, wsManager *core.WebsocketManager) (*http.Server, error) {
 	proxy := svrConfig.GetDefault("proxy", false).(bool)
 	lcd := svrConfig.GetDefault("lcd", "").(string)
-	router, err := registerHandler(hub, wsManager, proxy, lcd)
+	lcdv0 := svrConfig.GetDefault("lcdv0", "").(string)
+	router, err := registerHandler(hub, wsManager, proxy, lcdv0, lcd)
 	if err != nil {
 		return nil, err
 	}
