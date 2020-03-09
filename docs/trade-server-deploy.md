@@ -49,6 +49,7 @@ proxy = false
 
 # DEX节点LCD地址
 lcd = "http://localhost:1317"
+lcdv0 = "http://<?>:1317"   # 老链的REST接口地址
 
 # LevelDB数据目录
 data-dir = "data"

@@ -4,6 +4,7 @@ port = 8000
 # rest proxy
 proxy = true
 lcd = "http://localhost:1317"
+lcdv0 = "http://<?>:1317"
 
 # kafka
 kafka-addrs = "localhost:9092"
