@@ -144,6 +144,30 @@ type MocSubscribeManager struct {
 	PushList []pushInfo
 }
 
+func (sm *MocSubscribeManager) GetValidatorCommissionInfo() map[string][]Subscriber {
+	panic("implement me")
+}
+
+func (sm *MocSubscribeManager) GetDelegationRewards() map[string][]Subscriber {
+	panic("implement me")
+}
+
+func (sm *MocSubscribeManager) PushCreateMarket(subscriber Subscriber, info []byte) {
+	panic("implement me")
+}
+
+func (sm *MocSubscribeManager) PushValidatorCommissionInfo(subscriber Subscriber, info []byte) {
+	panic("implement me")
+}
+
+func (sm *MocSubscribeManager) PushDelegationRewards(subscriber Subscriber, info []byte) {
+	panic("implement me")
+}
+
+func (sm *MocSubscribeManager) GetMarketSubscribeInfo() map[string][]Subscriber {
+	panic("implement me")
+}
+
 func (sm *MocSubscribeManager) showResult() {
 	for _, info := range sm.PushList {
 		var id int64

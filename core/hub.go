@@ -53,6 +53,11 @@ const (
 	CreateOrderOnlyByte = byte(0x40)
 	FillOrderOnlyByte   = byte(0x42)
 	CancelOrderOnlyByte = byte(0x44)
+
+	// Later add key
+	CreateMarketByte        = byte(0x46)
+	ValidatorCommissionByte = byte(0x48)
+	DelegatorRewardsByte    = byte(0x50)
 )
 
 type Pruneable interface {
@@ -102,7 +107,9 @@ func (hub *Hub) getBancorDealKey(market string) []byte {
 func (hub *Hub) getCommentKey(token string) []byte {
 	return hub.getKeyFromBytes(CommentByte, []byte(token), 0)
 }
-
+func (hub *Hub) getCreateMarketKey(market string) []byte {
+	return hub.getKeyFromBytes(CreateMarketByte, []byte(market), 0)
+}
 func (hub *Hub) getCreateOrderKey(addr string) []byte {
 	return hub.getKeyFromBytes(OrderByte, []byte(addr), CreateOrderEndByte)
 }
@@ -111,6 +118,12 @@ func (hub *Hub) getFillOrderKey(addr string) []byte {
 }
 func (hub *Hub) getCancelOrderKey(addr string) []byte {
 	return hub.getKeyFromBytes(OrderByte, []byte(addr), CancelOrderEndByte)
+}
+func (hub *Hub) getValidatorCommissionKey(addr string) []byte {
+	return hub.getKeyFromBytes(ValidatorCommissionByte, []byte(addr), 0)
+}
+func (hub *Hub) getDelegatorRewardsKey(addr string) []byte {
+	return hub.getKeyFromBytes(DelegatorRewardsByte, []byte(addr), 0)
 }
 func (hub *Hub) getBancorTradeKey(addr string) []byte {
 	return hub.getKeyFromBytes(BancorTradeByte, []byte(addr), byte(0))
@@ -413,6 +426,8 @@ func (hub *Hub) handleMsg() {
 			hub.handleNotificationUnlock(entry.bz)
 		case "token_comment":
 			hub.handleTokenComment(entry.bz)
+		case "create_market_info":
+			hub.handleCreatMarketInfo(entry.bz)
 		case "create_order_info":
 			hub.handleCreateOrderInfo(entry.bz)
 		case "fill_order_info":
@@ -425,10 +440,14 @@ func (hub *Hub) handleMsg() {
 			hub.handleMsgBancorInfoForKafka(entry.bz)
 		case "bancor_create":
 			hub.handleMsgBancorInfoForKafka(entry.bz)
-		case "commit":
-			hub.commit()
 		case "send_lock_coins":
 			hub.handleLockedCoinsMsg(entry.bz)
+		case "delegator_rewards":
+			hub.handleDelegatorRewards(entry.bz)
+		case "validator_commission":
+			hub.handleValidatorCommission(entry.bz)
+		case "commit":
+			hub.commit()
 		default:
 			hub.Log(fmt.Sprintf("Unknown Message Type:%s", entry.msgType))
 		}
@@ -553,12 +572,38 @@ func (hub *Hub) handleLockedCoinsMsg(bz []byte) {
 	err := json.Unmarshal(bz, &v)
 	if err != nil {
 		hub.Log("Err in Unmarshal LockedSendMsg")
+		return
 	}
 	bz = appendHashID(bz, hub.currTxHashID)
 	key := hub.getLockedKey(v.ToAddress)
 	hub.batch.Set(key, bz)
 	hub.sid++
 	hub.msgsChannel <- MsgToPush{topic: LockedKey, bz: bz, extra: v.ToAddress}
+}
+
+func (hub *Hub) handleDelegatorRewards(bz []byte) {
+	var v NotificationDelegatorRewards
+	if err := unmarshalAndLogErr(bz, &v); err != nil {
+		return
+	}
+	key := hub.getDelegatorRewardsKey(v.Validator)
+	hub.commonAction(DelegationRewardsKey, key, bz, v.Validator)
+}
+
+func (hub *Hub) handleValidatorCommission(bz []byte) {
+	var v NotificationValidatorCommission
+	if err := unmarshalAndLogErr(bz, &v); err != nil {
+		return
+	}
+	key := hub.getValidatorCommissionKey(v.Validator)
+	hub.commonAction(ValidatorCommissionKey, key, bz, v.Validator)
+}
+
+func (hub *Hub) commonAction(pushKey string, storeKey []byte, bz []byte, extra interface{}) {
+	bz = appendHashID(bz, hub.currTxHashID)
+	hub.batch.Set(storeKey, bz)
+	hub.sid++
+	hub.msgsChannel <- MsgToPush{topic: pushKey, bz: bz, extra: extra}
 }
 
 // Some important information are not shown as a dedicated kafka message,
@@ -787,7 +832,7 @@ func (hub *Hub) handleTokenComment(bz []byte) {
 	var v TokenComment
 	err := json.Unmarshal(bz, &v)
 	if err != nil {
-		hub.Log("Error in Unmarshal TokenComment")
+		log.Error("Error in Unmarshal TokenComment")
 		return
 	}
 	bz = appendHashID(bz, hub.currTxHashID)
@@ -795,6 +840,20 @@ func (hub *Hub) handleTokenComment(bz []byte) {
 	hub.batch.Set(key, bz)
 	hub.sid++
 	hub.msgsChannel <- MsgToPush{topic: CommentKey, bz: bz, extra: v.Token}
+}
+
+func (hub *Hub) handleCreatMarketInfo(bz []byte) {
+	var v MarketInfo
+	err := json.Unmarshal(bz, &v)
+	if err != nil {
+		log.Errorf("Error in Unmarshal MarketInfo")
+		return
+	}
+	bz = appendHashID(bz, hub.currTxHashID)
+	key := hub.getCreateMarketKey(getMarketName(v))
+	hub.batch.Set(key, bz)
+	hub.sid++
+	hub.msgsChannel <- MsgToPush{topic: CreateMarketInfoKey, bz: bz}
 }
 
 func (hub *Hub) handleCreateOrderInfo(bz []byte) {

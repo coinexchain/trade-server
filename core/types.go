@@ -88,6 +88,7 @@ type SubscribeManager interface {
 	GetCommentSubscribeInfo() map[string][]Subscriber
 
 	//the map keys are accounts' bech32 addresses
+	GetMarketSubscribeInfo() map[string][]Subscriber
 	GetOrderSubscribeInfo() map[string][]Subscriber
 	GetBancorTradeSubscribeInfo() map[string][]Subscriber
 	GetBancorDealSubscribeInfo() map[string][]Subscriber
@@ -97,6 +98,8 @@ type SubscribeManager interface {
 	GetUnlockSubscribeInfo() map[string][]Subscriber
 	GetTxSubscribeInfo() map[string][]Subscriber
 	GetLockedSubscribeInfo() map[string][]Subscriber
+	GetValidatorCommissionInfo() map[string][]Subscriber
+	GetDelegationRewards() map[string][]Subscriber
 
 	PushLockedSendMsg(subscriber Subscriber, info []byte)
 	PushSlash(subscriber Subscriber, info []byte)
@@ -108,6 +111,7 @@ type SubscribeManager interface {
 	PushCandleStick(subscriber Subscriber, info []byte)
 	PushDeal(subscriber Subscriber, info []byte)
 	PushBancorDeal(subscriber Subscriber, info []byte)
+	PushCreateMarket(subscriber Subscriber, info []byte)
 	PushCreateOrder(subscriber Subscriber, info []byte)
 	PushFillOrder(subscriber Subscriber, info []byte)
 	PushCancelOrder(subscriber Subscriber, info []byte)
@@ -119,6 +123,8 @@ type SubscribeManager interface {
 	PushUnlock(subscriber Subscriber, info []byte)
 	PushTx(subscriber Subscriber, info []byte)
 	PushComment(subscriber Subscriber, info []byte)
+	PushValidatorCommissionInfo(subscriber Subscriber, info []byte)
+	PushDelegationRewards(subscriber Subscriber, info []byte)
 
 	SetSkipOption(isSkip bool)
 }

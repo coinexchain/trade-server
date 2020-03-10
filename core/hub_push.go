@@ -25,6 +25,8 @@ func (hub *Hub) pushMsgToWebsocket() {
 			hub.PushUnlockMsg( /*addr*/ entry.extra.(string), entry.bz)
 		case CommentKey:
 			hub.PushCommentMsg( /*token*/ entry.extra.(string), entry.bz)
+		case CreateMarketInfoKey:
+			hub.PushMarketInfoMsg( /*market*/ entry.extra.(string), entry.bz)
 		case CreateOrderKey:
 			hub.PushCreateOrderInfoMsg( /*addr*/ entry.extra.(string), entry.bz)
 		case FillOrderKey:
@@ -49,6 +51,10 @@ func (hub *Hub) pushMsgToWebsocket() {
 			hub.PushDepthMsg( /*market*/ entry.bz, entry.extra.(map[string][]byte))
 		case OptionKey:
 			hub.subMan.SetSkipOption(entry.extra.(bool))
+		case ValidatorCommissionKey:
+			hub.PushValidatorCommissionMsg( /*addr*/ entry.extra.(string), entry.bz)
+		case DelegationRewardsKey:
+			hub.PushDelegationRewardsMsg( /*addr*/ entry.extra.(string), entry.bz)
 		}
 	}
 }
@@ -163,6 +169,16 @@ func (hub *Hub) PushCommentMsg(token string, bz []byte) {
 	if ok {
 		for _, target := range targets {
 			hub.subMan.PushComment(target, bz)
+		}
+	}
+}
+
+func (hub *Hub) PushMarketInfoMsg(market string, bz []byte) {
+	info := hub.subMan.GetMarketSubscribeInfo()
+	targets, ok := info[market]
+	if ok {
+		for _, target := range targets {
+			hub.subMan.PushCreateMarket(target, bz)
 		}
 	}
 }
@@ -294,5 +310,29 @@ func (hub *Hub) PushDepthMsg(data []byte, levelsData map[string][]byte) {
 				}
 			}
 		}
+	}
+}
+
+func (hub *Hub) PushValidatorCommissionMsg(addr string, data []byte) {
+	info := hub.subMan.GetValidatorCommissionInfo()
+	targets, ok := info[addr]
+	if !ok {
+		return
+	}
+
+	for _, target := range targets {
+		hub.subMan.PushValidatorCommissionInfo(target, data)
+	}
+}
+
+func (hub *Hub) PushDelegationRewardsMsg(addr string, data []byte) {
+	info := hub.subMan.GetDelegationRewards()
+	targets, ok := info[addr]
+	if !ok {
+		return
+	}
+
+	for _, target := range targets {
+		hub.subMan.PushDelegationRewards(target, data)
 	}
 }

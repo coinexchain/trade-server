@@ -320,3 +320,14 @@ func TestGetTopicAndParams(t *testing.T) {
 	require.EqualValues(t, TickerKey, topic)
 	require.EqualValues(t, 2, len(params))
 }
+
+func TestUnmarshal(t *testing.T) {
+	type Person struct {
+		Name string `json:"name"`
+	}
+	var p Person
+
+	err := unmarshalAndLogErr([]byte("{\"name\":\"cetd\"}"), &p)
+	require.Nil(t, err)
+	require.EqualValues(t, "cetd", p.Name)
+}

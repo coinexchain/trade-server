@@ -4,10 +4,12 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	log "github.com/sirupsen/logrus"
 )
 
 // -----------
@@ -311,4 +313,27 @@ func limitCount(count int) int {
 		return MaxCount
 	}
 	return count
+}
+
+func getTokenNameFromAmount(amount string) string {
+	tokenName := ""
+	for i, c := range amount {
+		if c < '0' || c > '9' {
+			tokenName = amount[i:]
+			break
+		}
+	}
+	return tokenName
+}
+
+func getMarketName(info MarketInfo) string {
+	return info.Stock + "/" + info.Money
+}
+
+func unmarshalAndLogErr(bz []byte, v interface{}) error {
+	err := json.Unmarshal(bz, v)
+	if err != nil {
+		log.Error("Err in Unmarshal ", reflect.TypeOf(v).String())
+	}
+	return err
 }

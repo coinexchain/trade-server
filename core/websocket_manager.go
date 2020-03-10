@@ -230,6 +230,10 @@ func (w *WebsocketManager) GetDepthSubscribeInfo() map[string][]Subscriber {
 	return res
 }
 
+func (w *WebsocketManager) GetMarketSubscribeInfo() map[string][]Subscriber {
+	return w.getNoDetailSubscribe(CreateMarketInfoKey)
+}
+
 func (w *WebsocketManager) GetDealSubscribeInfo() map[string][]Subscriber {
 	return w.getNoDetailSubscribe(DealKey)
 }
@@ -263,9 +267,14 @@ func (w *WebsocketManager) GetUnlockSubscribeInfo() map[string][]Subscriber {
 func (w *WebsocketManager) GetTxSubscribeInfo() map[string][]Subscriber {
 	return w.getNoDetailSubscribe(TxKey)
 }
-
 func (w *WebsocketManager) GetLockedSubscribeInfo() map[string][]Subscriber {
 	return w.getNoDetailSubscribe(LockedKey)
+}
+func (w *WebsocketManager) GetDelegationRewards() map[string][]Subscriber {
+	return w.getNoDetailSubscribe(DelegationRewardsKey)
+}
+func (w *WebsocketManager) GetValidatorCommissionInfo() map[string][]Subscriber {
+	return w.getNoDetailSubscribe(ValidatorCommissionKey)
 }
 
 // Push msgs----------------------------
@@ -310,6 +319,9 @@ func (w *WebsocketManager) PushCandleStick(subscriber Subscriber, info []byte) {
 func (w *WebsocketManager) PushDeal(subscriber Subscriber, info []byte) {
 	w.sendEncodeMsg(subscriber, DealKey, info)
 }
+func (w *WebsocketManager) PushCreateMarket(subscriber Subscriber, info []byte) {
+	w.sendEncodeMsg(subscriber, CreateMarketInfoKey, info)
+}
 func (w *WebsocketManager) PushCreateOrder(subscriber Subscriber, info []byte) {
 	w.sendEncodeMsg(subscriber, CreateOrderKey, info)
 }
@@ -345,4 +357,10 @@ func (w *WebsocketManager) PushTx(subscriber Subscriber, info []byte) {
 }
 func (w *WebsocketManager) PushComment(subscriber Subscriber, info []byte) {
 	w.sendEncodeMsg(subscriber, CommentKey, info)
+}
+func (w *WebsocketManager) PushValidatorCommissionInfo(subscriber Subscriber, info []byte) {
+	w.sendEncodeMsg(subscriber, ValidatorCommissionKey, info)
+}
+func (w *WebsocketManager) PushDelegationRewards(subscriber Subscriber, info []byte) {
+	w.sendEncodeMsg(subscriber, DelegationRewardsKey, info)
 }

@@ -14,15 +14,22 @@ import (
 	cmn "github.com/tendermint/tendermint/libs/common"
 )
 
-const DecByteCount = 40
-const BUY = 1
-const SELL = 2
-const GTE = 3
-const LIMIT = 2
+const (
+	DecByteCount = 40
+	BUY          = 1
+	SELL         = 2
+	GTE          = 3
+	LIMIT        = 2
+)
 
-type OrderResponse struct {
-	Data    []json.RawMessage `json:"data"`
-	Timesid []int64           `json:"timesid"`
+// --------------------------
+// market info
+type MarketInfo struct {
+	Stock             string  `json:"stock"`
+	Money             string  `json:"money"`
+	PricePrecision    byte    `json:"price_precision"`
+	LastExecutedPrice sdk.Dec `json:"last_executed_price"`
+	OrderPrecision    byte    `json:"order_precision"`
 }
 
 type OrderInfo struct {
@@ -30,6 +37,12 @@ type OrderInfo struct {
 	FillOrderInfo   OrderResponse `json:"fill_order_info"`
 	CancelOrderInfo OrderResponse `json:"cancel_order_info"`
 }
+
+type OrderResponse struct {
+	Data    []json.RawMessage `json:"data"`
+	Timesid []int64           `json:"timesid"`
+}
+
 type CreateOrderInfo struct {
 	OrderID     string  `json:"order_id"`
 	Sender      string  `json:"sender"`
@@ -91,6 +104,14 @@ type CancelOrderInfo struct {
 	RebateRefereeAddr sdk.AccAddress `json:"RebateRefereeAddr,omitempty"`
 }
 
+type DepthDetails struct {
+	TradingPair string        `json:"trading_pair"`
+	Bids        []*PricePoint `json:"bids"`
+	Asks        []*PricePoint `json:"asks"`
+}
+
+// ---------------------
+// common info
 type NewHeightInfo struct {
 	ChainID       string       `json:"chain_id,omitempty"`
 	Height        int64        `json:"height"`
@@ -104,17 +125,6 @@ type TransferRecord struct {
 	Amount    string `json:"amount"`
 }
 
-func getTokenNameFromAmount(amount string) string {
-	tokenName := ""
-	for i, c := range amount {
-		if c < '0' || c > '9' {
-			tokenName = amount[i:]
-			break
-		}
-	}
-	return tokenName
-}
-
 type NotificationTx struct {
 	Signers      []string         `json:"signers"`
 	Transfers    []TransferRecord `json:"transfers"`
@@ -126,6 +136,8 @@ type NotificationTx struct {
 	ExtraInfo    string           `json:"extra_info,omitempty"`
 }
 
+// ------------------------
+// manager info
 type NotificationBeginRedelegation struct {
 	Delegator      string `json:"delegator"`
 	ValidatorSrc   string `json:"src"`
@@ -163,46 +175,8 @@ type NotificationSlash struct {
 	Jailed    bool   `json:"jailed"`
 }
 
-type LockedCoin struct {
-	Coin        sdk.Coin       `json:"coin"`
-	UnlockTime  int64          `json:"unlock_time"`
-	FromAddress sdk.AccAddress `json:"from_address,omitempty"`
-	Supervisor  sdk.AccAddress `json:"supervisor,omitempty"`
-	Reward      int64          `json:"reward,omitempty"`
-}
-type LockedCoins []LockedCoin
-
-type NotificationUnlock struct {
-	Address     string      `json:"address" yaml:"address"`
-	Unlocked    sdk.Coins   `json:"unlocked"`
-	LockedCoins LockedCoins `json:"locked_coins"`
-	FrozenCoins sdk.Coins   `json:"frozen_coins"`
-	Coins       sdk.Coins   `json:"coins" yaml:"coins"`
-	Height      int64       `json:"height"`
-}
-
-type CommentRef struct {
-	ID           uint64  `json:"id"`
-	RewardTarget string  `json:"reward_target"`
-	RewardToken  string  `json:"reward_token"`
-	RewardAmount int64   `json:"reward_amount"`
-	Attitudes    []int32 `json:"attitudes"`
-}
-
-type TokenComment struct {
-	ID          uint64       `json:"id"`
-	Height      int64        `json:"height"`
-	Sender      string       `json:"sender"`
-	Token       string       `json:"token"`
-	Donation    int64        `json:"donation"`
-	Title       string       `json:"title"`
-	Content     string       `json:"content"`
-	ContentType int8         `json:"content_type"`
-	References  []CommentRef `json:"references"`
-
-	TxHash string `json:"tx_hash,omitempty"`
-}
-
+// -----------
+// bancor info
 type MsgBancorInfoForKafka struct {
 	Owner              string  `json:"sender"`
 	Stock              string  `json:"stock"`
@@ -237,6 +211,37 @@ type MsgBancorTradeInfoForKafka struct {
 	RebateRefereeAddr string `json:"rebate_referee_addr,omitempty"`
 }
 
+// -------------
+// block reward info
+type NotificationValidatorCommission struct {
+	Validator  string `json:"validator"`
+	Commission string `json:"commission"`
+}
+type NotificationDelegatorRewards struct {
+	Validator string `json:"validator"`
+	Rewards   string `json:"rewards"`
+}
+
+// --------------------
+// other module info
+type LockedCoin struct {
+	Coin        sdk.Coin       `json:"coin"`
+	UnlockTime  int64          `json:"unlock_time"`
+	FromAddress sdk.AccAddress `json:"from_address,omitempty"`
+	Supervisor  sdk.AccAddress `json:"supervisor,omitempty"`
+	Reward      int64          `json:"reward,omitempty"`
+}
+type LockedCoins []LockedCoin
+
+type NotificationUnlock struct {
+	Address     string      `json:"address" yaml:"address"`
+	Unlocked    sdk.Coins   `json:"unlocked"`
+	LockedCoins LockedCoins `json:"locked_coins"`
+	FrozenCoins sdk.Coins   `json:"frozen_coins"`
+	Coins       sdk.Coins   `json:"coins" yaml:"coins"`
+	Height      int64       `json:"height"`
+}
+
 type LockedSendMsg struct {
 	FromAddress string    `json:"from_address"`
 	ToAddress   string    `json:"to_address"`
@@ -248,8 +253,24 @@ type LockedSendMsg struct {
 	TxHash string `json:"tx_hash,omitempty"`
 }
 
-type DepthDetails struct {
-	TradingPair string        `json:"trading_pair"`
-	Bids        []*PricePoint `json:"bids"`
-	Asks        []*PricePoint `json:"asks"`
+type CommentRef struct {
+	ID           uint64  `json:"id"`
+	RewardTarget string  `json:"reward_target"`
+	RewardToken  string  `json:"reward_token"`
+	RewardAmount int64   `json:"reward_amount"`
+	Attitudes    []int32 `json:"attitudes"`
+}
+
+type TokenComment struct {
+	ID          uint64       `json:"id"`
+	Height      int64        `json:"height"`
+	Sender      string       `json:"sender"`
+	Token       string       `json:"token"`
+	Donation    int64        `json:"donation"`
+	Title       string       `json:"title"`
+	Content     string       `json:"content"`
+	ContentType int8         `json:"content_type"`
+	References  []CommentRef `json:"references"`
+
+	TxHash string `json:"tx_hash,omitempty"`
 }
