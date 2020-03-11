@@ -14,7 +14,7 @@
 
 ```toml
 feature-toggle = true
-subscribe-modules = "comment,authx,bankx,market,bancorlite"
+subscribe-modules = "comment,authx,bankx,market,bancorlite,distribution"
 brokers = [
     "dir:/home/data"                # 指定节点为trade-server数据存储的目录
 ]
