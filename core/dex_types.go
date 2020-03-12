@@ -101,7 +101,7 @@ type CancelOrderInfo struct {
 
 	UsedFeatureFee    int64          `json:"used_feature_fee,omitempty"`
 	RebateAmount      int64          `json:"rebate_amount,omitempty"`
-	RebateRefereeAddr sdk.AccAddress `json:"RebateRefereeAddr,omitempty"`
+	RebateRefereeAddr sdk.AccAddress `json:"rebate_referee_addr,omitempty"`
 }
 
 type DepthDetails struct {
