@@ -31,10 +31,8 @@ brokers配置按实际存储的数据目录填写，修改完后启动节点。
 进入工程目录，执行以下命令进行编译
 
 ```shell
-GO111MODULE=on go install ./...
+GO111MODULE=on go build github.com/coinexchain/trade-server
 ```
-
-编译完成后，二进制文件在 $GOPATH/bin 下
 
 ### 配置文件说明
 
@@ -77,7 +75,24 @@ dir = "/home/data"          # 指定dex-node 中为trade-server数据存储的�
 
 monitorinterval = 10       
 
+# upgrade chain
+
+initChainHeight = 0         
 ```
+
+
+**initChainHeight** : 配置链的初始高度
+
+*   设置该值的目的：
+    *   v0.2.0的`cetd`升级时，允许延续旧链的高度；当在测试网中升级时，为测试方便，抛弃旧链的历史数据；
+    *   trade-server添加了防止跳块的功能，当接收的块高度大于trade-server记录的高度时，不允许启动； 
+    *   当升级后，如果抛弃旧链数据，且`cetd`延续高度的情况下，会导致接收区块大于trade-server记录的块高度，无法启动.
+    *   此时，配置`initChainHeight`为新链的`genesis`高度.
+*   正式环境中，推荐保存旧链的历史记录，且`initChainHeight`一直配置为0
+    *   历史记录存在于两处：
+        *   cetd 推送的数据目录，即`dir-mode`下`dir`的配置.
+        *   trade-server自身的数据目录，即`data-dir`的配置.     
+ 
 
 ### 启动
 
@@ -87,9 +102,10 @@ monitorinterval = 10
 nohup trade-server -c config.toml &
 ```
 
+
 ## 注意
 
 1. dex-node 节点配置文件中 `brokers`下指定的`dir`的值 必须与 trade-server 配置文件中 `dir`的值一致。
-2. **初次**启用节点的`brokers`的`dir`模式时，节点必须从高度0开始，重新同步数据。
-3. 启用节点的`brokers`的`dir`模式后，当运行一段时间重启节点时，修改了节点配置文件中`dir`的值，节点必须从高度0开始，重新同步数据。
+2. **初次**启用节点的`brokers`的`dir`模式时，节点必须从genesis高度开始，重新同步数据。
+3. 启用节点的`brokers`的`dir`模式后，当运行一段时间重启节点时，修改了节点配置文件中`dir`的值，节点必须从genesis高度开始，重新同步数据。
 3. 启用节点的`brokers`的`dir`模式后，当运行一段时间重启节点时，配置文件的`dir`值未修改，直接启动节点即可。
