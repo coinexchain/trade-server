@@ -119,6 +119,11 @@ type NewHeightInfo struct {
 	LastBlockHash cmn.HexBytes `json:"last_block_hash"`
 }
 
+type HeightInfo struct {
+	Height    uint64 `json:"height"`
+	TimeStamp uint64 `json:"timestamp"`
+}
+
 type TransferRecord struct {
 	Sender    string `json:"sender"`
 	Recipient string `json:"recipient"`

@@ -23,6 +23,7 @@ func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager, proxy bool
 	}
 
 	// REST
+	router.HandleFunc("/misc/height", QueryLatestHeight(hub)).Methods("GET")
 	router.HandleFunc("/misc/block-times", QueryBlockTimesRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/misc/donations", QueryDonationsRequestHandlerFn(hub)).Methods("GET")
 	router.HandleFunc("/market/tickers", QueryTickersRequestHandlerFn(hub)).Methods("GET")

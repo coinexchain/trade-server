@@ -27,6 +27,12 @@ const (
 	queryKeyOrderTag   = "tag"
 )
 
+func QueryLatestHeight(hub *core.Hub) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		postQueryResponse(w, hub.QueryBlockInfo())
+	}
+}
+
 func QueryBlockTimesRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()

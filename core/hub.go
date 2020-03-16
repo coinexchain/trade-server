@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -1187,6 +1188,25 @@ func (hub *Hub) QueryLatestHeight() int64 {
 		return 0
 	}
 	return BigEndianBytesToInt64(bz)
+}
+
+func (hub *Hub) QueryBlockInfo() *HeightInfo {
+	heightBytes := Int64ToBigEndianBytes(math.MaxInt64)
+	key := append([]byte{BlockHeightByte}, heightBytes...)
+
+	hub.dbMutex.RLock()
+	iter := hub.db.ReverseIterator(nil, key)
+	defer func() {
+		iter.Close()
+		hub.dbMutex.RUnlock()
+	}()
+
+	var v HeightInfo
+	if iter.Valid() {
+		v.Height = binary.BigEndian.Uint64(iter.Key()[1:])
+		v.TimeStamp = binary.LittleEndian.Uint64(iter.Value())
+	}
+	return &v
 }
 
 func (hub *Hub) QueryBlockTime(height int64, count int) []int64 {
