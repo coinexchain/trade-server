@@ -93,6 +93,7 @@ func initHub(svrConfig *toml.Tree, db dbm.DB, wsManager *core.WebsocketManager) 
 func initWebService(svrConfig *toml.Tree, hub *core.Hub, wsManager *core.WebsocketManager) (*http.Server, error) {
 	if err := checkHTTPSOption(svrConfig); err != nil {
 		log.WithError(err).Error("check https required cert file failed")
+		return nil, err
 	}
 	httpSvr, err := initHTTPService(svrConfig, hub, wsManager)
 	return httpSvr, err

@@ -1212,7 +1212,7 @@ func (hub *Hub) QueryBlockInfo() *HeightInfo {
 func (hub *Hub) QueryBlockTime(height int64, count int) []int64 {
 	count = limitCount(count)
 	data := make([]int64, 0, count)
-	end := append([]byte{BlockHeightByte}, Int64ToBigEndianBytes(height)...)
+	end := append([]byte{BlockHeightByte}, Int64ToBigEndianBytes(height+1)...)
 	start := []byte{BlockHeightByte}
 	hub.dbMutex.RLock()
 	iter := hub.db.ReverseIterator(start, end)
