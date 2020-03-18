@@ -444,9 +444,9 @@ func (hub *Hub) handleMsg() {
 		case "send_lock_coins":
 			hub.handleLockedCoinsMsg(entry.bz)
 		case "delegator_rewards":
-			hub.handleDelegatorRewards(entry.bz)
+			//hub.handleDelegatorRewards(entry.bz)
 		case "validator_commission":
-			hub.handleValidatorCommission(entry.bz)
+			//hub.handleValidatorCommission(entry.bz)
 		case "commit":
 			hub.commit()
 		default:
@@ -854,7 +854,7 @@ func (hub *Hub) handleCreatMarketInfo(bz []byte) {
 	key := hub.getCreateMarketKey(getMarketName(v))
 	hub.batch.Set(key, bz)
 	hub.sid++
-	hub.msgsChannel <- MsgToPush{topic: CreateMarketInfoKey, bz: bz}
+	hub.msgsChannel <- MsgToPush{topic: CreateMarketInfoKey, bz: bz, extra: getMarketName(v)}
 }
 
 func (hub *Hub) handleCreateOrderInfo(bz []byte) {
