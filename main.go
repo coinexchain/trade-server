@@ -21,7 +21,7 @@ var (
 	version bool
 )
 
-const ReleaseVersion = "v0.2.1-alpha"
+var ReleaseVersion = "v0.2.2-alpha"
 
 func init() {
 	newFlag = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
