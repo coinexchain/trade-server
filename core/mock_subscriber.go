@@ -139,6 +139,7 @@ type MocSubscribeManager struct {
 	UnlockSubscribeInfo       map[string][]Subscriber
 	TxSubscribeInfo           map[string][]Subscriber
 	LockedSubcribeInfo        map[string][]Subscriber
+	BancorDealSubscribeInfo   map[string][]Subscriber
 
 	sync.Mutex
 	PushList []pushInfo
@@ -337,7 +338,7 @@ func (sm *MocSubscribeManager) GetBancorTradeSubscribeInfo() map[string][]Subscr
 	return sm.BancorTradeSubscribeInfo
 }
 func (sm *MocSubscribeManager) GetBancorDealSubscribeInfo() map[string][]Subscriber {
-	return nil
+	return sm.BancorDealSubscribeInfo
 }
 func (sm *MocSubscribeManager) GetIncomeSubscribeInfo() map[string][]Subscriber {
 	return sm.IncomeSubscribeInfo
