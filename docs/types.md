@@ -129,16 +129,16 @@ market|String| 交易对
 
 字段 | 类型|描述
 ---|---|---
-sender|String|bancor 的创建者
+owner|String|bancor 的创建者
 stock|String| stock token
 money|String| money token
 init_price|String| bancor交易对的初始化价格
 max_supply|String| bancor的最大供应量
 max_price|String| bancor的最大价格
-price|String| 
+current_price|String|当前bancor的价格 
 stock_in_pool|String| bancor中存储的stock数量
 money_in_pool|String| bancor中存储的money数量
-earliest_cancel_time|Number| bancor允许取消的最早时间
+earliest_cancel_time|String| bancor允许取消的最早时间
 stock_precision|String| stock的精度
 max_money|String| bancor中存入的最大money数量
 ar|String|

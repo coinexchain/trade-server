@@ -183,20 +183,19 @@ type NotificationSlash struct {
 // -----------
 // bancor info
 type MsgBancorInfoForKafka struct {
-	Owner              string  `json:"sender"`
-	Stock              string  `json:"stock"`
-	Money              string  `json:"money"`
-	InitPrice          sdk.Dec `json:"init_price"`
-	MaxSupply          sdk.Int `json:"max_supply"`
-	MaxPrice           sdk.Dec `json:"max_price"`
-	Price              sdk.Dec `json:"price"`
-	StockInPool        sdk.Int `json:"stock_in_pool"`
-	MoneyInPool        sdk.Int `json:"money_in_pool"`
-	EarliestCancelTime int64   `json:"earliest_cancel_time"`
-
-	StockPrecision byte   `json:"stock_precision,omitempty"`
-	MaxMoney       string `json:"max_money,omitempty"`
-	AR             int64  `json:"ar,omitempty"`
+	Owner              string `json:"owner"`
+	Stock              string `json:"stock"`
+	Money              string `json:"money"`
+	InitPrice          string `json:"init_price"`
+	MaxSupply          string `json:"max_supply"`
+	StockPrecision     string `json:"stock_precision,omitempty"`
+	MaxPrice           string `json:"max_price"`
+	MaxMoney           string `json:"max_money,omitempty"`
+	AR                 string `json:"ar,omitempty"`
+	CurrentPrice       string `json:"current_price"`
+	StockInPool        string `json:"stock_in_pool"`
+	MoneyInPool        string `json:"money_in_pool"`
+	EarliestCancelTime string `json:"earliest_cancel_time"`
 }
 
 type MsgBancorTradeInfoForKafka struct {

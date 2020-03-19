@@ -501,13 +501,13 @@ func Test1(t *testing.T) {
 		Owner:              addr1,
 		Stock:              "xyz",
 		Money:              "cet",
-		InitPrice:          sdk.NewDec(10),
-		MaxSupply:          sdk.NewInt(10000),
-		MaxPrice:           sdk.NewDec(100),
-		Price:              sdk.NewDec(20),
-		StockInPool:        sdk.NewInt(50),
-		MoneyInPool:        sdk.NewInt(5000),
-		EarliestCancelTime: 0,
+		InitPrice:          "10",
+		MaxSupply:          "10000",
+		MaxPrice:           "100",
+		CurrentPrice:       "20",
+		StockInPool:        "50",
+		MoneyInPool:        "5000",
+		EarliestCancelTime: "0",
 	}
 	bytes, _ = json.Marshal(msgBancorInfoForKafka)
 	hub.ConsumeMessage("bancor_info", bytes)
@@ -531,7 +531,7 @@ func Test1(t *testing.T) {
 3: {"height":1002,"timestamp":"2019-07-15T08:29:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 4: {"height":1002,"timestamp":"2019-07-15T08:29:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
 6: {"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"100","unix_time":1563178750,"time_span":"1min","market":"abc/cet"}
-12: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","stock":"xyz","money":"cet","init_price":"10.000000000000000000","max_supply":"10000","max_price":"100.000000000000000000","price":"20.000000000000000000","stock_in_pool":"50","money_in_pool":"5000","earliest_cancel_time":0}
+12: {"owner":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","stock":"xyz","money":"cet","init_price":"10","max_supply":"10000","max_price":"100","current_price":"20","stock_in_pool":"50","money_in_pool":"5000","earliest_cancel_time":"0"}
 17: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":1,"side":2,"money_limit":10,"transaction_price":"2.000000000000000000","block_height":1001}
 18: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":1,"side":2,"money_limit":10,"transaction_price":"2.000000000000000000","block_height":1001}
 `
@@ -606,7 +606,7 @@ func Test1(t *testing.T) {
 	assert.Equal(t, "[1563178750,12]", string(bytes))
 
 	data, timesid = hub.QueryBancorInfo("xyz/cet", unixTime, 0, 20)
-	correct = `{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","stock":"xyz","money":"cet","init_price":"10.000000000000000000","max_supply":"10000","max_price":"100.000000000000000000","price":"20.000000000000000000","stock_in_pool":"50","money_in_pool":"5000","earliest_cancel_time":0}`
+	correct = `{"owner":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","stock":"xyz","money":"cet","init_price":"10","max_supply":"10000","max_price":"100","current_price":"20","stock_in_pool":"50","money_in_pool":"5000","earliest_cancel_time":"0"}`
 	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
 	assert.Equal(t, "[1563179350,15]", string(bytes))
