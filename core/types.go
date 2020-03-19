@@ -164,3 +164,8 @@ type Querier interface {
 
 	QueryTxByHashID(hexHashID string) json.RawMessage
 }
+
+type Pruneable interface {
+	SetPruneTimestamp(t uint64)
+	GetPruneTimestamp() uint64
+}

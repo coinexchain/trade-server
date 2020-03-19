@@ -337,3 +337,21 @@ func unmarshalAndLogErr(bz []byte, v interface{}) error {
 	}
 	return err
 }
+
+// Append tx_hash into a json string
+func appendHashID(bz []byte, hashID string) []byte {
+	if len(hashID) == 0 {
+		return bz
+	}
+	bz = bz[0 : len(bz)-1] // Delete the last character: '}'
+	return append(bz, []byte(fmt.Sprintf(`,"tx_hash":"%s"}`, hashID))...)
+}
+
+func formatCandleStick(info *CandleStick) []byte {
+	bz, err := json.Marshal(info)
+	if err != nil {
+		log.Errorf(err.Error())
+		return nil
+	}
+	return bz
+}

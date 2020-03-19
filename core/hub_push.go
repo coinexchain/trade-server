@@ -1,5 +1,7 @@
 package core
 
+import "fmt"
+
 // We offload the logic of pushing subscribers to this goroutine,
 // such that ConsumeMessage can run a little faster
 func (hub *Hub) pushMsgToWebsocket() {
@@ -292,6 +294,27 @@ func (hub *Hub) PushDepthFullMsg(market string) {
 			hub.subMan.PushDepthFullMsg(target, bz)
 		}
 	}
+}
+
+// Get all the depth data about 'market' and merge them according to 'level'.
+// When level is "all", it means no merging.
+func (hub *Hub) getDepthFullData(market string, level string, count int) ([]byte, error) {
+	var (
+		bz  []byte
+		err error
+	)
+	sell, buy := hub.QueryDepth(market, count)
+	if level == "all" {
+		bz, err = encodeDepthData(market, buy, sell)
+		msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(bz)))
+		return msg, err
+	}
+
+	buyLevel := mergePrice(buy, level, true)
+	sellLevel := mergePrice(sell, level, false)
+	bz, err = encodeDepthLevel(market, buyLevel, sellLevel)
+	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(bz)))
+	return msg, err
 }
 
 // TODO, will replace string with interface
