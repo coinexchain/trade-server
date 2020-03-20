@@ -140,6 +140,7 @@ type MocSubscribeManager struct {
 	TxSubscribeInfo           map[string][]Subscriber
 	LockedSubcribeInfo        map[string][]Subscriber
 	BancorDealSubscribeInfo   map[string][]Subscriber
+	MarketSubscribeInfo       map[string][]Subscriber
 
 	sync.Mutex
 	PushList []pushInfo
@@ -154,7 +155,9 @@ func (sm *MocSubscribeManager) GetDelegationRewards() map[string][]Subscriber {
 }
 
 func (sm *MocSubscribeManager) PushCreateMarket(subscriber Subscriber, info []byte) {
-	panic("implement me")
+	sm.Lock()
+	defer sm.Unlock()
+	sm.PushList = append(sm.PushList, pushInfo{subscriber, string(info)})
 }
 
 func (sm *MocSubscribeManager) PushValidatorCommissionInfo(subscriber Subscriber, info []byte) {
@@ -166,7 +169,7 @@ func (sm *MocSubscribeManager) PushDelegationRewards(subscriber Subscriber, info
 }
 
 func (sm *MocSubscribeManager) GetMarketSubscribeInfo() map[string][]Subscriber {
-	panic("implement me")
+	return sm.MarketSubscribeInfo
 }
 
 func (sm *MocSubscribeManager) showResult() {

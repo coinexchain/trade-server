@@ -8865,8 +8865,8 @@ del_order_info#{"order_id":"coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly-5913",
 del_order_info#{"order_id":"coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c-5911","trading_pair":"abc/cet","height":234,"side":1,"price":"6.500000000000000000","del_reason":"The order was fully filled","used_commission":2749559,"left_stock":0,"remain_amount":622541446,"deal_stock":518784538,"deal_money":2749558051}
 commit#{}
 height_info#{"height":235,"timestamp":"2019-08-21T08:00:42.638824Z","last_block_hash":"36ECBFACFF0B8548E06118C6070901F38E6F2B42A74BAA3B6F53CEE2E95DDEBD"}
-notify_slash#{"validator":"coinexvalcons1qwztwxzzndpdc94tujv8fux9phfenqmvx296zw","power":"1000000","reason":"double_sign","jailed":false}
-notify_slash#{"validator":"","power":"","reason":"","jailed":true}
+slash#{"validator":"coinexvalcons1qwztwxzzndpdc94tujv8fux9phfenqmvx296zw","power":"1000000","reason":"double_sign","jailed":false}
+slash#{"validator":"","power":"","reason":"","jailed":true}
 commit#{}
 height_info#{"height":236,"timestamp":"2019-08-21T08:00:45.223606Z","last_block_hash":"7CB843BCBDBA03AAD44CED200ADC1853AA0126A74DF433016D647D9CC3AE9420"}
 begin_redelegation#{"delegator":"coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg","src":"coinexvaloper1z6vr3s5nrn5d6fyxl5vmw77ehznme07w9dan6x","dst":"coinexvaloper16pr4xqlsglwu6urkyt975nxzl65hlt2fw0n58d","amount":"200000000000","completion_time":"2019-08-21T16:00:50+08:00"}
