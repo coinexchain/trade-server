@@ -272,7 +272,7 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 		return
 	}
 
-	timestamp := uint64(v.TimeStamp.Unix())
+	timestamp := uint64(v.TimeStamp)
 	hub.pruneDB(v.Height, timestamp)
 	latestHeight := hub.QueryLatestHeight()
 	// If extra==false, then this is an invalid or out-of-date Height
@@ -295,7 +295,7 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 	hub.batch.Set([]byte{LatestHeightByte}, heightBytes)
 	hub.msgsChannel <- MsgToPush{topic: BlockInfoKey, bz: bz}
 	hub.lastBlockTime = hub.currBlockTime
-	hub.currBlockTime = v.TimeStamp
+	hub.currBlockTime = time.Unix(v.TimeStamp, 0)
 	hub.beginForCandleSticks()
 }
 
@@ -539,11 +539,7 @@ func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
 		return
 	}
 	bz = appendHashID(bz, hub.currTxHashID)
-	t, err := time.Parse(time.RFC3339, v.CompletionTime)
-	if err != nil {
-		hub.Log("Error in Parsing Time")
-		return
-	}
+	t := time.Unix(v.CompletionTime, 0)
 	// Use completion time as the key
 	key := hub.getRedelegationEventKey(v.Delegator, t.Unix())
 	hub.batch.Set(key, bz)
@@ -558,11 +554,8 @@ func (hub *Hub) handleNotificationBeginUnbonding(bz []byte) {
 		return
 	}
 	bz = appendHashID(bz, hub.currTxHashID)
-	t, err := time.Parse(time.RFC3339, v.CompletionTime)
-	if err != nil {
-		hub.Log("Error in Parsing Time")
-		return
-	}
+	t := time.Unix(v.CompletionTime, 0)
+
 	// Use completion time as the key
 	key := hub.getUnbondingEventKey(v.Delegator, t.Unix())
 	hub.batch.Set(key, bz)

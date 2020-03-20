@@ -8,7 +8,6 @@ import (
 	//	"github.com/coinexchain/dex/modules/market"
 
 	"encoding/json"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -115,7 +114,7 @@ type DepthDetails struct {
 type NewHeightInfo struct {
 	ChainID       string       `json:"chain_id,omitempty"`
 	Height        int64        `json:"height"`
-	TimeStamp     time.Time    `json:"timestamp"`
+	TimeStamp     int64        `json:"timestamp"`
 	LastBlockHash cmn.HexBytes `json:"last_block_hash"`
 }
 
@@ -148,7 +147,7 @@ type NotificationBeginRedelegation struct {
 	ValidatorSrc   string `json:"src"`
 	ValidatorDst   string `json:"dst"`
 	Amount         string `json:"amount"`
-	CompletionTime string `json:"completion_time"`
+	CompletionTime int64  `json:"completion_time"`
 
 	TxHash string `json:"tx_hash,omitempty"`
 }
@@ -157,7 +156,7 @@ type NotificationBeginUnbonding struct {
 	Delegator      string `json:"delegator"`
 	Validator      string `json:"validator"`
 	Amount         string `json:"amount"`
-	CompletionTime string `json:"completion_time"`
+	CompletionTime int64  `json:"completion_time"`
 
 	TxHash string `json:"tx_hash,omitempty"`
 }
@@ -195,7 +194,7 @@ type MsgBancorInfoForKafka struct {
 	CurrentPrice       string `json:"current_price"`
 	StockInPool        string `json:"stock_in_pool"`
 	MoneyInPool        string `json:"money_in_pool"`
-	EarliestCancelTime string `json:"earliest_cancel_time"`
+	EarliestCancelTime int64  `json:"earliest_cancel_time"`
 }
 
 type MsgBancorTradeInfoForKafka struct {

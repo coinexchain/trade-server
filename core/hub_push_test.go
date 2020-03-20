@@ -34,6 +34,14 @@ func consumeMsgAndCompareRet(t *testing.T, hub *Hub, subMan *MocSubscribeManager
 	subMan.clearPushList()
 }
 
+func getTime(str string) int64 {
+	tmp, err := time.Parse(time.RFC3339, str)
+	if err != nil {
+		panic(err)
+	}
+	return tmp.Unix()
+}
+
 func TestHub_PushHeightInfoMsg(t *testing.T) {
 	subMan := &MocSubscribeManager{}
 	subMan.HeightSubscribeInfo = make([]Subscriber, 1)
@@ -43,7 +51,7 @@ func TestHub_PushHeightInfoMsg(t *testing.T) {
 
 	// consumer height msg
 	key := "height_info"
-	val := `{"chain_id":"coinexdex-test1","height":6,"timestamp":"2020-03-10T10:56:57.067926Z","last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
+	val := `{"chain_id":"coinexdex-test1","height":6,"timestamp":0,"last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
 	consumeMsgAndCompareRet(t, hub, subMan, key, val)
 }
 
@@ -56,7 +64,7 @@ func TestHub_PushBancorMsg(t *testing.T) {
 	defer os.RemoveAll("tmp")
 
 	key := "bancor_create"
-	val := `{"owner":"coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c","stock":"abc","money":"cet","init_price":"1.000000000000000000","max_supply":"10000000000000","max_price":"500.000000000000000000","price":"1.000000005988000000","stock_in_pool":"9999999999880","money_in_pool":"120","earliest_cancel_time":"1917014400"}`
+	val := `{"owner":"coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c","stock":"abc","money":"cet","init_price":"1.000000000000000000","max_supply":"10000000000000","max_price":"500.000000000000000000","price":"1.000000005988000000","stock_in_pool":"9999999999880","money_in_pool":"120","earliest_cancel_time":1917014400}`
 	consumeMsgAndCompareRet(t, hub, subMan, key, val)
 
 	key = "bancor_info"
@@ -206,14 +214,14 @@ func TestHub_PushRedelegationMsg(t *testing.T) {
 	defer os.RemoveAll("tmp")
 
 	key := "begin_redelegation"
-	val := `{"delegator":"coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg","src":"coinexvaloper1z6vr3s5nrn5d6fyxl5vmw77ehznme07w9dan6x","dst":"coinexvaloper16pr4xqlsglwu6urkyt975nxzl65hlt2fw0n58d","amount":"200000000000","completion_time":"2019-08-21T16:00:50+08:00"}`
+	val := `{"delegator":"coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg","src":"coinexvaloper1z6vr3s5nrn5d6fyxl5vmw77ehznme07w9dan6x","dst":"coinexvaloper16pr4xqlsglwu6urkyt975nxzl65hlt2fw0n58d","amount":"200000000000","completion_time":1566374450}`
 	hub.ConsumeMessage(key, []byte(val))
 	fillCommitInfo(hub)
 
 	key = "complete_redelegation"
 	val2 := `{"delegator":"coinex18rdsh78t4ds76p58kum34rye2pmrt3hj8z2ehg","src":"coinexvaloper1z6vr3s5nrn5d6fyxl5vmw77ehznme07w9dan6x","dst":"coinexvaloper16pr4xqlsglwu6urkyt975nxzl65hlt2fw0n58d"}`
-	hub.lastBlockTime, _ = time.Parse(time.RFC3339, "2019-08-21T16:00:50+08:00")
-	hub.currBlockTime, _ = time.Parse(time.RFC3339, "2019-08-21T08:00:51.648298Z")
+	hub.lastBlockTime = time.Unix(1566374450, 0)
+	hub.currBlockTime = time.Unix(1566374456, 0)
 	hub.ConsumeMessage(key, []byte(val2))
 	fillCommitInfo(hub)
 
@@ -231,14 +239,14 @@ func TestHub_PushUnbondingMsg(t *testing.T) {
 	defer os.RemoveAll("tmp")
 
 	key := "begin_unbonding"
-	val := `{"delegator":"coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw","validator":"coinexvaloper1yj66ancalgk7dz3383s6cyvdd0nd93q0sekwpv","amount":"100000","completion_time":"2019-08-21T08:00:49.505077Z"}`
+	val := `{"delegator":"coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw","validator":"coinexvaloper1yj66ancalgk7dz3383s6cyvdd0nd93q0sekwpv","amount":"100000","completion_time":1566374450}`
 	hub.ConsumeMessage(key, []byte(val))
 	fillCommitInfo(hub)
 
 	key = "complete_unbonding"
 	val2 := `{"delegator":"coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw","validator":"coinexvaloper1yj66ancalgk7dz3383s6cyvdd0nd93q0sekwpv"}`
-	hub.lastBlockTime, _ = time.Parse(time.RFC3339, "2019-08-21T08:00:49.505077Z")
-	hub.currBlockTime, _ = time.Parse(time.RFC3339, "2019-08-21T08:00:53.791882Z")
+	hub.lastBlockTime = time.Unix(1566374450, 0)
+	hub.currBlockTime = time.Unix(1566374456, 0)
 	hub.ConsumeMessage(key, []byte(val2))
 	fillCommitInfo(hub)
 

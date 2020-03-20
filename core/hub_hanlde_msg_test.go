@@ -54,9 +54,10 @@ func TestDepthLevel(t *testing.T) {
 	subMan := GetDepthSubscribeManeger()
 	hub := NewHub(db, subMan, 99999, 0, 0, 0)
 	hub.currBlockHeight = 999
+	T("2019-07-15T08:07:10Z")
 	newHeightInfo := &NewHeightInfo{
 		Height:        1000,
-		TimeStamp:     T("2019-07-15T08:07:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
 	bytes, _ := json.Marshal(newHeightInfo)
@@ -139,9 +140,10 @@ func TestDepthLevel(t *testing.T) {
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
 
+	T("2019-07-15T08:07:10Z")
 	newHeightInfo = &NewHeightInfo{
 		Height:        1001,
-		TimeStamp:     T("2019-07-15T08:07:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
@@ -197,9 +199,10 @@ func TestDepthLevel(t *testing.T) {
 	subMan.clearPushList()
 
 	hub.currBlockHeight = 99998
+	T("2019-07-15T08:07:10Z")
 	newHeightInfo = &NewHeightInfo{
 		Height:        99999,
-		TimeStamp:     T("2019-07-15T08:07:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
@@ -230,9 +233,10 @@ func Test1(t *testing.T) {
 	height := hub.QueryLatestHeight()
 	require.EqualValues(t, 0, height)
 
+	T("2019-07-15T08:07:10Z")
 	newHeightInfo := &NewHeightInfo{
 		Height:        1000,
-		TimeStamp:     T("2019-07-15T08:07:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
 	bytes, _ := json.Marshal(newHeightInfo)
@@ -282,21 +286,23 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(notificationUnlock)
 	hub.ConsumeMessage("notify_unlock", bytes)
 
+	timeTmp, _ := time.Parse(time.RFC3339, "2019-07-15T08:18:10Z")
 	notificationBeginRedelegation := &NotificationBeginRedelegation{
 		Delegator:      addr2,
 		ValidatorSrc:   "Val1",
 		ValidatorDst:   "Val2",
 		Amount:         "500",
-		CompletionTime: "2019-07-15T08:18:10Z",
+		CompletionTime: timeTmp.Unix(),
 	}
 	bytes, _ = json.Marshal(notificationBeginRedelegation)
 	hub.ConsumeMessage("begin_redelegation", bytes)
 
+	timeTmp, _ = time.Parse(time.RFC3339, "2019-07-15T08:18:10Z")
 	notificationBeginUnbonding := &NotificationBeginUnbonding{
 		Delegator:      addr1,
 		Validator:      "Val1",
 		Amount:         "300",
-		CompletionTime: "2019-07-15T08:18:10Z",
+		CompletionTime: timeTmp.Unix(),
 	}
 	bytes, _ = json.Marshal(notificationBeginUnbonding)
 	hub.ConsumeMessage("begin_unbonding", bytes)
@@ -349,8 +355,8 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
 	correct := `
-3: {"height":1000,"timestamp":"2019-07-15T08:07:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
-4: {"height":1000,"timestamp":"2019-07-15T08:07:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+3: {"height":1000,"timestamp":1563178030,"last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1000,"timestamp":1563178030,"last_block_hash":"3031323334353637383930313233343536373839"}
 25: {"signers":["cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca"],"transfers":[{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","recipient":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","amount":"1cet"}],"serial_number":20000,"msg_types":["MsgType1"],"tx_json":"","height":1001,"hash":""}
 20: {"signers":["cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca"],"transfers":[{"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","recipient":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","amount":"1cet"}],"serial_number":20000,"msg_types":["MsgType1"],"tx_json":"","height":1001,"hash":""}
 23: {"address":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","unlocked":[{"denom":"abc","amount":"15000"}],"locked_coins":[{"coin":{"denom":"cet","amount":"5000"},"unlock_time":1563178690}],"frozen_coins":[],"coins":[],"height":1001}
@@ -385,9 +391,10 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(buyDepth)
 	assert.Equal(t, correct, string(bytes))
 
+	T("2019-07-15T08:19:10Z")
 	newHeightInfo = &NewHeightInfo{
 		Height:        1001,
-		TimeStamp:     T("2019-07-15T08:19:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("12345678901234567890"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
@@ -465,10 +472,10 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
 	correct = `
-3: {"height":1001,"timestamp":"2019-07-15T08:19:10Z","last_block_hash":"3132333435363738393031323334353637383930"}
-4: {"height":1001,"timestamp":"2019-07-15T08:19:10Z","last_block_hash":"3132333435363738393031323334353637383930"}
-22: {"delegator":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","src":"Val1","dst":"Val2","amount":"500","completion_time":"2019-07-15T08:18:10Z"}
-21: {"delegator":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","validator":"Val1","amount":"300","completion_time":"2019-07-15T08:18:10Z"}
+3: {"height":1001,"timestamp":1563178750,"last_block_hash":"3132333435363738393031323334353637383930"}
+4: {"height":1001,"timestamp":1563178750,"last_block_hash":"3132333435363738393031323334353637383930"}
+22: {"delegator":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","src":"Val1","dst":"Val2","amount":"500","completion_time":1563178690}
+21: {"delegator":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","validator":"Val1","amount":"300","completion_time":1563178690}
 13: {"id":181,"height":1001,"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","token":"cet","donation":0,"title":"I love CET","content":"I love CET so much.","content_type":3,"references":[{"id":180,"reward_target":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","reward_token":"cet","reward_amount":500000,"attitudes":[]}]}
 14: {"id":181,"height":1001,"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","token":"cet","donation":0,"title":"I love CET","content":"I love CET so much.","content_type":3,"references":[{"id":180,"reward_target":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","reward_token":"cet","reward_amount":500000,"attitudes":[]}]}
 15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1001,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":100,"deal_money":10,"curr_stock":100,"curr_money":10,"fill_price":"0.100000000000000000"}
@@ -489,9 +496,10 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(buyDepth)
 	assert.Equal(t, correct, string(bytes))
 
+	T("2019-07-15T08:29:10Z")
 	newHeightInfo = &NewHeightInfo{
 		Height:        1002,
-		TimeStamp:     T("2019-07-15T08:29:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("23456789012345678901"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
@@ -507,7 +515,7 @@ func Test1(t *testing.T) {
 		CurrentPrice:       "20",
 		StockInPool:        "50",
 		MoneyInPool:        "5000",
-		EarliestCancelTime: "0",
+		EarliestCancelTime: 0,
 	}
 	bytes, _ = json.Marshal(msgBancorInfoForKafka)
 	hub.ConsumeMessage("bancor_info", bytes)
@@ -528,10 +536,10 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
 	correct = `
-3: {"height":1002,"timestamp":"2019-07-15T08:29:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
-4: {"height":1002,"timestamp":"2019-07-15T08:29:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
+3: {"height":1002,"timestamp":1563179350,"last_block_hash":"3233343536373839303132333435363738393031"}
+4: {"height":1002,"timestamp":1563179350,"last_block_hash":"3233343536373839303132333435363738393031"}
 6: {"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"100","unix_time":1563178750,"time_span":"1min","market":"abc/cet"}
-12: {"owner":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","stock":"xyz","money":"cet","init_price":"10","max_supply":"10000","max_price":"100","current_price":"20","stock_in_pool":"50","money_in_pool":"5000","earliest_cancel_time":"0"}
+12: {"owner":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","stock":"xyz","money":"cet","init_price":"10","max_supply":"10000","max_price":"100","current_price":"20","stock_in_pool":"50","money_in_pool":"5000","earliest_cancel_time":0}
 17: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":1,"side":2,"money_limit":10,"transaction_price":"2.000000000000000000","block_height":1001}
 18: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":1,"side":2,"money_limit":10,"transaction_price":"2.000000000000000000","block_height":1001}
 `
@@ -606,7 +614,7 @@ func Test1(t *testing.T) {
 	assert.Equal(t, "[1563178750,12]", string(bytes))
 
 	data, timesid = hub.QueryBancorInfo("xyz/cet", unixTime, 0, 20)
-	correct = `{"owner":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","stock":"xyz","money":"cet","init_price":"10","max_supply":"10000","max_price":"100","current_price":"20","stock_in_pool":"50","money_in_pool":"5000","earliest_cancel_time":"0"}`
+	correct = `{"owner":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","stock":"xyz","money":"cet","init_price":"10","max_supply":"10000","max_price":"100","current_price":"20","stock_in_pool":"50","money_in_pool":"5000","earliest_cancel_time":0}`
 	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
 	assert.Equal(t, "[1563179350,15]", string(bytes))
@@ -634,13 +642,13 @@ func Test1(t *testing.T) {
 	assert.Equal(t, 0, len(timesid))
 
 	data, timesid = hub.QueryRedelegation(addr2, unixTime, 0, 20)
-	correct = `{"delegator":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","src":"Val1","dst":"Val2","amount":"500","completion_time":"2019-07-15T08:18:10Z"}`
+	correct = `{"delegator":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","src":"Val1","dst":"Val2","amount":"500","completion_time":1563178690}`
 	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
 	assert.Equal(t, "[1563178690,4]", string(bytes))
 
 	data, timesid = hub.QueryUnbonding(addr1, unixTime, 0, 20)
-	correct = `{"delegator":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","validator":"Val1","amount":"300","completion_time":"2019-07-15T08:18:10Z"}`
+	correct = `{"delegator":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca","validator":"Val1","amount":"300","completion_time":1563178690}`
 	assert.Equal(t, correct, toStr(data))
 	bytes, _ = json.Marshal(timesid)
 	assert.Equal(t, "[1563178690,5]", string(bytes))
@@ -703,9 +711,10 @@ func Test1(t *testing.T) {
 	bytes, _ = json.Marshal(timesid)
 	assert.Equal(t, "[1563178030,9]", string(bytes))
 
+	T("2019-07-15T08:31:10Z")
 	newHeightInfo = &NewHeightInfo{
 		Height:        1003,
-		TimeStamp:     T("2019-07-15T08:31:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("23456789012345678901"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
@@ -732,8 +741,8 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
 	correct = `
-3: {"height":1003,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
-4: {"height":1003,"timestamp":"2019-07-15T08:31:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
+3: {"height":1003,"timestamp":1563179470,"last_block_hash":"3233343536373839303132333435363738393031"}
+4: {"height":1003,"timestamp":1563179470,"last_block_hash":"3233343536373839303132333435363738393031"}
 6: {"open":"0.100000000000000000","close":"0.100000000000000000","high":"0.100000000000000000","low":"0.100000000000000000","total":"0","unix_time":1563179350,"time_span":"1min","market":"abc/cet"}
 28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"1","unix_time":1563179350,"time_span":"1min","market":"B:xyz/cet"}
 15: {"order_id":"cosmos1qy352eufqy352eufqy352eufqy35qqqptw34ca-1","trading_pair":"abc/cet","height":1003,"side":2,"price":"100.000000000000000000","left_stock":0,"freeze":0,"deal_stock":200,"deal_money":25,"curr_stock":200,"curr_money":25,"fill_price":"0.125000000000000000"}
@@ -744,9 +753,10 @@ func Test1(t *testing.T) {
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
 
+	T("2019-07-16T00:01:10Z")
 	newHeightInfo = &NewHeightInfo{
 		Height:        1004,
-		TimeStamp:     T("2019-07-16T00:01:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("23456789012345678901"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
@@ -772,8 +782,8 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
 	correct = `
-3: {"height":1004,"timestamp":"2019-07-16T00:01:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
-4: {"height":1004,"timestamp":"2019-07-16T00:01:10Z","last_block_hash":"3233343536373839303132333435363738393031"}
+3: {"height":1004,"timestamp":1563235270,"last_block_hash":"3233343536373839303132333435363738393031"}
+4: {"height":1004,"timestamp":1563235270,"last_block_hash":"3233343536373839303132333435363738393031"}
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563179470,"time_span":"1min","market":"abc/cet"}
 7: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1hour","market":"abc/cet"}
 5: {"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1day","market":"abc/cet"}
@@ -801,9 +811,10 @@ func Test1(t *testing.T) {
 	correct = `{"open":"0.100000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.100000000000000000","total":"300","unix_time":1563179470,"time_span":"1day","market":"abc/cet"}`
 	assert.Equal(t, correct, toStr(data))
 
+	T("2019-07-15T08:37:10Z")
 	newHeightInfo = &NewHeightInfo{
 		Height:        1005,
-		TimeStamp:     T("2019-07-15T08:37:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
@@ -811,8 +822,8 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
 	correct = `
-3: {"height":1005,"timestamp":"2019-07-15T08:37:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
-4: {"height":1005,"timestamp":"2019-07-15T08:37:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+3: {"height":1005,"timestamp":1563179830,"last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1005,"timestamp":1563179830,"last_block_hash":"3031323334353637383930313233343536373839"}
 7: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563235270,"time_span":"1hour","market":"abc/cet"}
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563235270,"time_span":"1min","market":"abc/cet"}
 5: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"200","unix_time":1563235270,"time_span":"1day","market":"abc/cet"}
@@ -824,9 +835,10 @@ func Test1(t *testing.T) {
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
 
+	T("2019-07-15T08:38:10Z")
 	newHeightInfo = &NewHeightInfo{
 		Height:        1006,
-		TimeStamp:     T("2019-07-15T08:38:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
@@ -834,17 +846,18 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
 	correct = `
-3: {"height":1006,"timestamp":"2019-07-15T08:38:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
-4: {"height":1006,"timestamp":"2019-07-15T08:38:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+3: {"height":1006,"timestamp":1563179890,"last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1006,"timestamp":1563179890,"last_block_hash":"3031323334353637383930313233343536373839"}
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"0","unix_time":1563179830,"time_span":"1min","market":"abc/cet"}
 28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563179830,"time_span":"1min","market":"B:xyz/cet"}
 `
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
 
+	T("2019-07-15T08:39:10Z")
 	newHeightInfo = &NewHeightInfo{
 		Height:        1007,
-		TimeStamp:     T("2019-07-15T08:39:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
@@ -902,8 +915,8 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
 	correct = `
-3: {"height":1007,"timestamp":"2019-07-15T08:39:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
-4: {"height":1007,"timestamp":"2019-07-15T08:39:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+3: {"height":1007,"timestamp":1563179950,"last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1007,"timestamp":1563179950,"last_block_hash":"3031323334353637383930313233343536373839"}
 17: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":2,"side":2,"money_limit":20,"transaction_price":"3.000000000000000000","block_height":1007}
 18: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":2,"side":2,"money_limit":20,"transaction_price":"3.000000000000000000","block_height":1007}
 28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563179890,"time_span":"1min","market":"B:xyz/cet"}
@@ -912,9 +925,10 @@ func Test1(t *testing.T) {
 	subMan.compareResult(t, correct)
 	subMan.clearPushList()
 
+	T("2019-07-15T08:40:10Z")
 	newHeightInfo = &NewHeightInfo{
 		Height:        1008,
-		TimeStamp:     T("2019-07-15T08:40:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
@@ -922,8 +936,8 @@ func Test1(t *testing.T) {
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
 	correct = `
-3: {"height":1008,"timestamp":"2019-07-15T08:40:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
-4: {"height":1008,"timestamp":"2019-07-15T08:40:10Z","last_block_hash":"3031323334353637383930313233343536373839"}
+3: {"height":1008,"timestamp":1563180010,"last_block_hash":"3031323334353637383930313233343536373839"}
+4: {"height":1008,"timestamp":1563180010,"last_block_hash":"3031323334353637383930313233343536373839"}
 27: [{"market":"B:xyz/cet","new":"3.000000000000000000","old":"2.000000000000000000","minute_in_day":519}]
 28: {"open":"3.000000000000000000","close":"3.000000000000000000","high":"3.000000000000000000","low":"3.000000000000000000","total":"2","unix_time":1563179950,"time_span":"1min","market":"B:xyz/cet"}
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"0","unix_time":1563179950,"time_span":"1min","market":"abc/cet"}
@@ -967,9 +981,10 @@ func TestDumpOffset(t *testing.T) {
 	hub.lastDumpTime = time.Now().Add(-1 * time.Minute)
 	hub.UpdateOffset(0, 1)
 	require.EqualValues(t, 0, hub.dumpFlag)
+	T("2019-07-15T08:40:10Z")
 	newHeightInfo := &NewHeightInfo{
 		Height:        1,
-		TimeStamp:     T("2019-07-15T08:40:10Z"),
+		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("01234567890123456789"),
 	}
 	bytes, _ := json.Marshal(newHeightInfo)
