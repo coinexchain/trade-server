@@ -24,11 +24,11 @@ const (
 // --------------------------
 // market info
 type MarketInfo struct {
-	Stock             string  `json:"stock"`
-	Money             string  `json:"money"`
-	PricePrecision    byte    `json:"price_precision"`
-	LastExecutedPrice sdk.Dec `json:"last_executed_price"`
-	OrderPrecision    byte    `json:"order_precision"`
+	Stock          string `json:"stock"`
+	Money          string `json:"money"`
+	Creator        string `json:"creator"`
+	PricePrecision byte   `json:"price_precision"`
+	OrderPrecision byte   `json:"order_precision"`
 }
 
 type OrderInfo struct {
@@ -98,9 +98,9 @@ type CancelOrderInfo struct {
 
 	TxHash string `json:"tx_hash,omitempty"`
 
-	UsedFeatureFee    int64          `json:"used_feature_fee,omitempty"`
-	RebateAmount      int64          `json:"rebate_amount,omitempty"`
-	RebateRefereeAddr sdk.AccAddress `json:"rebate_referee_addr,omitempty"`
+	UsedFeatureFee    int64  `json:"used_feature_fee,omitempty"`
+	RebateAmount      int64  `json:"rebate_amount,omitempty"`
+	RebateRefereeAddr string `json:"rebate_referee_addr,omitempty"`
 }
 
 type DepthDetails struct {
@@ -228,11 +228,11 @@ type NotificationDelegatorRewards struct {
 // --------------------
 // other module info
 type LockedCoin struct {
-	Coin        sdk.Coin       `json:"coin"`
-	UnlockTime  int64          `json:"unlock_time"`
-	FromAddress sdk.AccAddress `json:"from_address,omitempty"`
-	Supervisor  sdk.AccAddress `json:"supervisor,omitempty"`
-	Reward      int64          `json:"reward,omitempty"`
+	Coin        sdk.Coin `json:"coin"`
+	UnlockTime  int64    `json:"unlock_time"`
+	FromAddress string   `json:"from_address,omitempty"`
+	Supervisor  string   `json:"supervisor,omitempty"`
+	Reward      int64    `json:"reward,omitempty"`
 }
 type LockedCoins []LockedCoin
 

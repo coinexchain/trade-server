@@ -34,14 +34,6 @@ func consumeMsgAndCompareRet(t *testing.T, hub *Hub, subMan *MocSubscribeManager
 	subMan.clearPushList()
 }
 
-func getTime(str string) int64 {
-	tmp, err := time.Parse(time.RFC3339, str)
-	if err != nil {
-		panic(err)
-	}
-	return tmp.Unix()
-}
-
 func TestHub_PushHeightInfoMsg(t *testing.T) {
 	subMan := &MocSubscribeManager{}
 	subMan.HeightSubscribeInfo = make([]Subscriber, 1)
