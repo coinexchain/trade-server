@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"testing"
 	"time"
@@ -18,6 +19,7 @@ func getHub(t *testing.T, subMan *MocSubscribeManager) *Hub {
 	hub.currBlockHeight = 5
 	hub.StoreLeastHeight()
 	hub.skipHeight = false
+	hub.upgradeHeight = math.MaxInt64
 	return hub
 }
 
@@ -27,6 +29,7 @@ func fillCommitInfo(hub *Hub) {
 
 func consumeMsgAndCompareRet(t *testing.T, hub *Hub, subMan *MocSubscribeManager, key, val string) {
 	hub.ConsumeMessage(key, []byte(val))
+	fmt.Println(hub.currBlockHeight)
 	fillCommitInfo(hub)
 
 	time.Sleep(time.Millisecond)

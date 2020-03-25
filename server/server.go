@@ -61,7 +61,6 @@ func NewServer(svrConfig *toml.Tree) *TradeServer {
 		consumer: consumer,
 		hub:      hub,
 	}
-	hub.SetServer(server)
 	return server
 }
 

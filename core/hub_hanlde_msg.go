@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -96,7 +95,6 @@ type Hub struct {
 	trimanLockCount    int64
 
 	// stop operation for new chain
-	server        Server
 	oldChainID    string
 	upgradeHeight int64
 }
@@ -182,7 +180,22 @@ func (hub *Hub) ConsumeMessage(msgType string, bz []byte) {
 	if !hub.isTimeToHandleMsg(msgType) {
 		return
 	}
+	if hub.skipToOldChain(msgType) {
+		return
+	}
 	hub.handleMsg()
+}
+
+func (hub *Hub) skipToOldChain(msgType string) bool {
+	if hub.oldChainID == hub.chainID && hub.currBlockHeight > hub.upgradeHeight {
+		if msgType == "commit" {
+			// drop height info msg
+			hub.batch.Close()
+			hub.batch = hub.db.NewBatch()
+		}
+		return true
+	}
+	return false
 }
 
 // analyze height_info to decide whether to skip
@@ -201,17 +214,24 @@ func (hub *Hub) preHandleNewHeightInfo(msgType string, bz []byte) {
 		//The incoming msg is lagging behind hub's internal state
 		hub.skipHeight = true
 		log.Info(fmt.Sprintf("Skipping Height %d<%d\n", hub.currBlockHeight, v.Height))
+
+		// When receive new chain, reset height info and chain-id
+		if v.ChainID != hub.oldChainID && v.Height == hub.upgradeHeight+1 {
+			hub.chainID = v.ChainID
+			hub.currBlockHeight = v.Height
+			hub.skipHeight = false
+		}
 	} else if hub.currBlockHeight+1 == v.Height {
 		//The incoming msg catches up hub's internal state
 		hub.currBlockHeight = v.Height
 		hub.skipHeight = false
+		hub.chainID = v.ChainID
 	} else {
 		//The incoming msg can not be higher than hub's internal state
 		hub.skipHeight = true
 		log.Info(fmt.Sprintf("Invalid Height! %d+1!=%d\n", hub.currBlockHeight, v.Height))
-		panic("here")
+		panic(fmt.Sprintf("currBlockHeight height info [%d] < v.Height[%d] msg", hub.currBlockHeight, 9))
 	}
-
 	hub.msgEntryList = hub.msgEntryList[:0]
 }
 
@@ -306,7 +326,6 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 	hub.msgsChannel <- MsgToPush{topic: BlockInfoKey, bz: bz}
 	hub.lastBlockTime = hub.currBlockTime
 	hub.currBlockTime = time.Unix(v.TimeStamp, 0)
-	hub.chainID = v.ChainID
 	hub.beginForCandleSticks()
 }
 
@@ -814,7 +833,7 @@ func (hub *Hub) commit() {
 	hub.pushDepthFull()
 	hub.dumpHubState()
 	hub.refreshDB()
-	hub.timeToNewChain()
+	//hub.timeToNewChain()
 }
 
 func (hub *Hub) isStopped() bool {
@@ -951,11 +970,4 @@ func (hub *Hub) refreshDB() {
 	hub.batch.WriteSync()
 	hub.batch.Close()
 	hub.batch = hub.db.NewBatch()
-}
-
-func (hub *Hub) timeToNewChain() {
-	if hub.chainID == "" && hub.currBlockHeight == 10000 {
-		hub.server.Stop()
-		os.Exit(1)
-	}
 }
