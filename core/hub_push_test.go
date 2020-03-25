@@ -43,7 +43,7 @@ func TestHub_PushHeightInfoMsg(t *testing.T) {
 
 	// consumer height msg
 	key := "height_info"
-	val := `{"chain_id":"coinexdex-test1","height":6,"timestamp":0,"last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
+	val := `{"chain_id":"coinexdex-test1","height":6,"timestamp":283947,"last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
 	consumeMsgAndCompareRet(t, hub, subMan, key, val)
 }
 
@@ -244,4 +244,31 @@ func TestHub_PushUnbondingMsg(t *testing.T) {
 
 	time.Sleep(time.Millisecond)
 	subMan.compareResult(t, fmt.Sprintf("1: %s", val))
+}
+
+func TestHub_PushUnlockMsg(t *testing.T) {
+	addr := "coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw"
+	subMan := &MocSubscribeManager{}
+	subMan.UnlockSubscribeInfo = make(map[string][]Subscriber)
+	subMan.UnlockSubscribeInfo[addr] = make([]Subscriber, 1)
+	subMan.UnlockSubscribeInfo[addr][0] = &PlainSubscriber{1}
+	hub := getHub(t, subMan)
+	defer os.RemoveAll("tmp")
+
+	key := "notify_unlock"
+	val := `{"address":"coinex1tlegt4y40m3qu3dd4zddmjf6u3rswdqk8xxvzw","unlocked":[{"denom":"cet","amount":"1000000"}],"locked_coins":null,"frozen_coins":[{"denom":"abc","amount":"796912961248"},{"denom":"cet","amount":"1896049635319"}],"coins":[{"denom":"abc","amount":"24999230553270264"},{"denom":"cet","amount":"24971271794985539"}],"height":669}`
+	consumeMsgAndCompareRet(t, hub, subMan, key, val)
+}
+
+func TestHub_PushCommentMsg(t *testing.T) {
+	subMan := &MocSubscribeManager{}
+	subMan.CommentSubscribeInfo = make(map[string][]Subscriber)
+	subMan.CommentSubscribeInfo["cet"] = make([]Subscriber, 1)
+	subMan.CommentSubscribeInfo["cet"][0] = &PlainSubscriber{1}
+	hub := getHub(t, subMan)
+	defer os.RemoveAll("tmp")
+
+	key := "token_comment"
+	val := `{"id":0,"height":10,"sender":"coinex1py9lss4nr0lm6ep4uwk3tclacw42a5nx0ra92r","token":"cet","donation":200000000,"title":"I-Love-CET","content":"cet-to-the-moon","content_type":3,"references":null}`
+	consumeMsgAndCompareRet(t, hub, subMan, key, val)
 }
