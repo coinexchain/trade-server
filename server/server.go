@@ -56,11 +56,13 @@ func NewServer(svrConfig *toml.Tree) *TradeServer {
 		log.WithError(err).Errorf("new consumer failed")
 		return nil
 	}
-	return &TradeServer{
+	server := &TradeServer{
 		httpSvr:  httpSvr,
 		consumer: consumer,
 		hub:      hub,
 	}
+	hub.SetServer(server)
+	return server
 }
 
 func initDB(svrConfig *toml.Tree) (dbm.DB, error) {
@@ -83,7 +85,9 @@ func initHub(svrConfig *toml.Tree, db dbm.DB, wsManager *core.WebsocketManager) 
 	keepRecent := svrConfig.GetDefault("keepRecent", int64(-1)).(int64)
 	monitorInterval := svrConfig.GetDefault("monitorinterval", int64(0)).(int64)
 	initChainHeight := svrConfig.GetDefault("initChainHeight", int64(0)).(int64)
-	hub := core.NewHub(db, wsManager, interval, monitorInterval, keepRecent, initChainHeight)
+	oldChainID := svrConfig.GetDefault("chain-id", "").(string)
+	upgradeHeight := svrConfig.GetDefault(" upgrade-height", int64(0)).(int64)
+	hub := core.NewHub(db, wsManager, interval, monitorInterval, keepRecent, initChainHeight, oldChainID, upgradeHeight)
 	if err := restoreHub(hub); err != nil {
 		return nil, err
 	}

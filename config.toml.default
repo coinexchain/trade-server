@@ -35,3 +35,8 @@ interval = 120
 dir-mode = false
 dir = "/tmp"
 file-prefix = "backup-"
+
+# stop old chain id
+chain-id = "coinexdex"
+# old chain upgrade height
+upgrade-height = 3082739

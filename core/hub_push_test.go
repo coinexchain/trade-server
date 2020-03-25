@@ -14,7 +14,7 @@ func getHub(t *testing.T, subMan *MocSubscribeManager) *Hub {
 	db, err := dbm.NewGoLevelDB("test", "tmp")
 	require.Nil(t, err)
 
-	hub := NewHub(db, subMan, 1, 0, 1, 1)
+	hub := NewHub(db, subMan, 1, 0, 1, 1, "", 0)
 	hub.currBlockHeight = 5
 	hub.StoreLeastHeight()
 	hub.skipHeight = false

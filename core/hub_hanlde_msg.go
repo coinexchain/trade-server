@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -63,6 +64,7 @@ type Hub struct {
 	// skip the repeating messages after restart
 	skipHeight      bool
 	currBlockHeight int64
+	chainID         string
 
 	currBlockTime time.Time
 	lastBlockTime time.Time
@@ -92,9 +94,15 @@ type Hub struct {
 	dbLockCount        int64
 	tickerMapLockCount int64
 	trimanLockCount    int64
+
+	// stop operation for new chain
+	server        Server
+	oldChainID    string
+	upgradeHeight int64
 }
 
-func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval int64, keepRecent int64, initChainHeight int64) (hub *Hub) {
+func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval int64,
+	keepRecent int64, initChainHeight int64, oldChainID string, upgradeHeight int64) (hub *Hub) {
 	hub = &Hub{
 		db:              db,
 		batch:           db.NewBatch(),
@@ -116,6 +124,8 @@ func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval 
 		keepRecent:      keepRecent,
 		msgsChannel:     make(chan MsgToPush, 10000),
 		currBlockHeight: initChainHeight,
+		oldChainID:      oldChainID,
+		upgradeHeight:   upgradeHeight,
 	}
 
 	go hub.pushMsgToWebsocket()
@@ -296,6 +306,7 @@ func (hub *Hub) handleNewHeightInfo(bz []byte) {
 	hub.msgsChannel <- MsgToPush{topic: BlockInfoKey, bz: bz}
 	hub.lastBlockTime = hub.currBlockTime
 	hub.currBlockTime = time.Unix(v.TimeStamp, 0)
+	hub.chainID = v.ChainID
 	hub.beginForCandleSticks()
 }
 
@@ -803,6 +814,7 @@ func (hub *Hub) commit() {
 	hub.pushDepthFull()
 	hub.dumpHubState()
 	hub.refreshDB()
+	hub.timeToNewChain()
 }
 
 func (hub *Hub) isStopped() bool {
@@ -939,4 +951,11 @@ func (hub *Hub) refreshDB() {
 	hub.batch.WriteSync()
 	hub.batch.Close()
 	hub.batch = hub.db.NewBatch()
+}
+
+func (hub *Hub) timeToNewChain() {
+	if hub.chainID == "" && hub.currBlockHeight == 10000 {
+		hub.server.Stop()
+		os.Exit(1)
+	}
 }

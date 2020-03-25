@@ -163,3 +163,11 @@ func (hub *Hub) AddMarket(market string) {
 	}
 	hub.csMan.AddMarket(market)
 }
+
+type Server interface {
+	Stop()
+}
+
+func (hub *Hub) SetServer(s Server) {
+	hub.server = s
+}
