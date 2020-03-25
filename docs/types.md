@@ -6,7 +6,7 @@
 ------|------|------|
 chain_id | String | 当前链ID
 height | Number | 当前块高度
-timestamp | String | 当前块的时间戳
+timestamp | Number | 当前块的时间戳
 last_block_hash | String | 上个块哈希
 
 ### 订阅income信息
@@ -138,7 +138,7 @@ max_price|String| bancor的最大价格
 current_price|String|当前bancor的价格 
 stock_in_pool|String| bancor中存储的stock数量
 money_in_pool|String| bancor中存储的money数量
-earliest_cancel_time|String| bancor允许取消的最早时间
+earliest_cancel_time|Number| bancor允许取消的最早时间
 stock_precision|String| stock的精度
 max_money|String| bancor中存入的最大money数量
 ar|String|
@@ -221,7 +221,7 @@ delegator|String|委托者地址
 src|String|前一个validator地址
 dst|String|当前的validator地址
 amount|String|金额
-completion_time|String|完成时间 
+completion_time|Number|完成时间 
 tx_hash|String| 交易哈希
 
 ### 订阅 unbonding 信息
@@ -231,7 +231,7 @@ tx_hash|String| 交易哈希
 delegator|String|委托者地址
 validator|String|validator地址
 amount|String|金额
-completion_time|String|完成时间
+completion_time|Number|完成时间
 tx_hash|String| 交易哈希
 
 ### 订阅slash 信息
