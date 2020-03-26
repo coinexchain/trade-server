@@ -29,7 +29,6 @@ func fillCommitInfo(hub *Hub) {
 
 func consumeMsgAndCompareRet(t *testing.T, hub *Hub, subMan *MocSubscribeManager, key, val string) {
 	hub.ConsumeMessage(key, []byte(val))
-	fmt.Println(hub.currBlockHeight)
 	fillCommitInfo(hub)
 
 	time.Sleep(time.Millisecond)

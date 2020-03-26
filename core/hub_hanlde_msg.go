@@ -203,13 +203,11 @@ func (hub *Hub) preHandleNewHeightInfo(msgType string, bz []byte) {
 	if msgType != "height_info" {
 		return
 	}
-	var v NewHeightInfo
-	err := json.Unmarshal(bz, &v)
-	if err != nil {
-		hub.Log("Error in Unmarshal NewHeightInfo")
+
+	v := hub.parseHeightInfo(bz, hub.currBlockHeight+1 <= hub.upgradeHeight)
+	if v == nil {
 		return
 	}
-
 	if hub.currBlockHeight >= v.Height {
 		//The incoming msg is lagging behind hub's internal state
 		hub.skipHeight = true
@@ -295,10 +293,13 @@ func (hub *Hub) handleMsg() {
 }
 
 func (hub *Hub) handleNewHeightInfo(bz []byte) {
-	var v NewHeightInfo
-	err := json.Unmarshal(bz, &v)
+	v := hub.parseHeightInfo(bz, hub.currBlockHeight <= hub.upgradeHeight)
+	if v == nil {
+		return
+	}
+	bz, err := json.Marshal(v)
 	if err != nil {
-		hub.Log("Error in Unmarshal NewHeightInfo")
+		log.Error("marshal heightInfo failed, ", err)
 		return
 	}
 

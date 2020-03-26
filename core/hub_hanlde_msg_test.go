@@ -1045,7 +1045,7 @@ func TestDumpOffset(t *testing.T) {
 	//}()
 	//time.Sleep(time.Second)
 	//require.EqualValues(t, true, hub.dumpFlag)
-	//newHeightInfo.Height++
+	//  .Height++
 	//bytes, _ = json.Marshal(newHeightInfo)
 	//hub.ConsumeMessage("height_info", bytes)
 	//hub.ConsumeMessage("commit", nil)
@@ -1126,13 +1126,7 @@ func TestHub_SkipOldChain(t *testing.T) {
 	consumerMsgAndNonRet(t, hub, subMan, key, val)
 	require.EqualValues(t, 8, hub.currBlockHeight)
 
-	// old chain block height continues to increase; so hub.currBlockHeight < v.height ==> panic
-	defer func() {
-		if err := recover(); err != nil {
-			reason := err.(string)
-			require.EqualValues(t, fmt.Sprintf("currBlockHeight height info [%d] < v.Height[%d] msg", hub.currBlockHeight, 9), reason)
-		}
-	}()
+	// old chain block height continues to increase;
 	key = "height_info"
 	val = `{"chain_id":"coinexdex-test1","height":9,"timestamp":283947,"last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
 	consumerMsgAndNonRet(t, hub, subMan, key, val)
