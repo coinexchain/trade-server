@@ -38,11 +38,15 @@ func (dm *DepthManager) AddLevel(levelStr string) error {
 			return nil
 		}
 	}
-	p, err := sdk.NewDecFromStr(levelStr)
-	if err != nil {
-		return err
+	if levelStr == "all" {
+		dm.CachedMulDecsForLevels = append(dm.CachedMulDecsForLevels, sdk.OneDec())
+	} else {
+		p, err := sdk.NewDecFromStr(levelStr)
+		if err != nil {
+			return err
+		}
+		dm.CachedMulDecsForLevels = append(dm.CachedMulDecsForLevels, sdk.OneDec().QuoTruncate(p))
 	}
-	dm.CachedMulDecsForLevels = append(dm.CachedMulDecsForLevels, sdk.OneDec().QuoTruncate(p))
 	dm.Levels = append(dm.Levels, levelStr)
 	dm.LevelDepth[levelStr] = make(map[string]*PricePoint)
 	return nil
