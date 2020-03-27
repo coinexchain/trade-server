@@ -54,13 +54,15 @@ func TestDepthLevel(t *testing.T) {
 	db := dbm.NewMemDB()
 	subMan := GetDepthSubscribeManeger()
 	hub := NewHub(db, subMan, 99999, 0, 0, 0, "", 0)
-	hub.upgradeHeight = math.MaxInt64
+	hub.upgradeHeight = 900
+	hub.oldChainID = "coinex-old"
 	hub.currBlockHeight = 999
 	T("2019-07-15T08:07:10Z")
 	newHeightInfo := &NewHeightInfo{
 		Height:        1000,
 		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("01234567890123456789"),
+		ChainID:       "coinex-test",
 	}
 	bytes, _ := json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
@@ -147,6 +149,7 @@ func TestDepthLevel(t *testing.T) {
 		Height:        1001,
 		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("01234567890123456789"),
+		ChainID:       "coinex-test",
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
@@ -206,6 +209,7 @@ func TestDepthLevel(t *testing.T) {
 		Height:        99999,
 		TimeStamp:     lastTime.Unix(),
 		LastBlockHash: []byte("01234567890123456789"),
+		ChainID:       "coinex-test",
 	}
 	bytes, _ = json.Marshal(newHeightInfo)
 	hub.ConsumeMessage("height_info", bytes)
@@ -232,7 +236,8 @@ func Test1(t *testing.T) {
 	subMan := GetSubscribeManager(addr1, addr2)
 	hub := NewHub(db, subMan, 999999, 0, 0, 0, "", 0)
 	hub.currBlockHeight = 999
-	hub.upgradeHeight = math.MaxInt64
+	hub.oldChainID = "coinex-old"
+	hub.upgradeHeight = 900
 	height := hub.QueryLatestHeight()
 	require.EqualValues(t, 0, height)
 
@@ -386,7 +391,8 @@ func Test1(t *testing.T) {
 	err = json.Unmarshal(bz, hub4jo)
 	assert.Equal(t, nil, err)
 	hub.Load(hub4jo)
-	hub.upgradeHeight = math.MaxInt64
+	hub.upgradeHeight = 900
+	hub.oldChainID = "coinex-old"
 
 	sellDepth, buyDepth := hub.QueryDepth("abc/cet", 20)
 	correct = `[{"p":"100.000000000000000000","a":"300"}]`
@@ -1089,11 +1095,16 @@ func TestHub_SkipOldChain(t *testing.T) {
 	hub.oldChainID = "coinexdex-test1"
 	hub.upgradeHeight = 7
 	hub.currBlockHeight = 5
+	date, _ := time.Parse(time.RFC3339, "2019-08-21T07:59:19.340662Z")
 
 	// old chain
 	key := "height_info"
-	val := `{"chain_id":"coinexdex-test1","height":6,"timestamp":283947,"last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
-	consumeMsgAndCompareRet(t, hub, subMan, key, val)
+	val := `{"chain_id":"coinexdex-test1","height":6,"timestamp":"2019-08-21T07:59:19.340662Z","last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
+	consumeMsg(hub, key, val)
+	model := `{"chain_id":"%s","height":%d,"timestamp":%d,"last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
+	expectVal := fmt.Sprintf(model, "coinexdex-test1", 6, date.Unix())
+	subMan.compareResult(t, fmt.Sprintf("1: %s", expectVal))
+	subMan.clearPushList()
 	require.EqualValues(t, 6, hub.currBlockHeight)
 
 	key = "bancor_create"
@@ -1101,8 +1112,11 @@ func TestHub_SkipOldChain(t *testing.T) {
 	consumeMsgAndCompareRet(t, hub, subMan, key, val)
 
 	key = "height_info"
-	val = `{"chain_id":"coinexdex-test1","height":7,"timestamp":283947,"last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
-	consumeMsgAndCompareRet(t, hub, subMan, key, val)
+	val = `{"chain_id":"coinexdex-test1","height":7,"timestamp":"2019-08-21T07:59:19.340662Z","last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
+	consumeMsg(hub, key, val)
+	expectVal = fmt.Sprintf(model, "coinexdex-test1", 7, date.Unix())
+	subMan.compareResult(t, fmt.Sprintf("1: %s", expectVal))
+	subMan.clearPushList()
 	require.EqualValues(t, 7, hub.currBlockHeight)
 
 	key = "bancor_create"
@@ -1113,13 +1127,13 @@ func TestHub_SkipOldChain(t *testing.T) {
 
 	// only height info
 	key = "height_info"
-	val = `{"chain_id":"coinexdex-test1","height":8,"timestamp":283947,"last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
+	val = `{"chain_id":"coinexdex-test1","height":8,"timestamp":"2019-08-21T07:59:19.340662Z","last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
 	consumerMsgAndNonRet(t, hub, subMan, key, val)
 	require.EqualValues(t, 8, hub.currBlockHeight)
 
 	// height info and other info
 	key = "height_info"
-	val = `{"chain_id":"coinexdex-test1","height":8,"timestamp":283947,"last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
+	val = `{"chain_id":"coinexdex-test1","height":8,"timestamp":"2019-08-21T07:59:19.340662Z","last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
 	hub.ConsumeMessage(key, []byte(val))
 	key = "bancor_create"
 	val = `{"owner":"coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c","stock":"abc","money":"cet","init_price":"1.000000000000000000","max_supply":"10000000000000","max_price":"500.000000000000000000","price":"1.000000005988000000","stock_in_pool":"9999999999880","money_in_pool":"120","earliest_cancel_time":1917014400}`
@@ -1128,7 +1142,7 @@ func TestHub_SkipOldChain(t *testing.T) {
 
 	// old chain block height continues to increase;
 	key = "height_info"
-	val = `{"chain_id":"coinexdex-test1","height":9,"timestamp":283947,"last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
+	val = `{"chain_id":"coinexdex-test1","height":9,"timestamp":"2019-08-21T07:59:19.340662Z","last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
 	consumerMsgAndNonRet(t, hub, subMan, key, val)
 	require.EqualValues(t, 9, hub.currBlockHeight)
 

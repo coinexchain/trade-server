@@ -355,3 +355,15 @@ func formatCandleStick(info *CandleStick) []byte {
 	}
 	return bz
 }
+
+func getChainID(bz []byte) string {
+	type ChainID struct {
+		ChainID string `json:"chain_id"`
+	}
+	var id ChainID
+	if err := json.Unmarshal(bz, &id); err != nil {
+		log.Error("unmarshal chaid failed")
+		return ""
+	}
+	return id.ChainID
+}

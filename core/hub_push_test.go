@@ -41,6 +41,7 @@ func TestHub_PushHeightInfoMsg(t *testing.T) {
 	subMan.HeightSubscribeInfo = make([]Subscriber, 1)
 	subMan.HeightSubscribeInfo[0] = &PlainSubscriber{1}
 	hub := getHub(t, subMan)
+	hub.upgradeHeight = 5
 	defer os.RemoveAll("tmp")
 
 	// consumer height msg

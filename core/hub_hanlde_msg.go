@@ -204,7 +204,11 @@ func (hub *Hub) preHandleNewHeightInfo(msgType string, bz []byte) {
 		return
 	}
 
-	v := hub.parseHeightInfo(bz, hub.currBlockHeight+1 <= hub.upgradeHeight)
+	chainID := getChainID(bz)
+	if len(chainID) == 0 {
+		return
+	}
+	v := hub.parseHeightInfo(bz, chainID == hub.oldChainID)
 	if v == nil {
 		return
 	}
@@ -293,7 +297,8 @@ func (hub *Hub) handleMsg() {
 }
 
 func (hub *Hub) handleNewHeightInfo(bz []byte) {
-	v := hub.parseHeightInfo(bz, hub.currBlockHeight <= hub.upgradeHeight)
+
+	v := hub.parseHeightInfo(bz, hub.chainID == hub.oldChainID)
 	if v == nil {
 		return
 	}

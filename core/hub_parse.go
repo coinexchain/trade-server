@@ -51,3 +51,13 @@ func (hub *Hub) convertNewHeightInfo(bz []byte) *NewHeightInfo {
 	}
 	return tmp.convertToNewHeightInfo()
 }
+
+type OldBancorInfoForKafka struct {
+}
+
+func (hub *Hub) parseBancorInfo(bz []byte) *MsgBancorInfoForKafka {
+	if hub.currBlockHeight <= hub.upgradeHeight {
+		panic("implement me ")
+	}
+	panic("implement me ")
+}
