@@ -568,10 +568,13 @@ func (hub *Hub) analyzeMessages(MsgTypes []string, TxJSON string) {
 }
 
 func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
-	var v NotificationBeginRedelegation
-	err := json.Unmarshal(bz, &v)
+	v := hub.parseNotificationBeginRedelegation(bz)
+	if v == nil {
+		return
+	}
+	bz, err := json.Marshal(v)
 	if err != nil {
-		hub.Log("Error in Unmarshal NotificationBeginRedelegation")
+		log.Error("marshal NotificationBeginRedelegation failed: ", err)
 		return
 	}
 	bz = appendHashID(bz, hub.currTxHashID)
@@ -583,17 +586,19 @@ func (hub *Hub) handleNotificationBeginRedelegation(bz []byte) {
 }
 
 func (hub *Hub) handleNotificationBeginUnbonding(bz []byte) {
-	var v NotificationBeginUnbonding
-	err := json.Unmarshal(bz, &v)
+	v := hub.parseNotificationBeginUnbonding(bz)
+	if v == nil {
+		return
+	}
+	bz, err := json.Marshal(v)
 	if err != nil {
-		hub.Log("Error in Unmarshal NotificationBeginUnbonding")
+		log.Error("marshal NotificationBeginUnbonding failed: ", err)
 		return
 	}
 	bz = appendHashID(bz, hub.currTxHashID)
-	t := time.Unix(v.CompletionTime, 0)
 
 	// Use completion time as the key
-	key := hub.getUnbondingEventKey(v.Delegator, t.Unix())
+	key := hub.getUnbondingEventKey(v.Delegator, v.CompletionTime)
 	hub.batch.Set(key, bz)
 	hub.sid++
 }
@@ -810,10 +815,13 @@ func (hub *Hub) handleMsgBancorTradeInfoForKafka(bz []byte) {
 }
 
 func (hub *Hub) handleMsgBancorInfoForKafka(bz []byte) {
-	var v MsgBancorInfoForKafka
-	err := json.Unmarshal(bz, &v)
+	v := hub.parseBancorInfo(bz)
+	if v == nil {
+		return
+	}
+	bz, err := json.Marshal(v)
 	if err != nil {
-		hub.Log("Error in Unmarshal MsgBancorInfoForKafka")
+		log.Error("Error in Unmarshal MsgBancorInfoForKafka")
 		return
 	}
 	//Create market if not exist

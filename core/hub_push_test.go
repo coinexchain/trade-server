@@ -56,10 +56,11 @@ func TestHub_PushBancorMsg(t *testing.T) {
 	subMan.BancorInfoSubscribeInfo["abc/cet"] = make([]Subscriber, 1)
 	subMan.BancorInfoSubscribeInfo["abc/cet"][0] = &PlainSubscriber{ID: 1}
 	hub := getHub(t, subMan)
+	hub.oldChainID = "chain"
 	defer os.RemoveAll("tmp")
 
 	key := "bancor_create"
-	val := `{"owner":"coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c","stock":"abc","money":"cet","init_price":"1.000000000000000000","max_supply":"10000000000000","max_price":"500.000000000000000000","price":"1.000000005988000000","stock_in_pool":"9999999999880","money_in_pool":"120","earliest_cancel_time":1917014400}`
+	val := `{"owner":"coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c","stock":"abc","money":"cet","init_price":"1.000000000000000000","max_supply":"10000000000000","max_price":"500.000000000000000000","current_price":"1.000000005988000000","stock_in_pool":"9999999999880","money_in_pool":"120","earliest_cancel_time":1917014400}`
 	consumeMsgAndCompareRet(t, hub, subMan, key, val)
 
 	key = "bancor_info"
@@ -206,6 +207,7 @@ func TestHub_PushRedelegationMsg(t *testing.T) {
 	subMan.RedelegationSubscribeInfo[addr] = make([]Subscriber, 1)
 	subMan.RedelegationSubscribeInfo[addr][0] = &PlainSubscriber{1}
 	hub := getHub(t, subMan)
+	hub.oldChainID = "chain"
 	defer os.RemoveAll("tmp")
 
 	key := "begin_redelegation"
@@ -231,6 +233,7 @@ func TestHub_PushUnbondingMsg(t *testing.T) {
 	subMan.UnbondingSubscribeInfo[addr] = make([]Subscriber, 1)
 	subMan.UnbondingSubscribeInfo[addr][0] = &PlainSubscriber{1}
 	hub := getHub(t, subMan)
+	hub.chainID = "chain"
 	defer os.RemoveAll("tmp")
 
 	key := "begin_unbonding"

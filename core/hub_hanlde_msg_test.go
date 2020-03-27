@@ -1092,6 +1092,7 @@ func TestHub_SkipOldChain(t *testing.T) {
 	subMan.BancorInfoSubscribeInfo["abc/cet"] = make([]Subscriber, 1)
 	subMan.BancorInfoSubscribeInfo["abc/cet"][0] = &PlainSubscriber{ID: 1}
 	hub := NewHub(db, subMan, 99999, 0, 0, 0, "", 0)
+	hub.chainID = "coinexdex-test1"
 	hub.oldChainID = "coinexdex-test1"
 	hub.upgradeHeight = 7
 	hub.currBlockHeight = 5
@@ -1107,10 +1108,6 @@ func TestHub_SkipOldChain(t *testing.T) {
 	subMan.clearPushList()
 	require.EqualValues(t, 6, hub.currBlockHeight)
 
-	key = "bancor_create"
-	val = `{"owner":"coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c","stock":"abc","money":"cet","init_price":"1.000000000000000000","max_supply":"10000000000000","max_price":"500.000000000000000000","price":"1.000000005988000000","stock_in_pool":"9999999999880","money_in_pool":"120","earliest_cancel_time":1917014400}`
-	consumeMsgAndCompareRet(t, hub, subMan, key, val)
-
 	key = "height_info"
 	val = `{"chain_id":"coinexdex-test1","height":7,"timestamp":"2019-08-21T07:59:19.340662Z","last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
 	consumeMsg(hub, key, val)
@@ -1118,10 +1115,6 @@ func TestHub_SkipOldChain(t *testing.T) {
 	subMan.compareResult(t, fmt.Sprintf("1: %s", expectVal))
 	subMan.clearPushList()
 	require.EqualValues(t, 7, hub.currBlockHeight)
-
-	key = "bancor_create"
-	val = `{"owner":"coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c","stock":"abc","money":"cet","init_price":"1.000000000000000000","max_supply":"10000000000000","max_price":"500.000000000000000000","price":"1.000000005988000000","stock_in_pool":"9999999999880","money_in_pool":"120","earliest_cancel_time":1917014400}`
-	consumeMsgAndCompareRet(t, hub, subMan, key, val)
 
 	// old chain exceed upgrade height; skip the msg
 
@@ -1135,10 +1128,6 @@ func TestHub_SkipOldChain(t *testing.T) {
 	key = "height_info"
 	val = `{"chain_id":"coinexdex-test1","height":8,"timestamp":"2019-08-21T07:59:19.340662Z","last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
 	hub.ConsumeMessage(key, []byte(val))
-	key = "bancor_create"
-	val = `{"owner":"coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c","stock":"abc","money":"cet","init_price":"1.000000000000000000","max_supply":"10000000000000","max_price":"500.000000000000000000","price":"1.000000005988000000","stock_in_pool":"9999999999880","money_in_pool":"120","earliest_cancel_time":1917014400}`
-	consumerMsgAndNonRet(t, hub, subMan, key, val)
-	require.EqualValues(t, 8, hub.currBlockHeight)
 
 	// old chain block height continues to increase;
 	key = "height_info"
