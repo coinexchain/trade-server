@@ -1112,8 +1112,6 @@ func TestHub_SkipOldChain(t *testing.T) {
 	key = "height_info"
 	val = `{"chain_id":"coinexdex-test1","height":7,"timestamp":"2019-08-21T07:59:19.340662Z","last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
 	consumeMsg(hub, key, val)
-	key = "bancor_trade"
-	val = `{"sender":"coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly","stock":"abc","money":"cet","amount":60,"side":1,"money_limit":100,"transaction_price":"5.300000000000000000","block_height":290}`
 	expectVal = fmt.Sprintf(model, "coinexdex-test1", 7, date.Unix())
 	subMan.compareResult(t, fmt.Sprintf("1: %s", expectVal))
 	subMan.clearPushList()
