@@ -122,7 +122,7 @@ func GetTopicAndParams(subscriptionTopic string) (topic string, params []string,
 		return "", nil, fmt.Errorf("Invalid params count : [%s] ", subscriptionTopic)
 	}
 	if !checkTopicValid(values[0], values[1:]) {
-		return "", nil, fmt.Errorf("The subscribed topic [%s] is illegal ", topic)
+		return "", nil, fmt.Errorf("The subscribed topic [%s] is illegal ", subscriptionTopic)
 	}
 	return values[0], values[1:], nil
 }
