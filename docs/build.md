@@ -7,4 +7,4 @@
 
 ## Build trade-server
 
-`go build github.com/coinexchain/trade-server`
+`go build -ldflags "-X main.ReleaseVersion=<version>" -o trade-server github.com/coinexchain/trade-server`
