@@ -141,7 +141,7 @@ money_in_pool|String| bancor中存储的money数量
 earliest_cancel_time|Number| bancor允许取消的最早时间
 stock_precision|String| stock的精度
 max_money|String| bancor中存入的最大money数量
-ar|String|
+ar|String|supply-price系数
 
 ### 订阅 bancor-trade 信息
 
@@ -152,9 +152,9 @@ stock|String|stock token
 money|String|money token
 amount|Number| 订单数量
 side|Number| 订单方向；BUY:1, SELL:2
-money_limit|Number| 
-transaction_price|String|
-block_height|Number| 
+money_limit|Number| 买单时愿意付出的money的上限，卖单时希望得到的money的下限
+transaction_price|String| 本次交易的成交均价，单位money per stock
+block_height|Number| 该笔成交所在高度
 tx_hash|String|交易哈希
 used_commission|Number| 订单实际使用的佣金
 rebate_amount|Number| 订单的返佣金额
