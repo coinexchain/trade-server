@@ -85,7 +85,7 @@ func initHub(svrConfig *toml.Tree, db dbm.DB, wsManager *core.WebsocketManager) 
 	monitorInterval := svrConfig.GetDefault("monitorinterval", int64(0)).(int64)
 	initChainHeight := svrConfig.GetDefault("initChainHeight", int64(0)).(int64)
 	oldChainID := svrConfig.GetDefault("chain-id", "").(string)
-	upgradeHeight := svrConfig.GetDefault(" upgrade-height", int64(0)).(int64)
+	upgradeHeight := svrConfig.GetDefault("upgrade-height", int64(0)).(int64)
 	hub := core.NewHub(db, wsManager, interval, monitorInterval, keepRecent, initChainHeight, oldChainID, upgradeHeight)
 	if err := restoreHub(hub); err != nil {
 		return nil, err

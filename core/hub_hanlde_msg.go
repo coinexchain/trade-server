@@ -205,9 +205,6 @@ func (hub *Hub) preHandleNewHeightInfo(msgType string, bz []byte) {
 	}
 
 	chainID := getChainID(bz)
-	if len(chainID) == 0 {
-		return
-	}
 	v := hub.parseHeightInfo(bz, chainID == hub.oldChainID)
 	if v == nil {
 		return
