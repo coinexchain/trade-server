@@ -626,7 +626,7 @@ func simulateKafkaInput() {
 	//fmt.Printf("here %s %d\n", toStr(data), unixTime)
 
 	t := T("2021-09-29T08:02:06.647266Z").Unix()
-	acc := "coinex1m0h3aw8n83tmlyltqldj7xqyp00wdvldxlw3nu"
+	acc := "coinex1m77xwm4t29ga2xg2dzrwzm6wf2mumw3gzl4yd6"
 	msgList, timesid := hub.QueryIncomeAboutToken("cet", acc, t, 0, 1024)
 	for i, msg := range msgList {
 		fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
