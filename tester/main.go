@@ -591,9 +591,11 @@ func simulateKafkaInput() {
 
 	db := dbm.NewMemDB()
 	subMan := core.GetSubscribeManager("coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly", "coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c")
-	hub := core.NewHub(db, subMan, 60, -1, -1, 4545600)
+	hub := core.NewHub(db, subMan, 60, -1, -1, 4447714, "", 4545600)
 
 	scanner := bufio.NewScanner(file)
+	size := 100*1024*1024
+	scanner.Buffer(make([]byte, size), size)
 	counter := int64(0)
 	for scanner.Scan() {
 		counter++
@@ -654,10 +656,10 @@ func simulateKafkaInput() {
 	//	fmt.Printf("== %s\n", string(msg))
 	//}
 
-	tickers := hub.QueryTickers([]string{"abc/cet", "hffp/cet", "game/cet", "hffp1/cet", "ddc/cet", "ift/cet", "ktt/cet"})
-	for _, ticker := range tickers {
-		fmt.Printf("== %v\n", ticker)
-	}
+	//tickers := hub.QueryTickers([]string{"abc/cet", "hffp/cet", "game/cet", "hffp1/cet", "ddc/cet", "ift/cet", "ktt/cet"})
+	//for _, ticker := range tickers {
+	//	fmt.Printf("== %v\n", ticker)
+	//}
 }
 
 func main() {
