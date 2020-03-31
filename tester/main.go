@@ -154,13 +154,13 @@ func testCandleStick(recList []dealRec) {
 				continue
 			}
 			if cs.TimeSpan == core.MinuteStr {
-				impMList = append(impMList, cs)
+				impMList = append(impMList, *cs)
 			}
 			if cs.TimeSpan == core.HourStr {
-				impHList = append(impHList, cs)
+				impHList = append(impHList, *cs)
 			}
 			if cs.TimeSpan == core.DayStr {
-				impDList = append(impDList, cs)
+				impDList = append(impDList, *cs)
 			}
 		}
 		impMan.GetRecord("").Update(t, deal.price, deal.amount)
@@ -170,13 +170,13 @@ func testCandleStick(recList []dealRec) {
 	csList := impMan.NewBlock(t)
 	for _, cs := range csList {
 		if cs.TimeSpan == core.MinuteStr {
-			impMList = append(impMList, cs)
+			impMList = append(impMList, *cs)
 		}
 		if cs.TimeSpan == core.HourStr {
-			impHList = append(impHList, cs)
+			impHList = append(impHList, *cs)
 		}
 		if cs.TimeSpan == core.DayStr {
-			impDList = append(impDList, cs)
+			impDList = append(impDList, *cs)
 		}
 	}
 	compareCandleSticks(refMan.MinuteList, impMList, "minute")
@@ -591,7 +591,7 @@ func simulateKafkaInput() {
 
 	db := dbm.NewMemDB()
 	subMan := core.GetSubscribeManager("coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly", "coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c")
-	hub := core.NewHub(db, subMan, 60)
+	hub := core.NewHub(db, subMan, 60, -1, -1, 4545600)
 
 	scanner := bufio.NewScanner(file)
 	counter := int64(0)
@@ -623,18 +623,18 @@ func simulateKafkaInput() {
 	//data = hub.QueryCandleStick("hffp/cet", core.Day, unixTime, 0, 1000)
 	//fmt.Printf("here %s %d\n", toStr(data), unixTime)
 
-	//t := T("2020-09-29T08:02:06.647266Z").Unix()
-	//acc := "coinex1wt8remcgk6v03q4337p2nm9l9r98tyejed4s6l"
-	//msgList, timesid := hub.QueryIncomeAboutToken("cet", acc, t, 0, 1024)
-	//for i, msg := range msgList {
-	//	fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
-	//}
-	//fmt.Printf("------------------------\n")
-	//acc = "coinex1qampszmdkpuyrsg620sdldmhxuha6mrrj87y9c"
-	//msgList, timesid = hub.QueryTxAboutToken("cet", acc, t, 0, 1024)
-	//for i, msg := range msgList {
-	//	fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
-	//}
+	t := T("2021-09-29T08:02:06.647266Z").Unix()
+	acc := "coinex1m0h3aw8n83tmlyltqldj7xqyp00wdvldxlw3nu"
+	msgList, timesid := hub.QueryIncomeAboutToken("cet", acc, t, 0, 1024)
+	for i, msg := range msgList {
+		fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
+	}
+	fmt.Printf("------------------------\n")
+	acc = "coinex1m0h3aw8n83tmlyltqldj7xqyp00wdvldxlw3nu"
+	msgList, timesid = hub.QueryTxAboutToken("cet", acc, t, 0, 1024)
+	for i, msg := range msgList {
+		fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
+	}
 
 	//t := T("2020-09-29T08:02:06.647266Z").Unix()
 	//msgList, timesid := hub.QueryDeal("abc/cet", t, 0, 1024)
