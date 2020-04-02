@@ -217,8 +217,8 @@ func TestDepthLevel(t *testing.T) {
 	time.Sleep(time.Millisecond)
 
 	correct = `
-8: {"type":"depth_full", "payload":{"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"171"}]}}
-9: {"type":"depth_full", "payload":{"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"171"}]}}
+8: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"171"}]}
+9: {"trading_pair":"abc/cet","bids":[{"p":"15.000000000000000000","a":"300"}],"asks":[{"p":"12.000000000000000000","a":"171"}]}
 `
 	//depthSub := subMan.DepthSubscribeInfo["abc/cet"][0].(*DepthSubscriber)
 	//depthSub.CompareRet(t, []string{str})
