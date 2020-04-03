@@ -98,7 +98,8 @@ func queryDepthAndPush(hub *Hub, c Subscriber, market string, level string, coun
 	if err != nil {
 		return err
 	}
-	if err := c.WriteMsg(bz); err != nil {
+	msg := []byte(fmt.Sprintf("{\"type\":\"%s\", \"payload\":%s}", DepthFull, string(bz)))
+	if err := c.WriteMsg(msg); err != nil {
 		return err
 	}
 	return hub.AddLevel(market, level)
