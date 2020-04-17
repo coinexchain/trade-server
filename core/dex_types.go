@@ -22,7 +22,7 @@ const (
 )
 
 // --------------------------
-// market info
+// market info, e.g. abc/cet
 type MarketInfo struct {
 	Stock          string `json:"stock"`
 	Money          string `json:"money"`
@@ -42,6 +42,7 @@ type OrderResponse struct {
 	Timesid []int64           `json:"timesid"`
 }
 
+// someone creates an order
 type CreateOrderInfo struct {
 	OrderID     string  `json:"order_id"`
 	Sender      string  `json:"sender"`
@@ -62,6 +63,7 @@ type CreateOrderInfo struct {
 	TxHash string `json:"tx_hash,omitempty"`
 }
 
+// another guy fills someone's order
 type FillOrderInfo struct {
 	OrderID     string  `json:"order_id"`
 	TradingPair string  `json:"trading_pair"`
@@ -79,6 +81,7 @@ type FillOrderInfo struct {
 	FillPrice sdk.Dec `json:"fill_price"`
 }
 
+// someone who has created an order before, but now he/she wants to cancel it
 type CancelOrderInfo struct {
 	OrderID     string  `json:"order_id"`
 	TradingPair string  `json:"trading_pair"`
@@ -103,6 +106,7 @@ type CancelOrderInfo struct {
 	RebateRefereeAddr string `json:"rebate_referee_addr,omitempty"`
 }
 
+// for the same trading pair, the bid prices and ask prices in this market
 type DepthDetails struct {
 	TradingPair string        `json:"trading_pair"`
 	Bids        []*PricePoint `json:"bids"`
@@ -111,6 +115,7 @@ type DepthDetails struct {
 
 // ---------------------
 // common info
+// timestamp field changes from string to int64
 type NewHeightInfo struct {
 	ChainID       string       `json:"chain_id,omitempty"`
 	Height        int64        `json:"height"`
@@ -129,6 +134,7 @@ type TransferRecord struct {
 	Amount    string `json:"amount"`
 }
 
+// transaction
 type NotificationTx struct {
 	Signers      []string         `json:"signers"`
 	Transfers    []TransferRecord `json:"transfers"`
@@ -142,6 +148,8 @@ type NotificationTx struct {
 
 // ------------------------
 // manager info
+// someone is going to delegate a validator to stake
+// or, someone who voted a validator before, but now he/she wants to delegate another validator
 type NotificationBeginRedelegation struct {
 	Delegator      string `json:"delegator"`
 	ValidatorSrc   string `json:"src"`
@@ -152,6 +160,8 @@ type NotificationBeginRedelegation struct {
 	TxHash string `json:"tx_hash,omitempty"`
 }
 
+// a validator leaves top 42
+// or a jailed validator becomes unjailed
 type NotificationBeginUnbonding struct {
 	Delegator      string `json:"delegator"`
 	Validator      string `json:"validator"`
@@ -161,17 +171,20 @@ type NotificationBeginUnbonding struct {
 	TxHash string `json:"tx_hash,omitempty"`
 }
 
+// the begin redelegation process is completed
 type NotificationCompleteRedelegation struct {
 	Delegator    string `json:"delegator"`
 	ValidatorSrc string `json:"src"`
 	ValidatorDst string `json:"dst"`
 }
 
+// the unbounding process is completed
 type NotificationCompleteUnbonding struct {
 	Delegator string `json:"delegator"`
 	Validator string `json:"validator"`
 }
 
+// if validators do some illegal acts，they will be punished (e.g. losing votes) or even jailed
 type NotificationSlash struct {
 	Validator string `json:"validator"`
 	Power     string `json:"power"`
@@ -181,6 +194,7 @@ type NotificationSlash struct {
 
 // -----------
 // bancor info
+// someone uses bancor to create markets automatically
 type MsgBancorInfoForKafka struct {
 	Owner              string `json:"owner"`
 	Stock              string `json:"stock"`
@@ -197,6 +211,7 @@ type MsgBancorInfoForKafka struct {
 	EarliestCancelTime int64  `json:"earliest_cancel_time"`
 }
 
+// some users trade with bancor
 type MsgBancorTradeInfoForKafka struct {
 	Sender      string  `json:"sender"`
 	Stock       string  `json:"stock"`
@@ -236,6 +251,7 @@ type LockedCoin struct {
 }
 type LockedCoins []LockedCoin
 
+// unclock the locked coins
 type NotificationUnlock struct {
 	Address     string      `json:"address" yaml:"address"`
 	Unlocked    sdk.Coins   `json:"unlocked"`
@@ -245,6 +261,8 @@ type NotificationUnlock struct {
 	Height      int64       `json:"height"`
 }
 
+// someone sends locked coins to another
+// another person can only wait until the unlock time to use these coins
 type LockedSendMsg struct {
 	FromAddress string    `json:"from_address"`
 	ToAddress   string    `json:"to_address"`
