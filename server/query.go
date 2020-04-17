@@ -502,8 +502,13 @@ func QueryDelistRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 		}
 
 		data, timesid := hub.QueryDelist(market, time, sid, count)
-		cancelTime := core.BigEndianBytesToInt64(data[0])
-		postQueryKVStoreResponse(w, []int64{cancelTime}, timesid)
+		var cancelTime int64
+		if len(data) > 0 {
+			cancelTime = core.BigEndianBytesToInt64(data[0])
+			postQueryKVStoreResponse(w, []int64{cancelTime}, timesid)
+		} else {
+			postQueryKVStoreResponse(w, []struct{}{}, timesid)
+		}
 	}
 }
 func QueryDelistsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
