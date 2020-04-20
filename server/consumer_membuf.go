@@ -21,6 +21,8 @@ type TradeConsumerWithMemBuf struct {
 	hub     *core.Hub
 	writer  MsgWriter
 
+	// Cap must be one to prevent the sudden interruption of
+	// the program and the loss of the pushed data
 	recvData chan int
 }
 
