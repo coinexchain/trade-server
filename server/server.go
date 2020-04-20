@@ -64,6 +64,24 @@ func NewServer(svrConfig *toml.Tree) *TradeServer {
 	return server
 }
 
+func CreateHub(svrConfig *toml.Tree) (*core.Hub, error) {
+	var (
+		db  dbm.DB
+		err error
+		hub *core.Hub
+	)
+	wsManager := core.NewWebSocketManager()
+	if db, err = initDB(svrConfig); err != nil {
+		log.WithError(err).Fatal("init db failed")
+		return nil, err
+	}
+	if hub, err = initHub(svrConfig, db, wsManager); err != nil {
+		log.WithError(err).Error("init hub failed")
+		return nil, err
+	}
+	return hub, nil
+}
+
 func initDB(svrConfig *toml.Tree) (dbm.DB, error) {
 	var (
 		db  dbm.DB

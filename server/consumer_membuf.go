@@ -29,6 +29,7 @@ func NewConsumerWithMemBuf(svrConfig *toml.Tree, hub *core.Hub) (*TradeConsumerW
 		err    error
 		writer MsgWriter
 	)
+
 	if writer, err = initBackupWriter(svrConfig); err != nil {
 		log.WithError(err).Errorf("init backup writer failed")
 		return nil, err
@@ -83,4 +84,9 @@ func (tc *TradeConsumerWithMemBuf) switchBuf() {
 	} else {
 		tc.bufIdx = 0
 	}
+}
+
+func (tc *TradeConsumerWithMemBuf) Close() {
+	close(tc.recvData)
+	tc.hub.Close()
 }
