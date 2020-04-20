@@ -844,7 +844,6 @@ func (hub *Hub) commit() {
 	hub.pushDepthFull()
 	hub.dumpHubState()
 	hub.refreshDB()
-	//hub.timeToNewChain()
 }
 
 func (hub *Hub) isStopped() bool {
