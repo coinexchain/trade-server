@@ -24,6 +24,7 @@ type TradeConsumerWithMemBuf struct {
 	// Cap must be one to prevent the sudden interruption of
 	// the program and the loss of the pushed data
 	recvData chan int
+	out      chan struct{}
 }
 
 func NewConsumerWithMemBuf(svrConfig *toml.Tree, hub *core.Hub) (*TradeConsumerWithMemBuf, error) {
@@ -40,6 +41,7 @@ func NewConsumerWithMemBuf(svrConfig *toml.Tree, hub *core.Hub) (*TradeConsumerW
 		hub:      hub,
 		writer:   writer,
 		recvData: make(chan int),
+		out:      make(chan struct{}),
 	}
 	go tc.Consumer()
 	return tc, nil
@@ -58,6 +60,7 @@ func (tc *TradeConsumerWithMemBuf) Consumer() {
 
 		tc.consume(tc.bufPair[idx])
 		tc.bufPair[idx] = tc.bufPair[idx][:0]
+		tc.out <- struct{}{}
 	}
 }
 
@@ -78,6 +81,7 @@ func (tc *TradeConsumerWithMemBuf) PutMsg(k, v []byte) {
 	if string(k) == "commit" {
 		tc.recvData <- tc.bufIdx
 		tc.switchBuf()
+		<-tc.out
 	}
 }
 
