@@ -36,6 +36,8 @@ github.com/coinexchain/dirtail v0.0.0-20191023095636-14c319aeadf4 h1:F9GcW5SvqWJ
 github.com/coinexchain/dirtail v0.0.0-20191023095636-14c319aeadf4/go.mod h1:Oj6tzJsSHS5QkaB2UMgXoxR8ubsf/DeEwo90DIJAx10=
 github.com/coinexchain/dirtail v0.0.0-20191231093009-753b1f23110c h1:vpR0+oqEthh0UrFx8rWFIBzulkDme+jSYdDUYN0uHks=
 github.com/coinexchain/dirtail v0.0.0-20191231093009-753b1f23110c/go.mod h1:Oj6tzJsSHS5QkaB2UMgXoxR8ubsf/DeEwo90DIJAx10=
+github.com/coinexchain/dirtail v0.0.0-20200420001655-e1e630c62e13 h1:CHnDzCgRn6SlXUQAYhZXrVRom0ct4Z6WQIn72UHJA5w=
+github.com/coinexchain/dirtail v0.0.0-20200420001655-e1e630c62e13/go.mod h1:Oj6tzJsSHS5QkaB2UMgXoxR8ubsf/DeEwo90DIJAx10=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
 github.com/coreos/go-etcd v2.0.0+incompatible/go.mod h1:Jez6KQU2B/sWsbdaef3ED8NzMklzPG4d5KIOhIy30Tk=
 github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
