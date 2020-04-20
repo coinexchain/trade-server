@@ -1,67 +1,59 @@
 package server
 
 import (
-	"sync"
-
 	"github.com/coinexchain/trade-server/core"
 	toml "github.com/pelletier/go-toml"
 	log "github.com/sirupsen/logrus"
 )
 
-
-
 // func (dt *DirTail) Start(interval int64, consumeFunc func(line string, fileNum uint32, offset uint32)) {
 
-	//	app.msgQueProducer.SendMsg([]byte("commit"), []byte("{}"))
-
+//	app.msgQueProducer.SendMsg([]byte("commit"), []byte("{}"))
 
 type kvpair struct {
-	key []byte
+	key   []byte
 	value []byte
 }
 
 type TradeConsumerWithMemBuf struct {
-	bufPair    [2][]kvpair
-	mtx        sync.Mutex
-	bufIdx     int
-	hub        *core.Hub
-	writer     MsgWriter
+	bufPair [2][]kvpair
+	bufIdx  int
+	hub     *core.Hub
+	writer  MsgWriter
+
+	recvData chan int
 }
 
 func NewConsumerWithMemBuf(svrConfig *toml.Tree, hub *core.Hub) (*TradeConsumerWithMemBuf, error) {
 	var (
-		err     error
-		writer  MsgWriter
+		err    error
+		writer MsgWriter
 	)
 	if writer, err = initBackupWriter(svrConfig); err != nil {
 		log.WithError(err).Errorf("init backup writer failed")
 		return nil, err
 	}
-	return &TradeConsumerWithMemBuf{
-		hub:        hub,
-		writer:     writer,
-	}, nil
+	tc := &TradeConsumerWithMemBuf{
+		hub:    hub,
+		writer: writer,
+	}
+	go tc.Consumer()
+	return tc, nil
 }
 
 func (tc *TradeConsumerWithMemBuf) String() string {
 	return "membuf-consumer"
 }
 
-func (tc *TradeConsumerWithMemBuf) switchBuf() {
-	if tc.bufIdx == 0 {
-		tc.bufIdx = 1
-	} else {
-		tc.bufIdx = 0
-	}
-}
+func (tc *TradeConsumerWithMemBuf) Consumer() {
+	for {
+		idx, ok := <-tc.recvData
+		if !ok {
+			return
+		}
 
-func (tc *TradeConsumerWithMemBuf) PutMsg(k, v []byte) {
-	tc.bufPair[tc.bufIdx] = append(tc.bufPair[tc.bufIdx], kvpair{key: k, value: v})
-	if string(k) == "commit" {
-		finishedList := tc.bufPair[tc.bufIdx]
-		tc.switchBuf()
-		tc.mtx.Lock()
-		go tc.consume(finishedList)
+		tc.consume(tc.bufPair[idx])
+		tc.bufPair[idx] = tc.bufPair[idx][:0]
 	}
 }
 
@@ -75,6 +67,20 @@ func (tc *TradeConsumerWithMemBuf) consume(kvList []kvpair) {
 		}
 		log.WithFields(log.Fields{"key": kv.key, "value": string(kv.value)}).Debug("consume message")
 	}
-	tc.mtx.Unlock()
 }
 
+func (tc *TradeConsumerWithMemBuf) PutMsg(k, v []byte) {
+	tc.bufPair[tc.bufIdx] = append(tc.bufPair[tc.bufIdx], kvpair{key: k, value: v})
+	if string(k) == "commit" {
+		tc.recvData <- tc.bufIdx
+		tc.switchBuf()
+	}
+}
+
+func (tc *TradeConsumerWithMemBuf) switchBuf() {
+	if tc.bufIdx == 0 {
+		tc.bufIdx = 1
+	} else {
+		tc.bufIdx = 0
+	}
+}
