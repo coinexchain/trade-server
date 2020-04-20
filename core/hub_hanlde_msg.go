@@ -137,9 +137,9 @@ func NewHub(db dbm.DB, subMan SubscribeManager, interval int64, monitorInterval 
 func (hub *Hub) healthMonitor(monitorInterval int64) {
 	// this goroutine monitors the progress of trade-server
 	// if it is stuck, panic here
-	oldDbLockCount := hub.dbLockCount
-	oldTickerMapLockCount := hub.tickerMapLockCount
-	oldTrimanLockCount := hub.trimanLockCount
+	oldDbLockCount := atomic.LoadInt64(&hub.dbLockCount)
+	oldTickerMapLockCount := atomic.LoadInt64(&hub.tickerMapLockCount)
+	oldTrimanLockCount := atomic.LoadInt64(&hub.trimanLockCount)
 	for {
 		time.Sleep(time.Duration(monitorInterval * int64(time.Second)))
 		if oldTrimanLockCount == hub.trimanLockCount {
