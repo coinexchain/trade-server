@@ -141,8 +141,8 @@ func TestDepthLevel(t *testing.T) {
 `
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
+	subMan.CompareResult(t, correct)
+	subMan.ClearPushList()
 
 	T("2019-07-15T08:07:10Z")
 	newHeightInfo = &NewHeightInfo{
@@ -176,8 +176,8 @@ func TestDepthLevel(t *testing.T) {
 `
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
+	subMan.CompareResult(t, correct)
+	subMan.ClearPushList()
 
 	cancelOrderInfo := &CancelOrderInfo{
 		OrderID:        addr1 + "-3",
@@ -200,8 +200,8 @@ func TestDepthLevel(t *testing.T) {
 `
 	hub.ConsumeMessage("commit", nil)
 	time.Sleep(time.Millisecond)
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
+	subMan.CompareResult(t, correct)
+	subMan.ClearPushList()
 
 	hub.currBlockHeight = 99998
 	T("2019-07-15T08:07:10Z")
@@ -222,7 +222,7 @@ func TestDepthLevel(t *testing.T) {
 `
 	//depthSub := subMan.DepthSubscribeInfo["abc/cet"][0].(*DepthSubscriber)
 	//depthSub.CompareRet(t, []string{str})
-	subMan.compareResult(t, correct)
+	subMan.CompareResult(t, correct)
 
 }
 
@@ -379,8 +379,8 @@ func Test1(t *testing.T) {
 8: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"300"}],"asks":[{"p":"100.000000000000000000","a":"300"}]}
 9: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"300"}],"asks":[{"p":"100.000000000000000000","a":"300"}]}
 `
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
+	subMan.CompareResult(t, correct)
+	subMan.ClearPushList()
 
 	hub4j := &HubForJSON{}
 	hub.Dump(hub4j)
@@ -495,8 +495,8 @@ func Test1(t *testing.T) {
 8: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":[{"p":"100.000000000000000000","a":"200"}]}
 9: {"trading_pair":"abc/cet","bids":[{"p":"100.000000000000000000","a":"250"}],"asks":[{"p":"100.000000000000000000","a":"200"}]}
 `
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
+	subMan.CompareResult(t, correct)
+	subMan.ClearPushList()
 
 	sellDepth, buyDepth = hub.QueryDepth("abc/cet", 20)
 	correct = `[{"p":"100.000000000000000000","a":"200"}]`
@@ -553,8 +553,8 @@ func Test1(t *testing.T) {
 17: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":1,"side":2,"money_limit":10,"transaction_price":"2.000000000000000000","block_height":1001}
 18: {"sender":"cosmos1qy352eufqy352eufqy352eufqy35qqqz9ayrkz","stock":"xyz","money":"cet","amount":1,"side":2,"money_limit":10,"transaction_price":"2.000000000000000000","block_height":1001}
 `
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
+	subMan.CompareResult(t, correct)
+	subMan.ClearPushList()
 
 	blockTimes := hub.QueryBlockTime(1100, 100)
 	bytes, _ = json.Marshal(blockTimes)
@@ -760,8 +760,8 @@ func Test1(t *testing.T) {
 8: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"100.000000000000000000","a":"0"}]}
 9: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"100.000000000000000000","a":"0"}]}
 `
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
+	subMan.CompareResult(t, correct)
+	subMan.ClearPushList()
 
 	T("2019-07-16T00:01:10Z")
 	newHeightInfo = &NewHeightInfo{
@@ -805,8 +805,8 @@ func Test1(t *testing.T) {
 8: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"110.000000000000000000","a":"-200"}]}
 9: {"trading_pair":"abc/cet","bids":[],"asks":[{"p":"110.000000000000000000","a":"-200"}]}
 `
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
+	subMan.CompareResult(t, correct)
+	subMan.ClearPushList()
 
 	unixTime = T("2019-07-25T08:39:10Z").Unix()
 	data = hub.QueryCandleStick("B:xyz/cet", Hour, unixTime, 0, 20)
@@ -842,8 +842,8 @@ func Test1(t *testing.T) {
 30: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563235270,"time_span":"1day","market":"B:xyz/cet"}
 
 `
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
+	subMan.CompareResult(t, correct)
+	subMan.ClearPushList()
 
 	T("2019-07-15T08:38:10Z")
 	newHeightInfo = &NewHeightInfo{
@@ -861,8 +861,8 @@ func Test1(t *testing.T) {
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"0","unix_time":1563179830,"time_span":"1min","market":"abc/cet"}
 28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563179830,"time_span":"1min","market":"B:xyz/cet"}
 `
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
+	subMan.CompareResult(t, correct)
+	subMan.ClearPushList()
 
 	T("2019-07-15T08:39:10Z")
 	newHeightInfo = &NewHeightInfo{
@@ -932,8 +932,8 @@ func Test1(t *testing.T) {
 28: {"open":"2.000000000000000000","close":"2.000000000000000000","high":"2.000000000000000000","low":"2.000000000000000000","total":"0","unix_time":1563179890,"time_span":"1min","market":"B:xyz/cet"}
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"0","unix_time":1563179890,"time_span":"1min","market":"abc/cet"}
 `
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
+	subMan.CompareResult(t, correct)
+	subMan.ClearPushList()
 
 	T("2019-07-15T08:40:10Z")
 	newHeightInfo = &NewHeightInfo{
@@ -952,8 +952,8 @@ func Test1(t *testing.T) {
 28: {"open":"3.000000000000000000","close":"3.000000000000000000","high":"3.000000000000000000","low":"3.000000000000000000","total":"2","unix_time":1563179950,"time_span":"1min","market":"B:xyz/cet"}
 6: {"open":"0.125000000000000000","close":"0.125000000000000000","high":"0.125000000000000000","low":"0.125000000000000000","total":"0","unix_time":1563179950,"time_span":"1min","market":"abc/cet"}
 `
-	subMan.compareResult(t, correct)
-	subMan.clearPushList()
+	subMan.CompareResult(t, correct)
+	subMan.ClearPushList()
 
 	correctTickers := []*Ticker{
 		{
@@ -1092,7 +1092,7 @@ func TestHub_SkipOldChain(t *testing.T) {
 	subMan.BancorTradeSubscribeInfo = make(map[string][]Subscriber)
 	subMan.BancorTradeSubscribeInfo[addr] = make([]Subscriber, 1)
 	subMan.BancorTradeSubscribeInfo[addr][0] = &PlainSubscriber{ID: 1}
-	hub := NewHub(db, subMan, 99999, 0, 0, 0, "", 0)
+	hub := NewHub(db, subMan, 99999, 600, 0, 0, "", 0)
 	hub.chainID = "coinexdex-test1"
 	hub.oldChainID = "coinexdex-test1"
 	hub.upgradeHeight = 7
@@ -1105,16 +1105,16 @@ func TestHub_SkipOldChain(t *testing.T) {
 	consumeMsg(hub, key, val)
 	model := `{"chain_id":"%s","height":%d,"timestamp":%d,"last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
 	expectVal := fmt.Sprintf(model, "coinexdex-test1", 6, date.Unix())
-	subMan.compareResult(t, fmt.Sprintf("1: %s", expectVal))
-	subMan.clearPushList()
+	subMan.CompareResult(t, fmt.Sprintf("1: %s", expectVal))
+	subMan.ClearPushList()
 	require.EqualValues(t, 6, hub.currBlockHeight)
 
 	key = "height_info"
 	val = `{"chain_id":"coinexdex-test1","height":7,"timestamp":"2019-08-21T07:59:19.340662Z","last_block_hash":"1AEE872130EEA53168AD546A453BB343B4ABAE075949AF7AB995EF855790F5A4"}`
 	consumeMsg(hub, key, val)
 	expectVal = fmt.Sprintf(model, "coinexdex-test1", 7, date.Unix())
-	subMan.compareResult(t, fmt.Sprintf("1: %s", expectVal))
-	subMan.clearPushList()
+	subMan.CompareResult(t, fmt.Sprintf("1: %s", expectVal))
+	subMan.ClearPushList()
 	require.EqualValues(t, 7, hub.currBlockHeight)
 	key = "bancor_trade"
 	val = `{"sender":"coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly","stock":"abc","money":"cet","amount":60,"side":1,"money_limit":100,"transaction_price":"5.300000000000000000","block_height":290}`

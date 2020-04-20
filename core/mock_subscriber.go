@@ -187,13 +187,13 @@ func (sm *MocSubscribeManager) showResult() {
 	}
 }
 
-func (sm *MocSubscribeManager) clearPushList() {
+func (sm *MocSubscribeManager) ClearPushList() {
 	sm.Lock()
 	defer sm.Unlock()
 	sm.PushList = sm.PushList[:0]
 }
 
-func (sm *MocSubscribeManager) compareResult(t *testing.T, correct string) {
+func (sm *MocSubscribeManager) CompareResult(t *testing.T, correct string) {
 	sm.Lock()
 	defer sm.Unlock()
 	out := make([]string, 0, 10)

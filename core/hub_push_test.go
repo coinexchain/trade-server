@@ -32,8 +32,8 @@ func consumeMsgAndCompareRet(t *testing.T, hub *Hub, subMan *MocSubscribeManager
 	fillCommitInfo(hub)
 
 	time.Sleep(time.Millisecond)
-	subMan.compareResult(t, fmt.Sprintf("1: %s", val))
-	subMan.clearPushList()
+	subMan.CompareResult(t, fmt.Sprintf("1: %s", val))
+	subMan.ClearPushList()
 }
 
 func TestHub_PushHeightInfoMsg(t *testing.T) {
@@ -223,7 +223,7 @@ func TestHub_PushRedelegationMsg(t *testing.T) {
 	fillCommitInfo(hub)
 
 	time.Sleep(time.Millisecond)
-	subMan.compareResult(t, fmt.Sprintf("1: %s", val))
+	subMan.CompareResult(t, fmt.Sprintf("1: %s", val))
 }
 
 func TestHub_PushUnbondingMsg(t *testing.T) {
@@ -249,7 +249,7 @@ func TestHub_PushUnbondingMsg(t *testing.T) {
 	fillCommitInfo(hub)
 
 	time.Sleep(time.Millisecond)
-	subMan.compareResult(t, fmt.Sprintf("1: %s", val))
+	subMan.CompareResult(t, fmt.Sprintf("1: %s", val))
 }
 
 func TestHub_PushUnlockMsg(t *testing.T) {

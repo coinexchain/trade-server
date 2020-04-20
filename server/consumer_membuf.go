@@ -35,8 +35,9 @@ func NewConsumerWithMemBuf(svrConfig *toml.Tree, hub *core.Hub) (*TradeConsumerW
 		return nil, err
 	}
 	tc := &TradeConsumerWithMemBuf{
-		hub:    hub,
-		writer: writer,
+		hub:      hub,
+		writer:   writer,
+		recvData: make(chan int),
 	}
 	go tc.Consumer()
 	return tc, nil
