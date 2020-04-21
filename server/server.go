@@ -204,17 +204,25 @@ func newLevelDB(name string, dir string) (db dbm.DB, err error) {
 }
 
 func restoreHub(hub *core.Hub) error {
-	data := hub.LoadDumpData()
-	if data == nil {
-		hub.StoreLeastHeight()
-		log.Info("dump data does not exist, init new hub")
-		return nil
-	}
-	hub4jo := &core.HubForJSON{}
-	if err := json.Unmarshal(data, hub4jo); err != nil {
+	hub4jo, err := getHubDumpData(hub)
+	if err != nil || hub4jo == nil {
 		return err
 	}
 	hub.Load(hub4jo)
 	log.Info("restore hub finish")
 	return nil
+}
+
+func getHubDumpData(hub *core.Hub) (*core.HubForJSON, error) {
+	data := hub.LoadDumpData()
+	if data == nil {
+		hub.StoreLeastHeight()
+		log.Info("dump data does not exist, init new hub")
+		return nil, nil
+	}
+	hub4jo := &core.HubForJSON{}
+	if err := json.Unmarshal(data, hub4jo); err != nil {
+		return nil, err
+	}
+	return hub4jo, nil
 }

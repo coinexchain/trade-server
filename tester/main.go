@@ -594,7 +594,7 @@ func simulateKafkaInput() {
 	hub := core.NewHub(db, subMan, 60, -1, -1, 4447714, "", 4545600)
 
 	scanner := bufio.NewScanner(file)
-	size := 100*1024*1024
+	size := 100 * 1024 * 1024
 	scanner.Buffer(make([]byte, size), size)
 	counter := int64(0)
 	for scanner.Scan() {

@@ -40,6 +40,13 @@ func (tc *TradeConsumerWithDirTail) String() string {
 	return "dir-consumer"
 }
 
+func (tc *TradeConsumerWithDirTail) GetDumpHeight() int64 {
+	if dump, err := getHubDumpData(tc.hub); err == nil && dump != nil {
+		return dump.CurrBlockHeight
+	}
+	return 0
+}
+
 func (tc *TradeConsumerWithDirTail) Consume() {
 	offset := tc.hub.LoadOffset(0)
 	fileOffset := uint32(offset)
