@@ -71,7 +71,7 @@ func NewServer(svrConfig *toml.Tree) *TradeServer {
 		httpSvr:  httpSvr,
 		consumer: consumer,
 		hub:      hub,
-		pw:       NewPruneWorker(svrConfig.GetDefault("data-dir", "data").(string)),
+		pw:       NewPruneWorker(svrConfig.GetDefault("data-dir", "data").(string), hub),
 	}
 	return server
 }

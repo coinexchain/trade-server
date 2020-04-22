@@ -22,8 +22,8 @@ type PruneWorker struct {
 	work         Worker
 }
 
-func NewPruneWorker(dir string) *PruneWorker {
-	pw := &PruneWorker{doneHeightCh: make(chan int64)}
+func NewPruneWorker(dir string, hub *core.Hub) *PruneWorker {
+	pw := &PruneWorker{doneHeightCh: make(chan int64), hub: hub}
 	pw.work = msgqueue.NewFileDeleter(pw.doneHeightCh, dir)
 	return pw
 }
@@ -34,7 +34,7 @@ func (p *PruneWorker) Run() {
 }
 
 func (p *PruneWorker) tickHeight() {
-	tick := time.NewTicker(60 * time.Second)
+	tick := time.NewTicker(2 * time.Hour)
 	defer tick.Stop()
 
 	for {
