@@ -11,6 +11,11 @@ type Worker interface {
 	Run()
 }
 
+type WorkerCloser interface {
+	Worker
+	Close()
+}
+
 type PruneWorker struct {
 	hub          *core.Hub
 	doneHeightCh chan int64
@@ -23,7 +28,7 @@ func NewPruneWorker(dir string) *PruneWorker {
 	return pw
 }
 
-func (p *PruneWorker) Work() {
+func (p *PruneWorker) Run() {
 	p.work.Run()
 	go p.tickHeight()
 }
@@ -40,4 +45,8 @@ func (p *PruneWorker) tickHeight() {
 			}
 		}
 	}
+}
+
+func (p *PruneWorker) Close() {
+	close(p.doneHeightCh)
 }

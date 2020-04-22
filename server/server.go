@@ -29,7 +29,7 @@ type TradeServer struct {
 	httpSvr  *http.Server
 	hub      *core.Hub
 	consumer Consumer
-	pw       Worker
+	pw       WorkerCloser
 }
 
 func NewServer(svrConfig *toml.Tree) *TradeServer {
@@ -61,7 +61,7 @@ func NewServer(svrConfig *toml.Tree) *TradeServer {
 		httpSvr:  httpSvr,
 		consumer: consumer,
 		hub:      hub,
-		pw:       NewPruneWork(svrConfig.GetDefault("data-dir", "data").(string)),
+		pw:       NewPruneWorker(svrConfig.GetDefault("data-dir", "data").(string)),
 	}
 	return server
 }
@@ -154,7 +154,7 @@ func (ts *TradeServer) Start(svrConfig *toml.Tree) {
 	log.WithField("addr", ts.httpSvr.Addr).Info("Trade-Server start...")
 	go ts.startHTTPServer(svrConfig)
 	go ts.consume()
-	ts.pw.Work()
+	ts.pw.Run()
 }
 
 func (ts *TradeServer) startHTTPServer(svrConfig *toml.Tree) {
@@ -191,6 +191,8 @@ func (ts *TradeServer) Stop() {
 
 	// stop hub (before closing consumer)
 	ts.hub.Close()
+
+	ts.pw.Close()
 
 	// stop consumer
 	ts.consumer.Close()
