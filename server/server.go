@@ -94,6 +94,10 @@ func CreateHub(svrConfig *toml.Tree) (*core.Hub, error) {
 	return hub, nil
 }
 
+func InitDB(svrConfig *toml.Tree) (dbm.DB, error) {
+	return initDB(svrConfig)
+}
+
 func initDB(svrConfig *toml.Tree) (dbm.DB, error) {
 	var (
 		db  dbm.DB
@@ -219,7 +223,7 @@ func newLevelDB(name string, dir string) (db dbm.DB, err error) {
 }
 
 func restoreHub(hub *core.Hub) error {
-	hub4jo, err := getHubDumpData(hub)
+	hub4jo, err := GetHubDumpData(hub)
 	if err != nil || hub4jo == nil {
 		return err
 	}
@@ -228,7 +232,7 @@ func restoreHub(hub *core.Hub) error {
 	return nil
 }
 
-func getHubDumpData(hub *core.Hub) (*core.HubForJSON, error) {
+func GetHubDumpData(hub *core.Hub) (*core.HubForJSON, error) {
 	data := hub.LoadDumpData()
 	if data == nil {
 		hub.StoreLeastHeight()

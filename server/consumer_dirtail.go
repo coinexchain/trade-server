@@ -41,7 +41,7 @@ func (tc *TradeConsumerWithDirTail) String() string {
 }
 
 func (tc *TradeConsumerWithDirTail) GetDumpHeight() int64 {
-	if dump, err := getHubDumpData(tc.hub); err == nil && dump != nil {
+	if dump, err := GetHubDumpData(tc.hub); err == nil && dump != nil {
 		return dump.CurrBlockHeight
 	}
 	return 0

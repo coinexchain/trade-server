@@ -39,7 +39,7 @@ func (p *PruneWorker) tickHeight() {
 
 	for {
 		<-tick.C
-		if dump, err := getHubDumpData(p.hub); err == nil && dump != nil {
+		if dump, err := GetHubDumpData(p.hub); err == nil && dump != nil {
 			if dump.CurrBlockHeight != 0 {
 				p.doneHeightCh <- dump.CurrBlockHeight
 			}

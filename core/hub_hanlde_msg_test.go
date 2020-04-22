@@ -33,7 +33,7 @@ func TestUnmarshalHub(t *testing.T) {
 	hub.currBlockHeight = 999
 	hub4j := &HubForJSON{}
 	hub.Dump(hub4j)
-	//dumpKey := getDumpKey()
+	//dumpKey := GetDumpKey()
 	dumpBuf, err := json.Marshal(hub4j)
 	if err != nil {
 		panic(err)

@@ -69,7 +69,7 @@ func (hub *Hub) Dump(hub4j *HubForJSON) {
 }
 
 func (hub *Hub) LoadDumpData() []byte {
-	key := getDumpKey()
+	key := GetDumpKey()
 	hub.dbMutex.RLock()
 	defer hub.dbMutex.RUnlock()
 	bz := hub.db.Get(key)
@@ -91,7 +91,7 @@ func (hub *Hub) UpdateOffset(partition int32, offset int64) {
 }
 
 func (hub *Hub) LoadOffset(partition int32) int64 {
-	key := getOffsetKey(partition)
+	key := GetOffsetKey(partition)
 	hub.partition = partition
 
 	hub.dbMutex.RLock()

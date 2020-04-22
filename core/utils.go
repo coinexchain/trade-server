@@ -291,14 +291,14 @@ func getEndKeyFromBytes(firstByte byte, bz []byte, time int64, sid int64) []byte
 	return res
 }
 
-func getOffsetKey(partition int32) []byte {
+func GetOffsetKey(partition int32) []byte {
 	key := make([]byte, 5)
 	key[0] = OffsetByte
 	binary.BigEndian.PutUint32(key[1:], uint32(partition))
 	return key
 }
 
-func getDumpKey() []byte {
+func GetDumpKey() []byte {
 	key := make([]byte, 2)
 	key[0] = DumpByte
 	key[1] = DumpVersion

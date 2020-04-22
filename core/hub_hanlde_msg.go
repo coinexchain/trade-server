@@ -956,7 +956,7 @@ func (hub *Hub) commitForDump() {
 	// save dump data
 	hub4j := &HubForJSON{}
 	hub.Dump(hub4j)
-	dumpKey := getDumpKey()
+	dumpKey := GetDumpKey()
 	dumpBuf, err := json.Marshal(hub4j)
 	if err != nil {
 		log.WithError(err).Error("hub json marshal fail")
@@ -965,7 +965,7 @@ func (hub *Hub) commitForDump() {
 	hub.batch.Set(dumpKey, dumpBuf)
 
 	// save offset
-	offsetKey := getOffsetKey(hub.partition)
+	offsetKey := GetOffsetKey(hub.partition)
 	offsetBuf := Int64ToBigEndianBytes(hub.offset)
 	hub.batch.Set(offsetKey, offsetBuf)
 
