@@ -8,7 +8,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/coinexchain/trade-server/utils"
 	toml "github.com/pelletier/go-toml"
+
 	log "github.com/sirupsen/logrus"
 	dbm "github.com/tendermint/tm-db"
 
@@ -30,6 +32,14 @@ type TradeServer struct {
 	hub      *core.Hub
 	consumer Consumer
 	pw       WorkerCloser
+}
+
+func NewTradeServer(svrConfig *toml.Tree) *TradeServer {
+	if err := utils.InitLog(svrConfig); err != nil {
+		fmt.Printf("Init log fail:%v\n", err)
+		return nil
+	}
+	return NewServer(svrConfig)
 }
 
 func NewServer(svrConfig *toml.Tree) *TradeServer {
