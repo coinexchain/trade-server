@@ -23,7 +23,7 @@ type PruneWorker struct {
 }
 
 func NewPruneWorker(dir string) *PruneWorker {
-	pw := &PruneWorker{}
+	pw := &PruneWorker{doneHeightCh: make(chan int64)}
 	pw.work = msgqueue.NewFileDeleter(pw.doneHeightCh, dir)
 	return pw
 }
