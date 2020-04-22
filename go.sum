@@ -47,6 +47,8 @@ github.com/coinexchain/cet-sdk v0.2.17-0.20200421075718-08b674d21af0 h1:yrXAUdlF
 github.com/coinexchain/cet-sdk v0.2.17-0.20200421075718-08b674d21af0/go.mod h1:BXyviU8tznEj115hkB2Mq0R378TMutWEHfWPAtC1jos=
 github.com/coinexchain/cet-sdk v0.2.17-0.20200421101604-a79946913d02 h1:vpp6WBvhQ+1FaiMP9/qGs6+AQ2oWNHuQZ+tIwjBMioA=
 github.com/coinexchain/cet-sdk v0.2.17-0.20200421101604-a79946913d02/go.mod h1:HYw9w/+gVv38seolFBcinTHDhQ7Fk01X5iydQcLgl88=
+github.com/coinexchain/cet-sdk v0.2.17-0.20200422032358-75cdf10d3714 h1:4BxO7nfZdZnl07CpFCPnUdPLvE4shyZApqrhFC+GGkk=
+github.com/coinexchain/cet-sdk v0.2.17-0.20200422032358-75cdf10d3714/go.mod h1:HYw9w/+gVv38seolFBcinTHDhQ7Fk01X5iydQcLgl88=
 github.com/coinexchain/cosmos-utils v0.0.0-20200109031554-f15ba3b1d6a7/go.mod h1:JvdHh+tB6eBmuQ75l/QqSLx8Jj5rOoVS4DkLJrmYJgw=
 github.com/coinexchain/dirtail v0.0.0-20200420013354-ae209e82d2da h1:OWQQQmOxMaEQI8U5gkdCELN98rE4hAlV7bC9b2arRK4=
 github.com/coinexchain/dirtail v0.0.0-20200420013354-ae209e82d2da/go.mod h1:Oj6tzJsSHS5QkaB2UMgXoxR8ubsf/DeEwo90DIJAx10=

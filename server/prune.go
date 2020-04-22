@@ -8,27 +8,27 @@ import (
 )
 
 type Worker interface {
-	Work()
+	Run()
 }
 
-type PruneWork struct {
+type PruneWorker struct {
 	hub          *core.Hub
 	doneHeightCh chan int64
 	work         Worker
 }
 
-func NewPruneWork(dir string) *PruneWork {
-	pw := &PruneWork{}
-	pw.work = msgqueue.NewPruneFile(pw.doneHeightCh, dir)
+func NewPruneWorker(dir string) *PruneWorker {
+	pw := &PruneWorker{}
+	pw.work = msgqueue.NewFileDeleter(pw.doneHeightCh, dir)
 	return pw
 }
 
-func (p *PruneWork) Work() {
-	p.work.Work()
+func (p *PruneWorker) Work() {
+	p.work.Run()
 	go p.tickHeight()
 }
 
-func (p *PruneWork) tickHeight() {
+func (p *PruneWorker) tickHeight() {
 	tick := time.NewTicker(60 * time.Second)
 	defer tick.Stop()
 

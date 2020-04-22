@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/Shopify/sarama v1.23.1
-	github.com/coinexchain/cet-sdk v0.2.17-0.20200421101604-a79946913d02
+	github.com/coinexchain/cet-sdk v0.2.17-0.20200422032358-75cdf10d3714
 	github.com/coinexchain/dirtail v0.0.0-20200420013354-ae209e82d2da
 	github.com/cosmos/cosmos-sdk v0.37.4
 	github.com/emirpasic/gods v1.12.0
