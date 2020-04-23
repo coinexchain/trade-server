@@ -214,18 +214,66 @@ RebateRefereeAddr | string | 订单的返佣地址
 字段 | 类型 | 描述
 ---|---|---
 Validator | string | 验证人
-Commission | string | 佣金
+Commission | string | 佣金(为什么是string？)
 
 ### NotificationDelegatorRewards
 ### 作为该validator的投票者收到的奖励
 字段 | 类型 | 描述
 ---|---|---
 Validator | string | 验证人
-Rewards | string | 奖励
+Rewards | string | 奖励(为什么是string？)
 
 ## Other Information 其他数据
-### LockedCoin
-### NotificationUnlock
-### LockedSendMsg
+### LockedCoin  锁定金额
+字段 | 类型 | 描述
+---|---|---
+Coin | sdk.Coin | 金额（sdk.Coin包含货币描述和数量）
+UnlockTime | int64 | 解锁时间
+FromAddress | string | 发起锁定的地址
+Supervisor | string | 管理员地址
+Reward | int64 | 管理员的奖励
+
+### NotificationUnlock  解锁信息
+字段 | 类型 | 描述
+---|---|---
+Address | string | 用户地址
+Unlocked | sdk.Coins | 账户解锁金额
+LockedCoins | []LockedCoin | 账户剩余的锁定金额
+FrozenCoins | sdk.Coins | 账户当前的冻结金额
+Coins | sdk.Coins | 账户的可用金额
+Height | int64 | 当前区块高度
+
+### LockedSendMsg  发送锁定货币
+### A给B发送锁定货币，B只有等到解锁时间过后才能使用
+字段 | 类型 | 描述
+---|---|---
+FromAddress | string | 发送人
+ToAddress | string | 接收人
+Amount | sdk.Coins | 货币信息
+UnlockTime | int64 | 解锁时间
+Supervisor | string | 管理员
+Reward | int64 | 管理员的奖励
+TxHash | string | 交易哈希
+
 ### CommentRef
+字段 | 类型 | 描述
+---|---|---
+ID | uint64 | Comment信息ID
+RewardTarget | string | 奖励地址
+RewardToken | string | 奖励币种
+RewardAmount | int64 | 奖励金额
+Attitudes | []int32 | ？
+
 ### TokenComment
+字段 | 类型 | 描述
+---|---|---
+ID | uint64 | ？
+Height | int64 | comment所在区块高度
+Sender | string | comment发送者
+Token | string | 打赏币种
+Donation | int64 | 该comment打赏的金额
+Title | string | 标题
+Content | string | 内容
+ContentType | int8 | 内容类型
+References | []CommentRef | 奖励
+TxHash | string | 交易哈希
