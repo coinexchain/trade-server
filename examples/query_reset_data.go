@@ -12,6 +12,32 @@ import (
 	toml "github.com/pelletier/go-toml"
 )
 
+func main() {
+	db := initDB()
+	defer db.Close()
+
+	QueryHubDumpData(db)
+	//ResetOffset(db)
+}
+
+func initDB() db.DB {
+	content := `"data-dir" = "/Users/matrix/cetchain/dex/data"
+"use-rocksdb" = false`
+
+	conf, err := toml.Load(content)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(conf.Get("data-dir"))
+	fmt.Println(conf.Get("use-rocksdb"))
+	db, err := server.InitDB(conf)
+	if err != nil {
+		panic(err)
+	}
+
+	return db
+}
+
 func QueryHubDumpData(db db.DB) {
 	hub := core.NewHub(db, nil, 1, 2, 3, 4, "", 2)
 	if hub == nil {
@@ -25,25 +51,7 @@ func QueryHubDumpData(db db.DB) {
 	fmt.Println(string(bz))
 }
 
-func main() {
-	content := `"data-dir" = "/Users/matrix/cetchain/dex/data"
-"use-rocksdb" = false`
-
-	conf, err := toml.Load(content)
-	if err != nil {
-		panic(err)
-	}
-	//conf.Set("data-dir", "/Users/matrix/cetchain/dex/data")
-	//conf.Set("use-rocksdb", false)
-	fmt.Println(conf.Get("data-dir"))
-	fmt.Println(conf.Get("use-rocksdb"))
-	db, err := server.InitDB(conf)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-	//QueryHubDumpData(db)
-	//return
+func ResetOffset(db db.DB) {
 	offsetKey := core.GetOffsetKey(0)
 	if !db.Has(offsetKey) {
 		panic("no data in store")
@@ -64,5 +72,4 @@ func main() {
 	if binary.BigEndian.Uint64(offsetBuf) != 0 {
 		panic("should be 0")
 	}
-
 }
