@@ -1,0 +1,187 @@
+# Dex Types数据描述
+## 本文档对应trade-server里core/dex_type.go文件
+## Market Information 跟市场/订单有关的数据
+
+### MarketInfo  市场信息
+字段 | 类型 | 描述
+---|---|---
+Stock | string | 被交易的币种
+Money | string | 交易金额币种
+Creator | string | 创建人
+PricePrecision | byte | 价格精确度（小数位） 
+OrderPrecision | byte | 订单精确度（？）
+
+### OrderResponse  订单信息返回值
+字段 | 类型 | 描述
+---|---|---
+Data | []json.RawMessage | 订单信息（创建/成交/取消）
+Timesid | []int64 | ？
+
+### OrderInfo  订单信息
+字段 | 类型 | 描述
+---|---|---
+CreateOrderInfo | OrderResponse | 创建订单信息
+FillOrderInfo | OrderResponse | 成交订单信息
+CancelOrderInfo | OrderResponse | 取消订单信息
+
+
+### CreateOrderInfo  创建订单信息
+字段 | 类型 | 描述
+---|---|---
+OrderID | string | 订单ID
+Sender | string | 创建者
+TradingPair | string | 交易对（例如 abc/cet）
+OrderType | byte | 2:限价单; 当前只支持限价单。
+Price | sdk.Dec | 挂单价
+Quantity | int64 | 交易stock的数量
+Side | byte | 订单方向；BUY:1, SELL:2
+TimeInForce | int | 订单类型；GTE:到期单, IOC:立即成交单
+Height | int64 | 创建订单的高度
+Freeze | int64 | 订单使用的资金
+FrozenFeatureFee | int64 | 冻结订单的最大功能费；订单删除时，按存在时间返还
+FrozenCommission | int64 | 冻结订单的最大佣金；订单删除时，按成交情况返还
+TxHash | string | 交易哈希
+
+### FillOrderInfo  成交订单信息
+字段 | 类型 | 描述
+---|---|---
+OrderID | string | 订单ID
+TradingPair | string | 交易对（例如 abc/cet）
+Height | int64 | 订单成交的高度
+Side | byte |  订单方向；BUY:1, SELL:2
+Price | sdk.Dec | 挂单价
+LeftStock | int64 | 订单未成交的stock
+Freeze | int64 | 订单剩余还未成交的冻结资金
+DealStock | int64 | 订单成交的stock
+DealMoney | int64 | 订单成交的money
+CurrStock | int64 | 订单本次成交的stock数量
+CurrMoney | int64 | 订单本次成交的money数量
+FillPrice | sdk.Dec | 交易哈希
+
+### CancelOrderInfo  取消订单信息
+字段 | 类型 | 描述
+---|---|---
+OrderID | string | 订单ID
+TradingPair | string | 交易对（例如 abc/cet）
+Height | int64 | 删除订单时的块高度
+Side | byte |  订单方向；BUY:1, SELL:2
+Price | sdk.Dec | 挂单价
+DelReason | string | 订单取消原因
+UsedCommission | int64 | 订单实际使用的佣金
+LeftStock | int64 | 订单剩余未成交的stock数量
+RemainAmount | int64 | 订单剩余未成交的资金
+DealStock | int64 | 订单成交的stock数量
+DealMoney | int64 | 订单成交的money数量
+TxHash | string | 交易哈希
+UsedFeatureFee | int64 | 订单实际使用的功能费
+RebateAmount | int64 | 订单的返佣金额
+RebateRefereeAddr | string | 订单返佣地址
+
+### DepthDetails 交易市场深度
+字段 | 类型 | 描述
+---|---|---
+TradingPair | string | 交易对（例如 abc/cet）
+Bids | []*PricePoint | 买家报价-数量列表
+Asks | []*PricePoint | 卖家报价-数量列表
+
+
+## Block Information 跟区块本身有关的数据
+
+### NewHeightInfo  区块高度信息
+### 对比起旧链，新链的timestamp由string改成int64
+字段 | 类型 | 描述
+---|---|---
+ChainID | string | 链ID
+Height | int64 | 区块高度
+TimeStamp | int64 | 时间戳
+LastBlockHash | cmn.HexBytes | 上一个区块的hash
+
+### HeightInfo  高度信息
+字段 | 类型 | 描述
+---|---|---
+Height | uint64 | 区块高度
+TimeStamp | uint64 | 时间戳
+
+### TransferRecord  转账记录
+字段 | 类型 | 描述
+---|---|---
+Sender | string | 发送人
+Recipient | string | 接收者
+Amount | string | 数量
+
+### NotificationTx 交易信息
+字段 | 类型 | 描述
+---|---|---
+Signers | []string | 签名者
+Transfers | []TransferRecord | 转账记录列表
+SerialNumber | int64 | 当前交易的序号
+MsgTypes | []string | 交易内的消息类型
+TxJSON | string | 交易JSON格式字符串
+Height | int64 | 交易发生高度
+Hash | string | 交易哈希
+ExtraInfo | string | 交易失败时，提供的额外信息
+
+
+## Management Information 跟共识/治理有关的数据
+### NotificationBeginRedelegation
+### 某个人想要委托validator进行staking
+### 或者某个人以前委托别人，想重新委托
+字段 | 类型 | 描述
+---|---|---
+Delegator | string | 委托人
+ValidatorSrc | string | 原来的被委托者
+ValidatorDst | string | 新的被委托者
+Amount | string | 委托的money
+CompletionTime | int64 | 完成时间
+TxHash | string | 交易哈希
+
+### NotificationBeginUnbonding
+### 某个validator排名跌出前42
+### 或者某个原先被jail的validator监禁期结束
+字段 | 类型 | 描述
+---|---|---
+Delegator | string | 委托人
+Validator | string | 验证人
+Amount | string | 委托的money
+CompletionTime | int64 | 完成时间
+TxHash | string | 交易哈希
+
+### NotificationCompleteRedelegation
+### BeginRedelegation完成信息
+字段 | 类型 | 描述
+---|---|---
+Delegator | string | 委托人
+ValidatorSrc | string | 原来的被委托者
+ValidatorDst | string | 新的被委托者
+
+### NotificationCompleteUnbonding
+### BeginUnbonding完成信息
+字段 | 类型 | 描述
+---|---|---
+Delegator | string | 委托人
+Validator | string | 验证人
+
+### NotificationSlash
+### 当一个validator做出违规行为，他会被惩罚，票数会削减一定百分比
+字段 | 类型 | 描述
+---|---|---
+Validator | string | 验证人
+Power | string | 票数削减百分比
+Reason | string | 理由
+Jailed | bool | 是否被监禁惩罚
+
+## Bancor Information 跟Bancor有关的数据
+### MsgBancorInfoForKafka
+### MsgBancorTradeInfoForKafka
+
+
+## Reward Information 跟奖励有关的数据
+### NotificationValidatorCommission
+### NotificationDelegatorRewards
+
+## Other Information 其他数据
+### LockedCoin
+### NotificationUnlock
+### LockedSendMsg
+### CommentRef
+### TokenComment
