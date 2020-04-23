@@ -172,12 +172,56 @@ Jailed | bool | 是否被监禁惩罚
 
 ## Bancor Information 跟Bancor有关的数据
 ### MsgBancorInfoForKafka
+### 某人使用bancor框架自动做市
+字段 | 类型 | 描述
+---|---|---
+Owner | string | bancor的创建者
+Stock | string | 被交易的币种
+Money | string | 交易金额币种
+InitPrice | string | bancor交易对的初始化价格，创建后币价达到这个值
+MaxSupply | string | bancor的最大供应量
+StockPrecision | string | stock的精度
+MaxPrice | string | bancor的最大价格
+MaxMoney | string | bancor中存入的最大money数量
+AR | string | supply-price系数
+CurrentPrice | string | 当前bancor的价格，CurrentPrice =  (MaxSupply - StockInPool) * MaxPrice / MaxSupply
+StockInPool | string | bancor中存储的stock数量
+MoneyInPool | string | bancor中存储的money数量，MoneyInPool = CurrentPrice * (MaxSupply - StockInPool) * 0.5
+EarliestCancelTime | int64 | bancor允许取消的最早时间，只有onwer才能取消
+
 ### MsgBancorTradeInfoForKafka
+### bancor交易信息
+### 某人与bancor生成的单进行交易
+字段 | 类型 | 描述
+---|---|---
+Sender | string | 交易人
+Stock | string | 被交易的币种
+Money | string | 交易金额币种
+Amount | int64 | 订单数量
+Side | byte | 订单方向；BUY:1, SELL:2
+MoneyLimit | int64 | 买单时愿意付出的money的上限，卖单时希望得到的money的下限
+TxPrice | sdk.Dec | 本次交易的成交均价，单位money per stock
+BlockHeight | int64 | 该笔成交所在高度
+TxHash | string | 交易哈希
+UsedCommission | int64 | 订单实际使用的佣金
+RebateAmount | int64 | 订单的返佣金额
+RebateRefereeAddr | string | 订单的返佣地址
 
 
 ## Reward Information 跟奖励有关的数据
 ### NotificationValidatorCommission
+### 作为validator收到的佣金
+字段 | 类型 | 描述
+---|---|---
+Validator | string | 验证人
+Commission | string | 佣金
+
 ### NotificationDelegatorRewards
+### 作为该validator的投票者收到的奖励
+字段 | 类型 | 描述
+---|---|---
+Validator | string | 验证人
+Rewards | string | 奖励
 
 ## Other Information 其他数据
 ### LockedCoin
