@@ -88,7 +88,7 @@ func loadConfigFile(cfgFile string) (*toml.Tree, error) {
 }
 
 func startService(svrConfig *toml.Tree) {
-	if svr := server.NewServer(svrConfig); svr != nil {
+	if svr := server.NewServer(svrConfig, nil); svr != nil {
 		svr.Start(svrConfig)
 		waitForSignal()
 		svr.Stop()

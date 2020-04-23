@@ -7,19 +7,23 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager, proxy bool, lcdv0, lcd string) (http.Handler, error) {
+func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager, proxy bool, lcdv0, lcd string, register RegisterRouter) (http.Handler, error) {
 	router := mux.NewRouter()
 
 	// REST API Proxy
-	if proxy {
-		if err := registerProxyHandler(lcd, router); err != nil {
-			return nil, err
+	if isEnableProxy(register) {
+		if proxy {
+			if err := registerProxyHandler(lcd, router); err != nil {
+				return nil, err
+			}
 		}
-	}
-	if proxy && len(lcdv0) != 0 {
-		if err := registerProxyHandlerLegacy("/v0", lcdv0, router); err != nil {
-			return nil, err
+		if proxy && len(lcdv0) != 0 {
+			if err := registerProxyHandlerLegacy("/v0", lcdv0, router); err != nil {
+				return nil, err
+			}
 		}
+	} else {
+		register(router)
 	}
 
 	// REST
@@ -50,4 +54,8 @@ func registerHandler(hub *core.Hub, wsManager *core.WebsocketManager, proxy bool
 	router.HandleFunc("/ws", ServeWsHandleFn(wsManager, hub))
 
 	return router, nil
+}
+
+func isEnableProxy(register RegisterRouter) bool {
+	return register == nil
 }

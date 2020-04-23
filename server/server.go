@@ -8,8 +8,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/coinexchain/trade-server/utils"
+	"github.com/gorilla/mux"
 	toml "github.com/pelletier/go-toml"
+
+	"github.com/coinexchain/trade-server/utils"
 
 	log "github.com/sirupsen/logrus"
 	dbm "github.com/tendermint/tm-db"
@@ -27,6 +29,8 @@ const (
 	DbName   = "dex-trade"
 )
 
+type RegisterRouter func(route *mux.Router)
+
 type TradeServer struct {
 	httpSvr  *http.Server
 	hub      *core.Hub
@@ -34,15 +38,15 @@ type TradeServer struct {
 	pw       WorkerCloser
 }
 
-func NewTradeServer(svrConfig *toml.Tree) *TradeServer {
+func NewTradeServer(svrConfig *toml.Tree, register RegisterRouter) *TradeServer {
 	if err := utils.InitLog(svrConfig); err != nil {
 		fmt.Printf("Init log fail:%v\n", err)
 		return nil
 	}
-	return NewServer(svrConfig)
+	return NewServer(svrConfig, register)
 }
 
-func NewServer(svrConfig *toml.Tree) *TradeServer {
+func NewServer(svrConfig *toml.Tree, register RegisterRouter) *TradeServer {
 	var (
 		db        dbm.DB
 		err       error
@@ -59,7 +63,7 @@ func NewServer(svrConfig *toml.Tree) *TradeServer {
 		log.WithError(err).Error("init hub failed")
 		return nil
 	}
-	if httpSvr, err = initWebService(svrConfig, hub, wsManager); err != nil {
+	if httpSvr, err = initWebService(svrConfig, hub, wsManager, register); err != nil {
 		log.WithError(err).Error("init web service failed")
 		return nil
 	}
@@ -127,12 +131,12 @@ func initHub(svrConfig *toml.Tree, db dbm.DB, wsManager *core.WebsocketManager) 
 	return hub, nil
 }
 
-func initWebService(svrConfig *toml.Tree, hub *core.Hub, wsManager *core.WebsocketManager) (*http.Server, error) {
+func initWebService(svrConfig *toml.Tree, hub *core.Hub, wsManager *core.WebsocketManager, register func(route *mux.Router)) (*http.Server, error) {
 	if err := checkHTTPSOption(svrConfig); err != nil {
 		log.WithError(err).Error("check https required cert file failed")
 		return nil, err
 	}
-	httpSvr, err := initHTTPService(svrConfig, hub, wsManager)
+	httpSvr, err := initHTTPService(svrConfig, hub, wsManager, register)
 	return httpSvr, err
 }
 
@@ -147,11 +151,11 @@ func checkHTTPSOption(svrConfig *toml.Tree) error {
 	return nil
 }
 
-func initHTTPService(svrConfig *toml.Tree, hub *core.Hub, wsManager *core.WebsocketManager) (*http.Server, error) {
+func initHTTPService(svrConfig *toml.Tree, hub *core.Hub, wsManager *core.WebsocketManager, register RegisterRouter) (*http.Server, error) {
 	proxy := svrConfig.GetDefault("proxy", false).(bool)
 	lcd := svrConfig.GetDefault("lcd", "").(string)
 	lcdv0 := svrConfig.GetDefault("lcdv0", "").(string)
-	router, err := registerHandler(hub, wsManager, proxy, lcdv0, lcd)
+	router, err := registerHandler(hub, wsManager, proxy, lcdv0, lcd, register)
 	if err != nil {
 		return nil, err
 	}
