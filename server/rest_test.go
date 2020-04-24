@@ -2,12 +2,13 @@ package server
 
 import (
 	"encoding/binary"
-	"github.com/coinexchain/trade-server/core"
-	"github.com/stretchr/testify/require"
-	dbm "github.com/tendermint/tm-db"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/coinexchain/trade-server/core"
+	"github.com/stretchr/testify/require"
+	dbm "github.com/tendermint/tm-db"
 )
 
 func TestHandlerOK(t *testing.T) {
@@ -30,7 +31,7 @@ func TestHandlerOK(t *testing.T) {
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	rr := httptest.NewRecorder()
-	handler, _ := registerHandler(hub, wsManager, false, "", "")
+	handler, _ := registerHandler(hub, wsManager, false, "", "", nil)
 
 	// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
 	// directly and pass in our Request and ResponseRecorder.
@@ -64,7 +65,7 @@ func TestHandlerNotFound(t *testing.T) {
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	rr := httptest.NewRecorder()
-	handler, _ := registerHandler(hub, wsManager, false, "", "")
+	handler, _ := registerHandler(hub, wsManager, false, "", "", nil)
 
 	// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
 	// directly and pass in our Request and ResponseRecorder.
