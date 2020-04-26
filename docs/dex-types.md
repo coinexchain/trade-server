@@ -1,7 +1,6 @@
 # Dex Types数据描述
 
-本文档描述的是 `cetd --> trade-server` 之间消息的数据结构;
-数据结构定义在[core/dex_type.go](../core/dex_types.go)文件内的数据结构.
+本文档描述的是 `cetd --> trade-server` 之间消息的数据结构，定义在[core/dex_type.go](../core/dex_types.go)文件内.
 
 ## Market Information 跟市场/订单有关的数据
 
