@@ -1,5 +1,8 @@
 # Dex Types数据描述
-## 本文档对应trade-server里core/dex_type.go文件
+
+本文档描述的是 `cetd --> trade-server` 之间消息的数据结构;
+数据结构定义在[core/dex_type.go](../core/dex_types.go)文件内的数据结构.
+
 ## Market Information 跟市场/订单有关的数据
 
 ### MarketInfo  市场信息
@@ -8,14 +11,8 @@
 Stock | string | 被交易的币种
 Money | string | 交易金额币种
 Creator | string | 创建人
-PricePrecision | byte | 价格精确度（小数位） 
-OrderPrecision | byte | 订单精确度（？）
-
-### OrderResponse  订单信息返回值
-字段 | 类型 | 描述
----|---|---
-Data | []json.RawMessage | 订单信息（创建/成交/取消）
-Timesid | []int64 | ？
+PricePrecision | byte | 价格精确度（小数位，控制价格的小数位） 
+OrderPrecision | byte | 订单精确度（控制交易时数量的粒度，代币交易的数量必须是(`10**OrderPrecision`)的倍数）
 
 ### OrderInfo  订单信息
 字段 | 类型 | 描述
@@ -24,6 +21,11 @@ CreateOrderInfo | OrderResponse | 创建订单信息
 FillOrderInfo | OrderResponse | 成交订单信息
 CancelOrderInfo | OrderResponse | 取消订单信息
 
+### OrderResponse  订单信息返回值
+字段 | 类型 | 描述
+---|---|---
+Data | []json.RawMessage | 订单信息（创建/成交/取消）
+Timesid | []int64 | index 0: time(该Msg的区块时间戳)； index 1: sid(消息的累计序列号，在trade-server中作为数据库中key的一部分，用于范围查询) 
 
 ### CreateOrderInfo  创建订单信息
 字段 | 类型 | 描述
@@ -88,7 +90,9 @@ Asks | []*PricePoint | 卖家报价-数量列表
 ## Block Information 跟区块本身有关的数据
 
 ### NewHeightInfo  区块高度信息
-### 对比起旧链，新链的timestamp由string改成int64
+
+对比起旧链，新链的timestamp由string改成int64
+
 字段 | 类型 | 描述
 ---|---|---
 ChainID | string | 链ID
@@ -123,9 +127,9 @@ ExtraInfo | string | 交易失败时，提供的额外信息
 
 
 ## Management Information 跟共识/治理有关的数据
+
 ### NotificationBeginRedelegation
-### 某个人想要委托validator进行staking
-### 或者某个人以前委托别人，想重新委托
+
 字段 | 类型 | 描述
 ---|---|---
 Delegator | string | 委托人
@@ -136,8 +140,7 @@ CompletionTime | int64 | 完成时间
 TxHash | string | 交易哈希
 
 ### NotificationBeginUnbonding
-### 某个validator排名跌出前42
-### 或者某个原先被jail的validator监禁期结束
+
 字段 | 类型 | 描述
 ---|---|---
 Delegator | string | 委托人
@@ -147,7 +150,9 @@ CompletionTime | int64 | 完成时间
 TxHash | string | 交易哈希
 
 ### NotificationCompleteRedelegation
-### BeginRedelegation完成信息
+
+BeginRedelegation完成信息
+
 字段 | 类型 | 描述
 ---|---|---
 Delegator | string | 委托人
@@ -155,14 +160,18 @@ ValidatorSrc | string | 原来的被委托者
 ValidatorDst | string | 新的被委托者
 
 ### NotificationCompleteUnbonding
-### BeginUnbonding完成信息
+
+BeginUnbonding完成信息
+
 字段 | 类型 | 描述
 ---|---|---
 Delegator | string | 委托人
 Validator | string | 验证人
 
 ### NotificationSlash
-### 当一个validator做出违规行为，他会被惩罚，票数会削减一定百分比
+
+当一个validator做出违规行为(活性差，双签)，他会被惩罚，票数会削减一定百分比
+
 字段 | 类型 | 描述
 ---|---|---
 Validator | string | 验证人
@@ -171,8 +180,11 @@ Reason | string | 理由
 Jailed | bool | 是否被监禁惩罚
 
 ## Bancor Information 跟Bancor有关的数据
+
 ### MsgBancorInfoForKafka
-### 某人使用bancor框架自动做市
+
+使用bancor框架自动做市
+
 字段 | 类型 | 描述
 ---|---|---
 Owner | string | bancor的创建者
@@ -190,8 +202,9 @@ MoneyInPool | string | bancor中存储的money数量，MoneyInPool = CurrentPric
 EarliestCancelTime | int64 | bancor允许取消的最早时间，只有onwer才能取消
 
 ### MsgBancorTradeInfoForKafka
-### bancor交易信息
-### 某人与bancor生成的单进行交易
+
+bancor交易信息
+
 字段 | 类型 | 描述
 ---|---|---
 Sender | string | 交易人
@@ -209,22 +222,29 @@ RebateRefereeAddr | string | 订单的返佣地址
 
 
 ## Reward Information 跟奖励有关的数据
+
 ### NotificationValidatorCommission
-### 作为validator收到的佣金
+
+validator收到的佣金
+
 字段 | 类型 | 描述
 ---|---|---
 Validator | string | 验证人
-Commission | string | 佣金(为什么是string？)
+Commission | string | 佣金
 
 ### NotificationDelegatorRewards
-### 作为该validator的投票者收到的奖励
+
+该validator的投票者收到的奖励
+
 字段 | 类型 | 描述
 ---|---|---
 Validator | string | 验证人
-Rewards | string | 奖励(为什么是string？)
+Rewards | string | 奖励
 
 ## Other Information 其他数据
+
 ### LockedCoin  锁定金额
+
 字段 | 类型 | 描述
 ---|---|---
 Coin | sdk.Coin | 金额（sdk.Coin包含货币描述和数量）
@@ -244,7 +264,9 @@ Coins | sdk.Coins | 账户的可用金额
 Height | int64 | 当前区块高度
 
 ### LockedSendMsg  发送锁定货币
-### A给B发送锁定货币，B只有等到解锁时间过后才能使用
+
+A给B发送锁定货币，B只有等到解锁时间过后才能使用
+
 字段 | 类型 | 描述
 ---|---|---
 FromAddress | string | 发送人
@@ -262,12 +284,12 @@ ID | uint64 | Comment信息ID
 RewardTarget | string | 奖励地址
 RewardToken | string | 奖励币种
 RewardAmount | int64 | 奖励金额
-Attitudes | []int32 | ？
+Attitudes | []int32 | 对该评论的态度(like,Dislike,Laugh...; 11种态度)
 
 ### TokenComment
 字段 | 类型 | 描述
 ---|---|---
-ID | uint64 | ？
+ID | uint64 | 评论指定token时，该评论的唯一ID；由系统维护，单调递增;
 Height | int64 | comment所在区块高度
 Sender | string | comment发送者
 Token | string | 打赏币种
