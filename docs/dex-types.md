@@ -11,7 +11,7 @@ Stock | string | 被交易的币种
 Money | string | 交易金额币种
 Creator | string | 创建人
 PricePrecision | byte | 价格精确度（小数位，控制价格的小数位） 
-OrderPrecision | byte | 订单精确度（控制交易时数量的粒度，代币交易的数量必须是(`10**OrderPrecision`)的倍数）
+OrderPrecision | byte | 订单精确度（控制每笔订单中交易token的数量，token交易的数量必须是(`10**OrderPrecision`)的倍数）
 
 ### OrderInfo  订单信息
 字段 | 类型 | 描述
