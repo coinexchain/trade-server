@@ -591,7 +591,8 @@ func simulateKafkaInput() {
 
 	db := dbm.NewMemDB()
 	subMan := core.GetSubscribeManager("coinex1x6rhu5m53fw8qgpwuljauaptvxyur57zym4jly", "coinex1yj66ancalgk7dz3383s6cyvdd0nd93q0tk4x0c")
-	hub := core.NewHub(db, subMan, 60, -1, -1, 4447714, "", 4545600)
+	//hub := core.NewHub(db, subMan, 60, -1, -1, 4447714, "", 4545600)
+	hub := core.NewHub(db, subMan, 60, -1, -1, 0, "", 99999999)
 
 	scanner := bufio.NewScanner(file)
 	size := 100 * 1024 * 1024
@@ -625,18 +626,21 @@ func simulateKafkaInput() {
 	//data = hub.QueryCandleStick("hffp/cet", core.Day, unixTime, 0, 1000)
 	//fmt.Printf("here %s %d\n", toStr(data), unixTime)
 
-	t := T("2021-09-29T08:02:06.647266Z").Unix()
-	acc := "coinex1m77xwm4t29ga2xg2dzrwzm6wf2mumw3gzl4yd6"
-	msgList, timesid := hub.QueryIncomeAboutToken("cet", acc, t, 0, 1024)
-	for i, msg := range msgList {
-		fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
-	}
-	fmt.Printf("------------------------\n")
-	acc = "coinex1m0h3aw8n83tmlyltqldj7xqyp00wdvldxlw3nu"
-	msgList, timesid = hub.QueryTxAboutToken("cet", acc, t, 0, 1024)
-	for i, msg := range msgList {
-		fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
-	}
+	info := hub.QueryTxByHashID("E26ACB4D854DE5609FF3AA16F44B2EF9A46757B069C14723DBD1A2A0903012B3")
+	fmt.Printf("=hhhh= %s\n", info)
+
+	//t := T("2021-09-29T08:02:06.647266Z").Unix()
+	//acc := "coinex1m77xwm4t29ga2xg2dzrwzm6wf2mumw3gzl4yd6"
+	//msgList, timesid := hub.QueryIncomeAboutToken("cet", acc, t, 0, 1024)
+	//for i, msg := range msgList {
+	//	fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
+	//}
+	//fmt.Printf("------------------------\n")
+	//acc = "coinex1m0h3aw8n83tmlyltqldj7xqyp00wdvldxlw3nu"
+	//msgList, timesid = hub.QueryTxAboutToken("cet", acc, t, 0, 1024)
+	//for i, msg := range msgList {
+	//	fmt.Printf("== %s %d\n", string(msg), timesid[2*i])
+	//}
 
 	//t := T("2020-09-29T08:02:06.647266Z").Unix()
 	//msgList, timesid := hub.QueryDeal("abc/cet", t, 0, 1024)
