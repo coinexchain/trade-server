@@ -413,10 +413,8 @@ func QueryTxsRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 func QueryTxsByHashRequestHandlerFn(hub *core.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		hashHexStr := vars["hashes"]
-
+		hashHexStr := vars["hash"]
 		data := hub.QueryTxByHashID(hashHexStr)
-
 		postQueryResponse(w, data)
 	}
 }
